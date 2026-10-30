@@ -6,5 +6,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="D:/02_Development_Tech_Document/DaiHocNam3/HK1/Application_Development/PetShop_LAND/Nhom2_PetStoreManagementSystem/lib/flatlaf-3.7.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
