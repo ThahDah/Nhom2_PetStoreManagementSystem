@@ -1,5 +1,3 @@
-
-
 package main;
 
 
@@ -20,22 +18,17 @@ import gui.LoginGUI;
 public class App {
 
 	public static void main(String[] args) {
-
-		// Dùng giao diện của hệ điều hành
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-//		SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true));
-
-		 SwingUtilities.invokeLater(() -> moTrangLichHen());
 		try {
 			  FlatLightLaf.setup();
 	        } catch (Exception e1) {
 	            e1.printStackTrace();
 	        }
-		new LoginGUI().setVisible(true);
+		
+//		SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true))
+//		test UI lich hẹn
+		 SwingUtilities.invokeLater(() -> moTrangLichHen());
+//		 Test UI login
+//		new LoginGUI().setVisible(true);
 
 	}
 
