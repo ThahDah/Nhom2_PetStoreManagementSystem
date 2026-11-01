@@ -6,5 +6,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="src" path="src"/>
+	<classpathentry kind="lib" path="libs/flatlaf-3.7.2.jar"/>
+	<classpathentry kind="lib" path="libs/sqljdbc42.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
