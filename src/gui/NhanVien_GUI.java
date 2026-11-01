@@ -13,7 +13,11 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.Struct;
+import java.util.ArrayList;
 
 import javax.swing.AbstractButton;
 import javax.swing.BorderFactory;
@@ -22,6 +26,7 @@ import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
+import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -29,13 +34,17 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
+import javax.swing.filechooser.FileNameExtensionFilter;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import com.formdev.flatlaf.FlatLightLaf;
 
+import dao.NhanVienDAO;
+import entity.NhanVien;
 import entity.TrangThai;
 
 
@@ -68,10 +77,9 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 
 	private JButton btnTim;
 	
-//	private NhanVien_dao nv_dao = new NhanVien_dao();
+	private NhanVienDAO nv_dao = new NhanVienDAO();
     private TableRowSorter<DefaultTableModel> rowSorter;
 
-	private JComboBox<String> cbTimCaLam;
 
 	private String duongDanAnh;
 
@@ -270,14 +278,14 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
         table.addMouseListener(this);
 
         // ket noi csdl
-//        try {
-//            connectDB.ConnectDB.getInstance().connect();
-//            System.out.println("Kết nối cơ sở dữ liệu thành công!");
-//            DocDuLieuVaoTable();
-//        } catch (java.sql.SQLException e) {
-//            e.printStackTrace();
-//            JOptionPane.showMessageDialog(this, "Không thể kết nối tới Cơ sở dữ liệu!\n" + e.getMessage());
-//        }
+        try {
+            connectDB.ConnectDB.getInstance().connect();
+            System.out.println("Kết nối cơ sở dữ liệu thành công!");
+            DocDuLieuVaoTable();
+        } catch (java.sql.SQLException e) {
+            e.printStackTrace();
+            JOptionPane.showMessageDialog(this, "Không thể kết nối tới Cơ sở dữ liệu!\n" + e.getMessage());
+        }
 }
 	public static void main(String[] args) {
 		try {
@@ -295,11 +303,343 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 			new NhanVien_GUI().setVisible(true);
 		});
 	}
+	
+	private void DocDuLieuVaoTable() {
+	    model.setRowCount(0); 
+	    ArrayList<NhanVien> listNV = nv_dao.getTableNhanVien();
+	    for (NhanVien nv : listNV) {
+	        model.addRow(new Object[] { 
+	            nv.getHinhAnh(),
+	            nv.getMaNV(), 
+	            nv.getTenNV(),
+	            nv.getSoDienThoai(),
+	            nv.getEmail(),
+	            nv.getTrangThaiNV()
+	        });
+	    }
+	}
+	
+	private String phatSinhMaNV() {
+		ArrayList<NhanVien> listNV = nv_dao.getTableNhanVien();
+		if (listNV.isEmpty()) {
+			return "NV1";
+		}
+		int max = 0;
+		for (NhanVien nv : listNV) {
+			String ma = nv.getMaNV();
+			try {
+				int so = Integer.parseInt(ma.substring(2)); // cat chu NV ra, lay so tinh toan
+				if (so > max) {
+					max = so;
+				}
+			} catch (Exception e) {
+				// bo qua loi
+			}
+		}
+		return String.format("NV%d", max + 1);
+	}
+	
+	private boolean validData() {
+		String ten = txtTenNV.getText().trim();
+		String sdt = txtSDTNV.getText().trim();
+		String email = txtEmail.getText().trim();
+
+		if (ten.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "Tên nhân viên không được để trống!");
+			txtTenNV.requestFocus();
+			return false;
+		}
+		if (!ten.matches("(?U)^\\p{Lu}[\\p{L}\\d]*(\\s\\p{Lu}[\\p{L}\\d]*)+$")) {
+			JOptionPane.showMessageDialog(this, "Tên nhân viên phải viết hoa chữ cái đầu mỗi từ!");
+			txtTenNV.requestFocus();
+			txtTenNV.selectAll();
+			return false;
+		}
+
+		if (sdt.isEmpty()) {
+			JOptionPane.showMessageDialog(this, "Số điện thoại không được để trống!");
+			txtSDTNV.requestFocus();
+			return false;
+		}
+		if (!sdt.matches("^0\\d{9}$")) {
+			JOptionPane.showMessageDialog(this, "Số điện thoại phải bắt đầu bằng 0 và gồm 10 chữ số!");
+			txtSDTNV.requestFocus();
+			txtSDTNV.selectAll();
+			return false;
+		}
+
+		if (!email.isEmpty() && !email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+			JOptionPane.showMessageDialog(this, "Email không hợp lệ!");
+			txtEmail.requestFocus();
+			txtEmail.selectAll();
+			return false;
+		}
+
+		return true;
+	}
+	
+	private void locDuLieu() {
+		try {
+			ArrayList<RowFilter<Object, Object>> filters = new ArrayList<>();
+			
+			String maNV = txtTimMaNV.getText().trim();
+			if (!maNV.isEmpty()) {
+				filters.add(RowFilter.regexFilter("(?i)" + maNV, 1)); // Cột 1: Mã NV
+			}
+
+			
+
+			if (filters.isEmpty()) {
+				rowSorter.setRowFilter(null);
+			} else {
+				rowSorter.setRowFilter(RowFilter.andFilter(filters));
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Object o = e.getSource();
+
+		//btn lam moi
+		if (o.equals(btnLamMoi)) {
+			txtMNV.setText(phatSinhMaNV()); 
+			txtMNV.setEditable(false);
+			txtTenNV.setText("");
+			txtSDTNV.setText("");
+			txtEmail.setText("");
+			duongDanAnh = null;
+			lblAvatar.setIcon(null);
+			cbTrangThai.setSelectedIndex(0);
+			
+			txtTimMaNV.setText("");
+			
+			
+			if (rowSorter != null) {
+			    rowSorter.setRowFilter(null); // bo bo loc
+			}
+			
+			table.clearSelection();
+			txtTenNV.requestFocus();
+		} 
+		
+		else if (o.equals(btnPickAvatar)) {
+		    javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
+		    
+		    // chi cho phep nhan vien nop file anh
+		    fileChooser.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Hình ảnh", "jpg", "jpeg", "png"));
+		    int result = fileChooser.showOpenDialog(this);
+
+		    if (result == javax.swing.JFileChooser.APPROVE_OPTION) {
+		        java.io.File file = fileChooser.getSelectedFile();
+		        duongDanAnh = file.getAbsolutePath(); // luu lai duong dan vao database
+
+		        // chinh kich thuoc
+		        javax.swing.ImageIcon icon = new javax.swing.ImageIcon(
+		            new javax.swing.ImageIcon(duongDanAnh).getImage().getScaledInstance(150, 200, java.awt.Image.SCALE_SMOOTH)
+		        );
+		        lblAvatar.setIcon(icon); 
+		    }
+		}
+		
+		//btn them
+		else if (o.equals(btnThem)) {
+		    if (validData()) {
+		        try {
+		            // phat sinh Ma nhan vien
+		            String ma = txtMNV.getText().trim().isEmpty() ? phatSinhMaNV() : txtMNV.getText().trim();
+		            String ten = txtTenNV.getText().trim();
+		            String sdt = txtSDTNV.getText().trim();
+		            String email = txtEmail.getText().trim();
+		            TrangThai trangThai = (TrangThai)cbTrangThai.getSelectedItem();
+
+		            // lay anh dung
+		            String hinhAnh = duongDanAnh != null ? duongDanAnh : "";
+
+		            NhanVien nv = new NhanVien(ma, ten, ten, email, trangThai, hinhAnh);
+
+
+		            if (nv_dao.themNhanVien(nv)) {
+
+		                model.addRow(new Object[]{
+		                	    nv.getHinhAnh(), 
+		                	    nv.getMaNV(), 
+		                	    nv.getTenNV(),  
+		                	    nv.getSoDienThoai(), 
+		                	    nv.getEmail(), 
+		                	    nv.getTrangThaiNV()
+		                	});
+
+		                JOptionPane.showMessageDialog(this, "Thêm nhân viên thành công!");
+		                btnLamMoi.doClick();
+		            }
+
+		        } catch (Exception ex) {
+		            JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage());
+		        }
+		    }
+		}
+		else if (o.equals(btnPickAvatar)) {
+			JFileChooser fileChooser = new JFileChooser();
+			fileChooser.setDialogTitle("Chọn hình ảnh sản phẩm");
+			// chi cho phep chon anh
+			FileNameExtensionFilter filter = new FileNameExtensionFilter("Hình ảnh (JPG, PNG, GIF)", "jpg", "jpeg",
+					"png", "gif");
+			fileChooser.setFileFilter(filter);
+
+			int result = fileChooser.showOpenDialog(this);
+			if (result == JFileChooser.APPROVE_OPTION) {
+				File selectedFile = fileChooser.getSelectedFile();
+				try {
+					File destFolder = new File("img");
+					if (!destFolder.exists()) {
+						destFolder.mkdir();
+					}
+					// coppy file vao img
+					File destFile = new File(destFolder, selectedFile.getName());
+					Files.copy(selectedFile.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+					duongDanAnh = "img/" + selectedFile.getName();
+					hienThiAnh(duongDanAnh);
+
+				} catch (IOException ex) {
+					ex.printStackTrace();
+					JOptionPane.showMessageDialog(this, "Lỗi khi lưu file ảnh!");
+				}
+			}
+
+		} 
+		// btn sua
+		else if (o.equals(btnSua)) {
+		    int viewRow = table.getSelectedRow();
+		    if (viewRow < 0) {
+		        JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên cần sửa!");
+		        return;
+		    }
+
+		    if (validData()) {
+		        int row = table.convertRowIndexToModel(viewRow);
+
+		        try {
+		            String ma = txtMNV.getText().trim();
+		            String ten = txtTenNV.getText().trim();
+		            String sdt = txtSDTNV.getText().trim();
+		            String email = txtEmail.getText().trim();
+		            TrangThai trangThai = (TrangThai)cbTrangThai.getSelectedItem();
+
+		            // neu chon anh thi chon moi, khong thi chon cu
+		            String hinhAnh = (duongDanAnh != null) 
+		                    ? duongDanAnh 
+		                    : (model.getValueAt(row, 0) != null ? model.getValueAt(row, 0).toString() : "");
+
+
+		            NhanVien nv = new NhanVien(ma, ten, ten, email, trangThai, hinhAnh);
+
+		            if (nv_dao.suaNhanVien(nv)) {
+
+		                model.setValueAt(hinhAnh, row, 0);
+		                model.setValueAt(ma, row, 1);
+		                model.setValueAt(ten, row, 2);
+		                model.setValueAt(sdt, row, 3);
+		                model.setValueAt(email, row, 4);
+		                model.setValueAt(trangThai.name(), row, 5);
+
+		                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
+		                btnLamMoi.doClick();
+		            }
+
+		        } catch (Exception ex) {
+		            JOptionPane.showMessageDialog(this, "Lỗi cập nhật!");
+		        }
+		    }
+		}
+		
+		//btn xoa
+		else if (o.equals(btnXoa)) {
+			int viewRow = table.getSelectedRow();
+			if (viewRow < 0) {
+				JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên cần xóa!");
+				return;
+			}
+
+			int row = table.convertRowIndexToModel(viewRow);
+			String maNV = model.getValueAt(row, 1).toString();
+			String tenNV = model.getValueAt(row, 2).toString();
+
+			int confirm = JOptionPane.showConfirmDialog(this, 
+				"Bạn có chắc muốn xóa nhân viên '" + tenNV + "'?", "Xác nhận", 
+				JOptionPane.YES_NO_OPTION);
+
+			if (confirm == JOptionPane.YES_OPTION) {
+				try {
+					if (nv_dao.xoaNhanVien(maNV)) {
+						model.removeRow(row);
+						JOptionPane.showMessageDialog(this, "Xóa thành công!");
+						btnLamMoi.doClick();
+					}
+				} catch (Exception ex) {
+					JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi xóa", JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}
+		
+		// btn tim
+		else if (o.equals(btnTim)) {
+		    locDuLieu(); 
+		}
+	}
+	
+	private void hienThiAnh(String path) {
+		if (path == null || path.trim().isEmpty()) {
+			lblAvatar.setIcon(null);
+			return;
+		}
+		File fileAnh = new File(path);
+		if (fileAnh.exists()) {
+			ImageIcon icon = new ImageIcon(path);
+			Image img = icon.getImage();
+			Image scaledImg = img.getScaledInstance(150, 200, Image.SCALE_SMOOTH);
+			lblAvatar.setIcon(new ImageIcon(scaledImg));
+		} else {
+			lblAvatar.setIcon(null);
+		}
+	}
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		// TODO Auto-generated method stub
-		
+		int viewRow = table.getSelectedRow();
+	    if (viewRow >= 0) {
+	        int row = table.convertRowIndexToModel(viewRow);
+
+	        // 2. Cập nhật hình ảnh (Cột 0)
+	        Object objAnh = model.getValueAt(row, 0);
+	        duongDanAnh = (objAnh != null) ? objAnh.toString() : "";
+	        hienThiAnh(duongDanAnh);
+
+	        // 3. Đổ dữ liệu cơ bản lên TextField (Cột 1 -> Cột 4)
+	        
+	        txtMNV.setText(model.getValueAt(row, 1).toString());
+	        txtTenNV.setText(model.getValueAt(row, 2).toString());
+	        
+	        
+	        txtSDTNV.setText(model.getValueAt(row, 3).toString());
+	        txtEmail.setText(model.getValueAt(row, 4).toString());
+
+	        // 4. Đổ dữ liệu Enum lên ComboBox (Cột 8, 9)
+	        try {
+	            String trangThaiStr=model.getValueAt(row, 5).toString();
+	            if(!trangThaiStr.isEmpty()) cbTrangThai.setSelectedItem(entity.TrangThai.valueOf(trangThaiStr));
+	        } catch (Exception ex) {
+	            // Tránh crash nếu dữ liệu Enum trong table bị trống
+	        }
+
+	        
+
+	        // 7. Khóa Mã nhân viên 
+	        txtMNV.setEditable(false);
+	    }
 	}
 
 	@Override
@@ -326,9 +666,4 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 		
 	}
 
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
 }
