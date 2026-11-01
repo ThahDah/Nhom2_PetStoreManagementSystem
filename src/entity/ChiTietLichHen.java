@@ -50,7 +50,15 @@ public class ChiTietLichHen {
 		this.donGia = donGia;
 	}
 	
-	
+	/** gia thuc te = gia tieu chuan + phu phi can nang + phu phi do hung du */
+	public double tinhGiaDichVu(ThuCung thuCung) {
+		return dichVu.getGiaTieuChuan() + thuCung.tinhPhuPhiCanNang() + thuCung.tinhPhuPhiDoHungDu();
+	}
+
+	/** tong phu phu phi = don gia da tinh tru gia tieu chuan dich vu  */
+	public double tinhPhuPhi() {
+		return donGia - dichVu.getGiaTieuChuan();
+	}
 	
 	
 }
