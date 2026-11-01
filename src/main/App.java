@@ -1,15 +1,7 @@
-//package main;
-//
-//import gui.LoginGUI;
-//
-//public class App {
-//	public static void main(String[] args) {
-//		
-//		new LoginGUI().setVisible(true);
-//	}
-//}
+
 
 package main;
+
 
 import java.sql.SQLException;
 
@@ -20,11 +12,15 @@ import javax.swing.UIManager;
 import dao.NhanVienDAO;
 import entity.NhanVien;
 import gui.LichHenGUI;
+import com.formdev.flatlaf.FlatLightLaf;
+
+
 import gui.LoginGUI;
 
 public class App {
 
 	public static void main(String[] args) {
+
 		// Dùng giao diện của hệ điều hành
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
@@ -34,6 +30,13 @@ public class App {
 //		SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true));
 
 		 SwingUtilities.invokeLater(() -> moTrangLichHen());
+		try {
+			  FlatLightLaf.setup();
+	        } catch (Exception e1) {
+	            e1.printStackTrace();
+	        }
+		new LoginGUI().setVisible(true);
+
 	}
 
 
