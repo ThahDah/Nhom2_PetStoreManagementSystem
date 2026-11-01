@@ -1,13 +1,3 @@
-//package main;
-//
-//import gui.LoginGUI;
-//
-//public class App {
-//	public static void main(String[] args) {
-//		
-//		new LoginGUI().setVisible(true);
-//	}
-//}
 
 package main;
 
@@ -35,7 +25,6 @@ public class App {
 
 		 SwingUtilities.invokeLater(() -> moTrangLichHen());
 	}
-
 
 	public static void moTrangLichHen() {
 		try {
