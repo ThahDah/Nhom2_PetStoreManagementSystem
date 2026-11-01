@@ -32,25 +32,23 @@ import javax.swing.table.TableRowSorter;
 
 import com.formdev.flatlaf.FlatLightLaf;
 
+import entity.KhachHang;
 
-//import entity.KhachHang;
-//import connectDB.ConnectDB;
-//import dao.KhachHang_dao;
-//import entity.LoaiKhachHang;
+
+import entity.KhachHang;
+import connectDB.ConnectDB;
+import dao.KhachHangDAO;
 
 
 public class KhachHang_GUI extends JFrame implements ActionListener, MouseListener{
 		
-//	private KhachHang_dao kh_dao = new KhachHang_dao();
+	private KhachHangDAO kh_DAO = new KhachHangDAO();
 	private TableRowSorter<DefaultTableModel> rowSorter; //bo loc tim kiem
 	
 	private JTextField txtMKH;
 	private JTextField txtTenKH;
 	private JTextField txtSDT;
 	private JTextField txtDiemTLKH;
-	private JTextField txtLoaiKH;
-	private JTextField txtDiemDaNhan;
-//	private JComboBox<LoaiKhachHang> loaiKH;
 	private JButton btnThem;
 	private JButton btnCapNhat;
 	private JButton btnXoa;
@@ -62,6 +60,7 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	private JButton btnLamMoi;
 	private JTextField txtEmail;
 	private JButton btnTimKiem;
+
 
 	public KhachHang_GUI() {
 		
@@ -128,13 +127,6 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		b.add(b4);
 		b.add(Box.createVerticalStrut(40));
 		
-		//them diem da nhan tren ui
-		JLabel diemDN=new JLabel("Điểm đã nhận:");
-		diemDN.setPreferredSize(maKH.getPreferredSize());
-		txtDiemDaNhan= new JTextField(10);
-		b5.add(diemDN); b5.add(txtDiemDaNhan);
-		b.add(b5);
-		b.add(Box.createVerticalStrut(40));
 		
 		JMenuBar menu=new JMenuBar();
 		btnThem=new JButton("Thêm");
@@ -179,12 +171,12 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		
 		JPanel dsKH=new JPanel();
 		dsKH.setBorder(BorderFactory.createTitledBorder("Danh sách khách hàng"));
-		String[] strDSKH= {"Mã KH","Tên khách hàng","SĐT","Điểm đã nhận","Điểm TL","Loại KH"};
+		String[] strDSKH= {"Mã KH","Tên khách hàng","SĐT","Email","Điểm TL"};
 		model = new DefaultTableModel(strDSKH, 0) {
 		    @Override
 		    public Class<?> getColumnClass(int columnIndex) {
 		        // khai bao cot la so nguyen
-		        if (columnIndex == 3 || columnIndex == 4) {
+		        if (columnIndex == 4) {
 		            return Integer.class;
 		        }
 		        return String.class;
@@ -222,17 +214,17 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		//dk sk click chuot
 		table.addMouseListener(this);
 		
-//		try {
-//			connectDB.ConnectDB.getInstance().connect();
-//			System.out.println("Kết nối cơ sở dữ liệu thành công!");
-//			
-//			// ghi mo app, du lieu hien len lien
-//			DocDuLieuVaoTable(); 
-//			
-//		} catch (java.sql.SQLException e) {
-//			e.printStackTrace();
-//			JOptionPane.showMessageDialog(this, "Không thể kết nối tới Cơ sở dữ liệu!\n" + e.getMessage());
-//		}
+		try {
+			connectDB.ConnectDB.getInstance().connect();
+			System.out.println("Kết nối cơ sở dữ liệu thành công!");
+			
+			// ghi mo app, du lieu hien len lien
+			DocDuLieuVaoTable(); 
+			
+		} catch (java.sql.SQLException e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Không thể kết nối tới Cơ sở dữ liệu!\n" + e.getMessage());
+		}
 	}
 
 	public static void main(String[] args) {
@@ -254,19 +246,19 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	}
 
 	// doc du lieu tu table
-//	private void DocDuLieuVaoTable() {
-//		model.setRowCount(0); //xoa du lieu cu
-//		ArrayList<KhachHang> listKH = kh_dao.getTableKhachHang();
-//		for (KhachHang kh : listKH) {
-//			model.addRow(new Object[] { 
-//				    kh.getMaKH(), 
-//				    kh.getTenKH(),
-//				    kh.getSoDienThoai(),
-//				    kh.getDiemTichLuy(),
-//				    kh.getDiemDaNhan()
-//				});
-//		}
-//	}
+	private void DocDuLieuVaoTable() {
+		model.setRowCount(0); //xoa du lieu cu
+		ArrayList<KhachHang> listKH = kh_DAO.getTableKhachHang();
+		for (KhachHang kh : listKH) {
+			model.addRow(new Object[] { 
+				    kh.getMaKH(), 
+				    kh.getTenKH(),
+				    kh.getSoDienThoai(),
+				    kh.getEmail(),
+				    kh.getDiemTichLuy()
+				});
+		}
+	}
 
 	//Phat sinh ma: KH1 KH2
 //	private String phatSinhMaKH() {
@@ -293,9 +285,8 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	private boolean validData() {
 		String ten = txtTenKH.getText().trim();
 		String sdt = txtSDT.getText().trim();
-//		String email = txtEmail.getText().trim();
+		String email = txtEmail.getText().trim();
 		String diemTL = txtDiemTLKH.getText().trim();
-		String diemDN = txtDiemDaNhan.getText().trim();
 
 		if (ten.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "Tên khách hàng không được để trống!");
@@ -320,6 +311,13 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 			txtSDT.selectAll();
 			return false;
 		}
+		
+		if(!email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$")) {
+			JOptionPane.showMessageDialog(this, "Email không hợp lệ! Vui lòng nhập đúng định dạng (ví dụ: ten@gmail.com)");
+			txtEmail.requestFocus();
+			txtEmail.selectAll();
+			return false;
+		}
 
 		if (diemTL.isEmpty() || !diemTL.matches("^\\d+$")) {
 			JOptionPane.showMessageDialog(this, "Điểm tích lũy phải là số nguyên!");
@@ -328,12 +326,6 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 			return false;
 		}
 		
-		if (diemDN.isEmpty() || !diemDN.matches("^\\d+$")) {
-			JOptionPane.showMessageDialog(this, "Điểm đã nhận phải là số nguyên!");
-			txtDiemDaNhan.requestFocus();
-			txtDiemDaNhan.selectAll();
-			return false;
-		}
 
 		return true;
 	}
@@ -371,12 +363,10 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 			txtMKH.setEditable(false);
 			txtTenKH.setText("");
 			txtSDT.setText("");
-//			txtEmail.setText("");
+			txtEmail.setText("");
 			txtDiemTLKH.setText("0"); // Mặc định điểm là 0
-			txtDiemDaNhan.setText("0");
 			
-			txtTimMKH.setText("");
-			txtTimTenKH.setText("");
+			
 			txtTimSDTKH.setText("");
 			if (rowSorter != null) {
 			    rowSorter.setRowFilter(null); //bo bo loc, hien thi tat ca
@@ -393,19 +383,17 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 					String ma = txtMKH.getText().trim();
 					String ten = txtTenKH.getText().trim();
 					String sdt = txtSDT.getText().trim();
+					String email = txtEmail.getText().trim();
 					int diemTL = Integer.parseInt(txtDiemTLKH.getText().trim()); //ep kieu
-					int diemDN = Integer.parseInt(txtDiemDaNhan.getText().trim());
 
-					// lay obj tu Enum vao Combobox
-//					LoaiKhachHang loai = (LoaiKhachHang) loaiKH.getSelectedItem();
-//
-//					KhachHang kh = new KhachHang(ma, ten, sdt, diemTL, diemDN, loai);
+					
+					KhachHang kh = new KhachHang(ma, ten, sdt, email, diemTL);
 
-//					if (kh_dao.themKhachHang(kh)) {
-//						model.addRow(new Object[] {ma, ten, sdt, diemTL, diemDN, loai});
-//						JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công!");
-//						btnLamMoi.doClick(); 
-//					}
+					if (kh_DAO.themKhachHang(kh)) {
+						model.addRow(new Object[] {ma, ten, sdt, email, diemTL});
+						JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công!");
+						btnLamMoi.doClick(); 
+					}
 				} catch (Exception ex) {
 					JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
 				}
@@ -426,19 +414,19 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 					String ma = txtMKH.getText().trim();
 					String ten = txtTenKH.getText().trim();
 					String sdt = txtSDT.getText().trim();
+					String email=txtEmail.getText().trim();
 					int diemTL = Integer.parseInt(txtDiemTLKH.getText().trim()); //ep kieu
-					int diemDN = Integer.parseInt(txtDiemDaNhan.getText().trim());
 
 				
-//					KhachHang kh = new KhachHang(ma, ten, sdt, diemTL, diemDN);
+				KhachHang kh = new KhachHang(ma, ten, sdt, email, diemTL);
 
-//					if (kh_dao.suaKhachHang(kh)) {
-//						model.setValueAt(ten, row, 1);
-//						model.setValueAt(sdt, row, 2);
-//						model.setValueAt(diemTL, row, 3);
-//						model.setValueAt(diemDN,row,4);
-//						JOptionPane.showMessageDialog(this, "Cập nhật khách hàng thành công!");
-//					}
+				if (kh_DAO.suaKhachHang(kh)) {
+					model.setValueAt(ten, row, 1);
+					model.setValueAt(sdt, row, 2);
+					model.setValueAt(email, row, 3);
+					model.setValueAt(diemTL, row, 4);
+					JOptionPane.showMessageDialog(this, "Cập nhật khách hàng thành công!");
+					}
 				} catch (Exception ex) {
 					JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
 				}
@@ -461,17 +449,17 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 				"Bạn có chắc muốn xóa khách hàng '" + tenKH + "'?", "Xác nhận", 
 				JOptionPane.YES_NO_OPTION);
 
-//			if (confirm == JOptionPane.YES_OPTION) {
-//				try {
-//					if (kh_dao.xoaKhachHang(maKH)) {
-//						model.removeRow(row);
-//						JOptionPane.showMessageDialog(this, "Xóa thành công!");
-//						btnLamMoi.doClick();
-//					}
-//				} catch (Exception ex) {
-//					JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi xóa", JOptionPane.ERROR_MESSAGE);
-//				}
-//			}
+			if (confirm == JOptionPane.YES_OPTION) {
+				try {
+					if (kh_DAO.xoaKhachHang(maKH)) {
+						model.removeRow(row);
+						JOptionPane.showMessageDialog(this, "Xóa thành công!");
+						btnLamMoi.doClick();
+					}
+				} catch (Exception ex) {
+					JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi xóa", JOptionPane.ERROR_MESSAGE);
+				}
+			}
 		}
 		else if (o.equals(btnTimKiem)) {
 		    locDuLieu(); // goi ham locDuLieu
@@ -487,10 +475,8 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 			txtMKH.setText(model.getValueAt(row, 0) != null ? model.getValueAt(row, 0).toString() : "");
 			txtTenKH.setText(model.getValueAt(row, 1) != null ? model.getValueAt(row, 1).toString() : "");
 			txtSDT.setText(model.getValueAt(row, 2) != null ? model.getValueAt(row, 2).toString() : "");
-//			txtEmail.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 3).toString() : "");
-			txtDiemTLKH.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 4).toString() : "");
-			txtDiemDaNhan.setText(model.getValueAt(row, 4).toString());
-			String loaiStr = model.getValueAt(row, 5).toString();
+			txtEmail.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 3).toString() : "");
+			txtDiemTLKH.setText(model.getValueAt(row, 4) != null ? model.getValueAt(row, 4).toString() : "");
 			
 			
 			txtMKH.setEditable(false); // khong duoc sua ma khi xem
