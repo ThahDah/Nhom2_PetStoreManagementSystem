@@ -309,3 +309,84 @@ JOIN ChiTietLichHen ct ON ct.maLH = lh.maLH
 GROUP BY lh.maLH, lh.thoiGianHen, lh.trangThaiHen
 ORDER BY lh.thoiGianHen DESC, lh.maLH DESC;
 GO
+USE PetShopLand;
+GO
+
+-- ===================== HÓA ĐƠN =====================
+CREATE TABLE HoaDon (
+    maHD VARCHAR(11) NOT NULL PRIMARY KEY,
+    ngayLap DATE NOT NULL,
+    donGia DECIMAL(18,0) NOT NULL,
+    trangThaiHD VARCHAR(20) NOT NULL,
+    phuongThucTT NVARCHAR(30) NULL,
+    maKH VARCHAR(10) NOT NULL,
+
+    CONSTRAINT FK_HoaDon_KhachHang
+        FOREIGN KEY (maKH) REFERENCES KhachHang(maKH),
+
+    CONSTRAINT CK_HoaDon_DonGia
+        CHECK (donGia >= 0)
+);
+
+-- ===================== CHI TIẾT HÓA ĐƠN =====================
+CREATE TABLE ChiTietHoaDon (
+    maHD VARCHAR(11) NOT NULL,
+    maSP VARCHAR(10) NOT NULL,
+    maDV VARCHAR(10) NOT NULL,
+    soLuong INT NOT NULL,
+
+    CONSTRAINT PK_ChiTietHoaDon
+        PRIMARY KEY (maHD, maSP, maDV),
+
+    CONSTRAINT FK_ChiTietHoaDon_HoaDon
+        FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
+
+    CONSTRAINT FK_ChiTietHoaDon_DichVu
+        FOREIGN KEY (maDV) REFERENCES DichVu(maDV),
+
+    CONSTRAINT CK_ChiTietHoaDon_SoLuong
+        CHECK (soLuong > 0)
+);
+GO
+INSERT INTO HoaDon
+(maHD, ngayLap, donGia, trangThaiHD, phuongThucTT, maKH)
+VALUES
+('HD001', '2026-10-15', 120000, 'DA_THANH_TOAN', N'Tiền mặt', 'KH0001'),
+('HD002', '2026-10-16', 350000, 'DA_THANH_TOAN', N'Chuyển khoản', 'KH0002'),
+('HD003', '2026-10-17', 180000, 'DA_THANH_TOAN', N'Tiền mặt', 'KH0003'),
+('HD004', '2026-10-18', 250000, 'DA_THANH_TOAN', N'Chuyển khoản', 'KH0004'),
+('HD005', '2026-10-19', 450000, 'DA_THANH_TOAN', N'Tiền mặt', 'KH0005'),
+
+('HD006', '2026-10-20', 150000, 'DA_THANH_TOAN', N'Chuyển khoản', 'KH0006'),
+('HD007', '2026-10-21', 200000, 'DA_THANH_TOAN', N'Tiền mặt', 'KH0007'),
+('HD008', '2026-10-22', 300000, 'DA_THANH_TOAN', N'Chuyển khoản', 'KH0008'),
+('HD009', '2026-10-23', 100000, 'DA_THANH_TOAN', N'Tiền mặt', 'KH0009'),
+('HD010', '2026-10-24', 500000, 'DA_THANH_TOAN', N'Chuyển khoản', 'KH0010'),
+
+('HD011', '2026-10-25', 180000, 'CHUA_THANH_TOAN', NULL, 'KH0001'),
+('HD012', '2026-10-26', 350000, 'CHUA_THANH_TOAN', NULL, 'KH0002'),
+('HD013', '2026-10-27', 250000, 'CHUA_THANH_TOAN', NULL, 'KH0003'),
+('HD014', '2026-10-28', 400000, 'DA_THANH_TOAN', NULL, 'KH0004'),
+('HD015', '2026-11-01', 150000, 'CHUA_THANH_TOAN', NULL, 'KH0005');
+GO
+INSERT INTO ChiTietHoaDon
+(maHD, maSP, maDV, soLuong)
+VALUES
+('HD001', 'SP001', 'DV001', 1),
+('HD002', 'SP002', 'DV003', 1),
+('HD003', 'SP003', 'DV002', 1),
+('HD004', 'SP004', 'DV007', 1),
+('HD005', 'SP005', 'DV003', 2),
+
+('HD006', 'SP006', 'DV004', 1),
+('HD007', 'SP007', 'DV008', 1),
+('HD008', 'SP008', 'DV001', 2),
+('HD009', 'SP009', 'DV009', 1),
+('HD010', 'SP010', 'DV010', 2),
+
+('HD011', 'SP001', 'DV002', 1),
+('HD012', 'SP002', 'DV003', 1),
+('HD013', 'SP003', 'DV007', 1),
+('HD014', 'SP004', 'DV008', 2),
+('HD015', 'SP005', 'DV004', 1);
+GO

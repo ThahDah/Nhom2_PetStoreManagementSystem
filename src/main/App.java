@@ -14,7 +14,7 @@ import com.formdev.flatlaf.FlatLightLaf;
 
 
 import gui.LoginGUI;
-
+import gui.HoaDonGUI;
 public class App {
 
 	public static void main(String[] args) {
@@ -26,12 +26,12 @@ public class App {
 		
 //		SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true))
 //		test UI lich hẹn
-		 SwingUtilities.invokeLater(() -> moTrangLichHen());
+		//  SwingUtilities.invokeLater(() -> moTrangLichHen());
 //		 Test UI login
 //		new LoginGUI().setVisible(true);
-
+//test UI hoa don
+			SwingUtilities.invokeLater(() -> moTrangHoaDon());
 	}
-
 
 	public static void moTrangLichHen() {
 		try {
@@ -46,4 +46,12 @@ public class App {
 			e.printStackTrace();
 		}
 	}
+	public static void moTrangHoaDon() {
+    JFrame frame = new JFrame("PetShop LAND - Hóa đơn");
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.setContentPane(new HoaDonGUI());
+    frame.setSize(1000, 600);
+    frame.setLocationRelativeTo(null);
+    frame.setVisible(true);
+}
 }
