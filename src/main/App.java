@@ -51,8 +51,8 @@ public class App {
 		}
 
 		
-		SwingUtilities.invokeLater(() -> moTrangLichHen());
-//		SwingUtilities.invokeLater(() -> moTrangHoaDon());
+//		SwingUtilities.invokeLater(() -> moTrangLichHen());
+		SwingUtilities.invokeLater(() -> moTrangHoaDon());
 	}
 
 	public static void moTrangLichHen() {

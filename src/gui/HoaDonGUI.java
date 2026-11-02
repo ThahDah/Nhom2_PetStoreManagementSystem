@@ -15,8 +15,6 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.sql.Date;
 import java.sql.SQLException;
-import java.text.DecimalFormat;
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -43,11 +41,7 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
 	private Color MAU_NEN = new Color(239, 248, 239);
 	private Color MAU_CHU = new Color(45, 55, 45);
 	private HoaDonDAO hoaDonDAO = new HoaDonDAO();
-
-	// dinh dang ngay va tien 
-	private  SimpleDateFormat dinhDangNgay = new SimpleDateFormat("dd/MM/yyyy");
-	private  SimpleDateFormat dinhDangNgayNut = new SimpleDateFormat("dd/MM");
-	private  DecimalFormat dinhDangTien = new DecimalFormat("#,##0");
+	
 	// tao model cho bang hien thi hoa don
 	private  DefaultTableModel model = new DefaultTableModel(
 			new Object[] { "Mã hóa đơn", "Khách hàng", "Số điện thoại", "Ngày lập", "Tổng tiền", "Trạng thái" },
@@ -70,6 +64,7 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
 	private JDialog dialogChonNgay;
 	private Date tuNgay;
 	private Date denNgay;
+	private String trangThaiDangLoc = null;
 
 	public HoaDonGUI() {
 		setLayout(new BorderLayout(0, 12));
@@ -173,10 +168,32 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
 		btnDaThanhToan.addActionListener(this);
 		btnKhoangNgay.addActionListener(this);
 	}
-
+	
+	
 	@Override
 	public void actionPerformed(ActionEvent e) {
-		
+		Object o = e.getSource();
+		if (o == txtTimKiem) {
+			taiDuLieu();
+		}else if (o == btnTatCa) {
+			trangThaiDangLoc = null;
+			chonNutTrangThai(btnTatCa);
+			taiDuLieu();
+		}else if (o == btnChuaThanhToan) {
+			trangThaiDangLoc = "CHUA_THANH_TOAN";
+			chonNutTrangThai(btnChuaThanhToan);
+			taiDuLieu();
+		}else if (o == btnDaThanhToan) {
+	        trangThaiDangLoc = "DA_THANH_TOAN";
+	        chonNutTrangThai(btnDaThanhToan);
+	        taiDuLieu();
+		} else if (o == btnKhoangNgay) {
+	        moChonKhoangNgay();
+		}else if (o == btnApDungNgay) {
+	        apDungKhoangNgay();
+		}else if (o == btnHuyNgay) {
+	        huyLocNgay();
+	    }
 	}
 
 	// ham doi mau nut khi duoc chon
@@ -205,26 +222,41 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
 	}
 
 	//load danh sach hoa don
-	private void taiDuLieu() {
-		try {
-			List<Object[]> danhSachHoaDon = hoaDonDAO.getAllHoaDon();
-			model.setRowCount(0);
-			for (Object[] hoaDon : danhSachHoaDon) {
-				model.addRow(new Object[] {
-						hoaDon[0],
-						hoaDon[1],
-						hoaDon[2],
-						hoaDon[3] == null ? "" : dinhDangNgay.format((Date) hoaDon[3]),
-						dinhDangTien.format((Double) hoaDon[4]),
-						((TrangThai) hoaDon[5]).getMoTa()
-				});
-			}
-		} catch (SQLException ex) {
-			JOptionPane.showMessageDialog(this, "Không thể tải hóa đơn: " + ex.getMessage(),
-					"Lỗi cơ sở dữ liệu", JOptionPane.ERROR_MESSAGE);
-		}
-	}
+    private void taiDuLieu() {
+        try {
+            String maHD = txtTimKiem.getText().trim();
+            List<Object[]> danhSachHoaDon;
 
+            if (maHD.isEmpty() && trangThaiDangLoc == null
+                    && tuNgay == null && denNgay == null) {
+                danhSachHoaDon = hoaDonDAO.getAllHoaDon();
+            } else {
+                danhSachHoaDon = hoaDonDAO.timKiemHoaDon(
+                        maHD, trangThaiDangLoc, tuNgay, denNgay);
+            }
+
+            model.setRowCount(0);
+
+            for (Object[] hoaDon : danhSachHoaDon) {
+                model.addRow(new Object[] {
+                        hoaDon[0],
+                        hoaDon[1],
+                        hoaDon[2],
+                        hoaDon[3] == null ? ""
+                                : DinhDang.NGAY.format(((Date) hoaDon[3]).toLocalDate()),
+                        DinhDang.TIEN.format(hoaDon[4]),
+                        ((TrangThai) hoaDon[5]).getMoTa()
+                });
+            }
+
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(this,
+                    "Không thể tải hóa đơn: " + ex.getMessage(),
+                    "Lỗi cơ sở dữ liệu",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+	
 	//mo hop chon khoang ngay
 	private void moChonKhoangNgay() {
 		Window owner = SwingUtilities.getWindowAncestor(this);
@@ -283,7 +315,7 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
 
 		tuNgay = new Date(ngayBatDau.getTime());
 		denNgay = new Date(ngayKetThuc.getTime());
-		btnKhoangNgay.setText(dinhDangNgayNut.format(tuNgay) + " - " + dinhDangNgayNut.format(denNgay));
+		btnKhoangNgay.setText(DinhDang.NGAY.format(tuNgay.toLocalDate()) + " - " + DinhDang.NGAY.format(denNgay.toLocalDate()));
 		dialogChonNgay.dispose();
 		taiDuLieu();
 	}
