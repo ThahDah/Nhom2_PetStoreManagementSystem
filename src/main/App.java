@@ -1,6 +1,5 @@
 package main;
 
-
 import java.sql.SQLException;
 
 import javax.swing.JFrame;
@@ -14,9 +13,10 @@ import com.formdev.flatlaf.FlatLightLaf;
 
 import connectDB.ConnectDB;
 
-
 import gui.LoginGUI;
+import gui.DichVuGUI;
 import gui.HoaDonGUI;
+
 public class App {
 
 //	public static void main(String[] args) {
@@ -34,14 +34,14 @@ public class App {
 ////test UI hoa don
 //			SwingUtilities.invokeLater(() -> moTrangHoaDon());
 //	}
-	
+
 	public static void main(String[] args) {
 		try {
 			FlatLightLaf.setup();
 		} catch (Exception e1) {
 			e1.printStackTrace();
 		}
-		
+
 		try {
 			ConnectDB.getInstance().connect();
 			System.out.println("Kết nối CSDL thành công!");
@@ -50,8 +50,8 @@ public class App {
 			System.out.println("Lỗi kết nối CSDL! Hãy kiểm tra lại SQL Server.");
 		}
 
-		
-		SwingUtilities.invokeLater(() -> moTrangLichHen());
+//		SwingUtilities.invokeLater(() -> moTrangLichHen());
+		SwingUtilities.invokeLater(() -> moTrangDichVu());
 //		SwingUtilities.invokeLater(() -> moTrangHoaDon());
 	}
 
@@ -68,12 +68,23 @@ public class App {
 			e.printStackTrace();
 		}
 	}
+
 	public static void moTrangHoaDon() {
-    JFrame frame = new JFrame("PetShop LAND - Hóa đơn");
-    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-    frame.setContentPane(new HoaDonGUI());
-    frame.setSize(1000, 600);
-    frame.setLocationRelativeTo(null);
-    frame.setVisible(true);
-}
+		JFrame frame = new JFrame("PetShop LAND - Hóa đơn");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setContentPane(new HoaDonGUI());
+		frame.setSize(1000, 600);
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+	}
+	
+	public static void moTrangDichVu() {
+		JFrame frame = new JFrame("PetShop LAND - Dịch vụ");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setContentPane(new DichVuGUI());
+		frame.setSize(1000, 600);
+		frame.setLocationRelativeTo(null);
+		frame.setVisible(true);
+	}
+	
 }
