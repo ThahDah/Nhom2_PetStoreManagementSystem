@@ -76,6 +76,8 @@ public class DichVuGUI extends JPanel implements ActionListener, MouseListener {
 		int labelWidth = 110;
 		int lableHeight = 25;
 		Dimension kichThuocNhan = new Dimension(labelWidth, lableHeight);
+		Color mauChiDoc = new Color(240, 240, 240);
+		Color chuChiDoc = new Color(80, 80, 80);
 
 		// ma dich vu
 		JPanel pnlMaDV = new JPanel();
@@ -88,6 +90,8 @@ public class DichVuGUI extends JPanel implements ActionListener, MouseListener {
 		txtMaDV = new JTextField();
 		txtMaDV.setMaximumSize(new Dimension(Integer.MAX_VALUE, lableHeight));
 		txtMaDV.setEditable(false);
+		txtMaDV.setBackground(mauChiDoc);
+		txtMaDV.setForeground(chuChiDoc);
 		pnlMaDV.add(lblMaDV);
 		pnlMaDV.add(txtMaDV);
 		pnlThongTin.add(pnlMaDV);
