@@ -4,16 +4,25 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class ConnectDB {
-	private static final String URL = "jdbc:sqlserver://localhost:1433;databaseName=PetShopLand;"
-			+ "encrypt=true;trustServerCertificate=true";
-	private static final String USER = "sa";
-	private static final String PASSWORD = "sapassword";
+import java.security.Security;
 
-	private ConnectDB() {
+public class ConnectDB {
+	public static Connection con = null;
+	private static ConnectDB instance = new ConnectDB();
+
+	public static ConnectDB getInstance() {
+		return instance;
 	}
-	
-	public static Connection getConnection() throws SQLException {
-		return DriverManager.getConnection(URL, USER, PASSWORD);
+
+	public void connect() throws SQLException {
+		Security.setProperty("jdk.tls.disabledAlgorithms", "");
+		String url = "jdbc:sqlserver://localhost:1433;databaseName=PetShopLAND;encrypt=false;trustServerCertificate=true";
+		String user = "sa";
+		String pwd = "sapassword";
+		con = DriverManager.getConnection(url, user, pwd);
+	}
+
+	public static Connection getConnection() {
+		return con;
 	}
 }

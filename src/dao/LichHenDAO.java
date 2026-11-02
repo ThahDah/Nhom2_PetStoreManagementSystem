@@ -31,8 +31,8 @@ public class LichHenDAO {
 		String sql = "SELECT maLH, thoiGianHen, ghiChu, trangThaiHen "
 				+ "FROM LichHen "
 				+ "ORDER BY thoiGianHen DESC, maLH DESC";
-		try (Connection con = ConnectDB.getConnection();
-				Statement stm = con.createStatement();
+		Connection con = ConnectDB.getConnection();
+		try (Statement stm = con.createStatement();
 				ResultSet rs = stm.executeQuery(sql)) {
 			while (rs.next()) {
 				String maLH = rs.getString("maLH");
@@ -55,8 +55,8 @@ public class LichHenDAO {
 		String sql = "SELECT MAX(maLH) "
 				+ "FROM LichHen "
 				+ "WHERE maLH LIKE ?";
-		try (Connection con = ConnectDB.getConnection();
-				PreparedStatement stm = con.prepareStatement(sql)) {
+		Connection con = ConnectDB.getConnection();
+		try (PreparedStatement stm = con.prepareStatement(sql)) {
 			stm.setString(1, tienTo + "%");
 			try (ResultSet rs = stm.executeQuery()) {
 				int soThuTu = 1;
@@ -76,9 +76,8 @@ public class LichHenDAO {
 	 */
 	public void kiemTraDatLich(ThuCung thuCung, DichVu dichVu, LocalDate ngayHen)
 			throws NghiepVuException, SQLException {
-		try (Connection con = ConnectDB.getConnection()) {
-			kiemTraDatLich(con, thuCung, dichVu, ngayHen);
-		}
+		Connection con = ConnectDB.getConnection();
+		kiemTraDatLich(con, thuCung, dichVu, ngayHen);
 	}
 
 	/**
@@ -89,31 +88,32 @@ public class LichHenDAO {
 		if (dsChiTiet == null || dsChiTiet.isEmpty()) {
 			throw new NghiepVuException("Lịch hẹn phải có ít nhất một thú cưng và dịch vụ");
 		}
-		try (Connection con = ConnectDB.getConnection()) {
+		Connection con = ConnectDB.getConnection();
+		try {
 			con.setAutoCommit(false);
-			try {
-				HashSet<String> dsDaChon = new HashSet<>();
-				for (ChiTietLichHen chiTiet : dsChiTiet) {
-					String khoa = chiTiet.getThuCung().getMaThuCung() + "|" + chiTiet.getDichVu().getMaDV();
-					if (!dsDaChon.add(khoa)) {
-						throw new NghiepVuException("Thú cưng " + chiTiet.getThuCung().getTenThuCung()
-								+ " bị chọn trùng dịch vụ " + chiTiet.getDichVu().getTenDV());
-					}
-					kiemTraDatLich(con, chiTiet.getThuCung(), chiTiet.getDichVu(), lichHen.getThoiGianHen());
+			HashSet<String> dsDaChon = new HashSet<>();
+			for (ChiTietLichHen chiTiet : dsChiTiet) {
+				String khoa = chiTiet.getThuCung().getMaThuCung() + "|" + chiTiet.getDichVu().getMaDV();
+				if (!dsDaChon.add(khoa)) {
+					throw new NghiepVuException("Thú cưng " + chiTiet.getThuCung().getTenThuCung()
+							+ " bị chọn trùng dịch vụ " + chiTiet.getDichVu().getTenDV());
 				}
-				lichHen.setTrangThaiHen(TrangThai.CHO_DEN_HEN);
-				themLichHen(con, lichHen);
-				tinhGiaChiTiet(dsChiTiet);
-				for (ChiTietLichHen chiTiet : dsChiTiet) {
-					chiTiet.setLichHen(lichHen);
-					thuCungDAO.capNhatThongTin(con, chiTiet.getThuCung());
-					chiTietLichHenDAO.them(con, chiTiet);
-				}
-				con.commit();
-			} catch (NghiepVuException | SQLException | RuntimeException ex) {
-				con.rollback();
-				throw ex;
+				kiemTraDatLich(con, chiTiet.getThuCung(), chiTiet.getDichVu(), lichHen.getThoiGianHen());
 			}
+			lichHen.setTrangThaiHen(TrangThai.CHO_DEN_HEN);
+			themLichHen(con, lichHen);
+			tinhGiaChiTiet(dsChiTiet);
+			for (ChiTietLichHen chiTiet : dsChiTiet) {
+				chiTiet.setLichHen(lichHen);
+				thuCungDAO.capNhatThongTin(con, chiTiet.getThuCung());
+				chiTietLichHenDAO.them(con, chiTiet);
+			}
+			con.commit();
+		} catch (NghiepVuException | SQLException | RuntimeException ex) {
+			con.rollback();
+			throw ex;
+		} finally {
+			con.setAutoCommit(true);
 		}
 	}
 
@@ -149,8 +149,8 @@ public class LichHenDAO {
 		String sql = "SELECT SUM(donGia) "
 				+ "FROM ChiTietLichHen "
 				+ "WHERE maLH = ?";
-		try (Connection con = ConnectDB.getConnection();
-				PreparedStatement stm = con.prepareStatement(sql)) {
+		Connection con = ConnectDB.getConnection();
+		try (PreparedStatement stm = con.prepareStatement(sql)) {
 			stm.setString(1, maLH);
 			try (ResultSet rs = stm.executeQuery()) {
 				if (rs.next()) {

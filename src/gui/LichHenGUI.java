@@ -2,6 +2,7 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.event.ActionEvent;
@@ -9,8 +10,10 @@ import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
@@ -20,12 +23,14 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
 import dao.ChiTietLichHenDAO;
 import dao.LichHenDAO;
 import entity.ChiTietLichHen;
+import entity.KhachHang;
 import entity.LichHen;
 import entity.NhanVien;
 
@@ -38,6 +43,9 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 	private ChiTietLichHenDAO chiTietLichHenDAO;
 	private NhanVien nhanVienDangNhap;
 	private ArrayList<LichHen> dsLichHen;
+	private JTextField txtTimKiem;
+	private JButton btnTim;
+	private JButton btnLamMoi;
 
 	public LichHenGUI(NhanVien nhanVienDangNhap) {
 		this.nhanVienDangNhap = nhanVienDangNhap;
@@ -69,7 +77,21 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		pnlHeaderLeft.setPreferredSize(btnTaoLichHen.getPreferredSize());
 		pnlHeader.add(pnlHeaderLeft, BorderLayout.WEST);
 
+		JPanel pnlTimKiem = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
+		JLabel lblTimKiem = new JLabel("Tìm khách hàng (mã hoặc tên):");
+		lblTimKiem.setFont(lblTimKiem.getFont());
+		txtTimKiem = new JTextField(20);
+		btnTim = new JButton("Tìm");
+		btnLamMoi = new JButton("Làm mới");
+		pnlTimKiem.add(lblTimKiem);
+		pnlTimKiem.add(txtTimKiem);
+		pnlTimKiem.add(btnTim);
+		pnlTimKiem.add(btnLamMoi);
+		pnlTimKiem.setMaximumSize(new Dimension(Integer.MAX_VALUE, pnlTimKiem.getPreferredSize().height));
+		
+		
 		pnlTopHalf.add(pnlHeader);
+		pnlTopHalf.add(pnlTimKiem);
 		add(pnlTopHalf, BorderLayout.NORTH);
 
 		// table
@@ -95,17 +117,33 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 
 		table.addMouseListener(this);
 		btnTaoLichHen.addActionListener(this);
+		
+		btnTim.addActionListener(this);
+		btnLamMoi.addActionListener(this);
+		txtTimKiem.addActionListener(this);
 	}
 
 	// ham doc du lieu vao bang
 	public void docDuLieuVaoTable() {
+		String tuKhoa = chuanHoa(txtTimKiem.getText());
 		model.setRowCount(0);
 		dsLichHen.clear();
 		try {
-			dsLichHen.addAll(lichHenDAO.layTatCa());
-			for (LichHen lichHen : dsLichHen) {
+			for (LichHen lichHen : lichHenDAO.layTatCa()) {
 				ArrayList<ChiTietLichHen> dsChiTiet = new ArrayList<ChiTietLichHen>(
 						chiTietLichHenDAO.timTheoLichHen(lichHen));
+				KhachHang khachHang = dsChiTiet.isEmpty() ? null : dsChiTiet.get(0).getThuCung().getChuSoHuu();
+				if (!tuKhoa.isEmpty()) {
+				    if (khachHang == null) {
+				        continue;
+				    }
+				    if (!chuanHoa(khachHang.getMaKH()).contains(tuKhoa)
+				            && !chuanHoa(khachHang.getTenKH()).contains(tuKhoa)) {
+				        continue;
+				    }
+				}
+				
+				
 //				StringBuilder tenThuCung = new StringBuilder();
 //				StringBuilder tenDichVu = new StringBuilder();
 //				for (ChiTietLichHen chiTiet : dsChiTiet) {
@@ -129,6 +167,8 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 //				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, tenThuCung.toString(),
 //						tenDichVu.toString(), lichHen.getThoiGianHen().format(DinhDang.NGAY),
 //						lichHen.getTrangThaiHen() });
+				
+				dsLichHen.add(lichHen);
 				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, String.join(", ", dsTenThuCung),
 						String.join(", ", dsTenDichVu), lichHen.getThoiGianHen().format(DinhDang.NGAY),
 						lichHen.getTrangThaiHen() });
@@ -138,6 +178,31 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
+	
+	// Hàm AI tạo
+	//Viết hàm Java tên chuanHoa(String s) dùng để chuẩn hóa chuỗi tiếng Việt thành chữ thường không dấu, đã xử lý khoảng trắng thừa và trường hợp null
+	public static String chuanHoa(String s) {
+        // 1. Kiểm tra trường hợp null
+        if (s == null) {
+            return ""; // Hoặc trả về null tùy logic nghiệp vụ của bạn
+        }
+
+        // 2. Chuyển thành chữ thường và loại bỏ khoảng trắng thừa đầu/cuối
+        String result = s.toLowerCase().trim();
+
+        // 3. Thay thế các khoảng trắng liên tiếp ở giữa thành một khoảng trắng duy nhất
+        result = result.replaceAll("\\s+", " ");
+
+        // 4. Xử lý riêng ký tự 'đ' và 'Đ' (vì Normalizer không tự chuyển 'đ' thành 'd')
+        result = result.replace('đ', 'd');
+
+        // 5. Loại bỏ dấu tiếng Việt sử dụng Normalizer
+        String temp = Normalizer.normalize(result, Normalizer.Form.NFD);
+        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+        result = pattern.matcher(temp).replaceAll("");
+
+        return result;
+    }
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -150,6 +215,15 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 			if (taoLichHenGUI.isDaTao()) {
 				docDuLieuVaoTable();
 			}
+		}else if (o.equals(btnTim) || o.equals(txtTimKiem)) {
+		    docDuLieuVaoTable();
+		    if (model.getRowCount() == 0 && !txtTimKiem.getText().trim().isEmpty()) {
+		        JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn của khách hàng này",
+		                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+		    }
+		} else if (o.equals(btnLamMoi)) {
+		    txtTimKiem.setText("");
+		    docDuLieuVaoTable();
 		}
 	}
 

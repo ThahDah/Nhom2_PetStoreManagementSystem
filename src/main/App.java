@@ -1,5 +1,6 @@
 package main;
 
+
 import java.sql.SQLException;
 
 import javax.swing.JFrame;
@@ -11,27 +12,48 @@ import entity.NhanVien;
 import gui.LichHenGUI;
 import com.formdev.flatlaf.FlatLightLaf;
 
+import connectDB.ConnectDB;
+
 
 import gui.LoginGUI;
-
+import gui.HoaDonGUI;
 public class App {
 
+//	public static void main(String[] args) {
+//		try {
+//			  FlatLightLaf.setup();
+//	        } catch (Exception e1) {
+//	            e1.printStackTrace();
+//	        }
+//		
+////		SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true))
+////		test UI lich hẹn
+//		//  SwingUtilities.invokeLater(() -> moTrangLichHen());
+////		 Test UI login
+////		new LoginGUI().setVisible(true);
+////test UI hoa don
+//			SwingUtilities.invokeLater(() -> moTrangHoaDon());
+//	}
+	
 	public static void main(String[] args) {
 		try {
-			  FlatLightLaf.setup();
-	        } catch (Exception e1) {
-	            e1.printStackTrace();
-	        }
+			FlatLightLaf.setup();
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 		
-//		SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true))
+		try {
+			ConnectDB.getInstance().connect();
+			System.out.println("Kết nối CSDL thành công!");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Lỗi kết nối CSDL! Hãy kiểm tra lại SQL Server.");
+		}
+
 		
-//		test UI lich hẹn
 		SwingUtilities.invokeLater(() -> moTrangLichHen());
-//		 Test UI login
-//		new LoginGUI().setVisible(true);
-
+//		SwingUtilities.invokeLater(() -> moTrangHoaDon());
 	}
-
 
 	public static void moTrangLichHen() {
 		try {
@@ -46,4 +68,12 @@ public class App {
 			e.printStackTrace();
 		}
 	}
+	public static void moTrangHoaDon() {
+    JFrame frame = new JFrame("PetShop LAND - Hóa đơn");
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+    frame.setContentPane(new HoaDonGUI());
+    frame.setSize(1000, 600);
+    frame.setLocationRelativeTo(null);
+    frame.setVisible(true);
+}
 }

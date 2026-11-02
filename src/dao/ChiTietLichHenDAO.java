@@ -27,11 +27,19 @@ public class ChiTietLichHenDAO {
 				+ "JOIN KhachHang k ON t.maKH = k.maKH "
 				+ "JOIN DichVu d ON ct.maDV = d.maDV "
 				+ "WHERE ct.maLH = ? ORDER BY t.tenThuCung, d.maDV";
-		try (Connection con = ConnectDB.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
+		Connection con = ConnectDB.getConnection();
+		try (PreparedStatement stm = con.prepareStatement(sql)) {
 			stm.setString(1, lichHen.getMaLH());
 			try (ResultSet rs = stm.executeQuery()) {
 				while (rs.next()) {
-					KhachHang khachHang = KhachHangDAO.taoKhachHang(rs);
+//					KhachHang khachHang = KhachHangDAO.taoKhachHang(rs);
+					String maKH = rs.getString("maKH");
+					String tenKH = rs.getString("tenKH");
+					String soDienThoai = rs.getString("soDienThoai");
+					String email = rs.getString("email");
+					int diemTichLuy = rs.getInt("diemTichLuy");
+					KhachHang khachHang = new KhachHang(maKH, tenKH, soDienThoai, email, diemTichLuy);
+					
 					ThuCung thuCung = ThuCungDAO.taoThuCung(rs, khachHang);
 					DichVu dichVu = DichVuDAO.taoDichVu(rs);
 					dsChiTiet.add(new ChiTietLichHen(lichHen, thuCung, dichVu, rs.getDouble("donGia")));
