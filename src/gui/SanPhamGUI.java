@@ -7,6 +7,12 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -19,8 +25,11 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import com.formdev.flatlaf.FlatLightLaf;
+
 import connectDB.ConnectDB;
 import dao.SanPhamDAO;
+import entity.DonViTinh;
 import entity.SanPham;
 
 import java.sql.ResultSet;
@@ -29,7 +38,7 @@ import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
-public class SanPhamGUI extends JFrame {
+public class SanPhamGUI extends JFrame implements ActionListener, MouseListener,KeyListener{
 
     private JTextField txtMaSP, txtTenSP;
     private JTextField txtSoLuongTon, txtGiaNiemYet, txtGiaBan;
@@ -84,13 +93,14 @@ public class SanPhamGUI extends JFrame {
         pnlThongTin.setBorder(BorderFactory.createEmptyBorder(15, 10, 10, 10));
 
         txtMaSP = new JTextField();
+        txtMaSP.setEditable(false);
         txtTenSP = new JTextField();
         txtSoLuongTon = new JTextField();
         txtGiaNiemYet = new JTextField();
         txtGiaBan = new JTextField();
 
         cboDonViTinh = new JComboBox<>(new String[] {
-                "Cái", "Kg", "Hộp", "Gói", "Chai"
+                "Cái", "Hộp", "Gói", "Chai", "Túi"
         });
 
         pnlThongTin.add(new JLabel("Mã sản phẩm:"));
@@ -206,8 +216,17 @@ public class SanPhamGUI extends JFrame {
 
         add(pnlTop, BorderLayout.NORTH);
         add(pnlBottom, BorderLayout.CENTER);
+        
+        btnTaoMa.addActionListener(this);
+        btnLuu.addActionListener(this);
+        btnChonAnh.addActionListener(this);
+        btnSua.addActionListener(this);
+        btnXoa.addActionListener(this);
+        tblSanPham.addMouseListener(this);
+        txtTimMaSP.addKeyListener(this);
     }
     public static void main(String[] args) {
+    	FlatLightLaf.setup();
     	SanPhamGUI frame = new SanPhamGUI();
     	
 		
@@ -217,4 +236,189 @@ public class SanPhamGUI extends JFrame {
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);
 	}
+	@Override
+	public void keyTyped(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void keyPressed(KeyEvent e) {
+		// TODO Auto-generated method stub
+		
+	}
+	@Override
+	public void keyReleased(KeyEvent e) {
+		Object o = e.getSource();
+        if (o.equals(txtTimMaSP)) {
+            String maTimKiem = txtTimMaSP.getText().trim().toLowerCase();
+            model.setRowCount(0); 
+            ArrayList<SanPham> dsSP = sp_dao.getAllSanPham();
+            for (SanPham sp : dsSP) {
+                if (sp.getMaSP().toLowerCase().contains(maTimKiem)) {
+                    model.addRow(new Object[] {
+                        null,
+                        sp.getMaSP(),
+                        sp.getTenSP(),
+                        sp.getDonViTinh() != null ? sp.getDonViTinh().name() : "",
+                        sp.getSoLuongTon(),
+                        sp.getGiaNY(),
+                        sp.getGiaNY()
+                    });
+                }
+            }
+        }
+		
+	}
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		Object o = e.getSource();
+        if (o.equals(tblSanPham)) {
+            int row = tblSanPham.getSelectedRow();
+            if (row != -1) {
+                txtMaSP.setText(tblSanPham.getValueAt(row, 1).toString());
+                txtTenSP.setText(tblSanPham.getValueAt(row, 2).toString());
+                cboDonViTinh.setSelectedItem(tblSanPham.getValueAt(row, 3).toString());
+                txtSoLuongTon.setText(tblSanPham.getValueAt(row, 4).toString());
+                txtGiaNiemYet.setText(tblSanPham.getValueAt(row, 5).toString());
+                txtGiaBan.setText(tblSanPham.getValueAt(row, 6).toString());
+                
+            }
+        }
+	}
+	@Override
+	public void mousePressed(MouseEvent e) {
+	
+		
+	}
+	@Override
+	public void mouseReleased(MouseEvent e) {
+		
+		
+	}
+	@Override
+	public void mouseEntered(MouseEvent e) {
+		
+	}
+	@Override
+	public void mouseExited(MouseEvent e) {
+	
+		
+	}
+	@Override
+	public void actionPerformed(ActionEvent e) {
+		Object o = e.getSource();
+		if (o.equals(btnTaoMa)) {
+            String maMoi = sp_dao.phatSinhMaSanPhamMoi();
+            txtMaSP.setText(maMoi);
+            txtMaSP.setEditable(false);
+        }
+        
+       
+        else if (o.equals(btnLuu)) {
+            try {
+                String maSP = txtMaSP.getText().trim();
+                String tenSP = txtTenSP.getText().trim();
+                String slStr = txtSoLuongTon.getText().trim();
+                String giaNYStr = txtGiaNiemYet.getText().trim();
+                Object selectedDv = cboDonViTinh.getSelectedItem();
+                DonViTinh dvt = DonViTinh.CAI;
+                
+                if (maSP.isEmpty() || tenSP.isEmpty() || slStr.isEmpty() || giaNYStr.isEmpty()) {
+                    JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                    return;
+                }
+
+                int soLuongTon = Integer.parseInt(slStr);
+                double giaNY = Double.parseDouble(giaNYStr);
+                
+                if (giaNY <= 0) {
+                    JOptionPane.showMessageDialog(this, "Giá niêm yết phải lớn hơn 0!", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+                    txtGiaNiemYet.requestFocus();
+                    return;
+                }
+                if (soLuongTon < 0) { 
+                    JOptionPane.showMessageDialog(this, "Số lượng tồn không hợp lệ (phải >= 0)!", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+                    txtSoLuongTon.requestFocus();
+                    return;
+                }
+                if (selectedDv != null) {
+                    String text = selectedDv.toString();
+                  
+                    switch (text) {
+                        case "Gói": dvt = DonViTinh.GOI; break;
+                        case "Hộp": dvt = DonViTinh.HOP; break;
+                        case "Chai": dvt = DonViTinh.CHAI; break;
+                        case "Túi": dvt = DonViTinh.TUI; break;
+                        default: dvt = DonViTinh.CAI; break;
+                    }
+                }
+
+                SanPham sp = new SanPham(maSP, tenSP, giaNY, soLuongTon, dvt);
+                
+                if (sp_dao.themSanPham(sp)) {
+                    JOptionPane.showMessageDialog(this, "Thêm sản phẩm thành công!");
+                    loadTableData(); 
+                    xoaTrangForm();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Thêm sản phẩm thất bại (Có thể bị trùng mã hoặc lỗi CSDL)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Số lượng tồn và Giá niêm yết phải là số hợp lệ!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
+            }
+        }
+        
+        
+        else if (o.equals(btnXoa)) {
+            int row = tblSanPham.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn dòng cần xóa trên bảng!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            String maSP = tblSanPham.getValueAt(row, 1).toString();
+            int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa sản phẩm có mã: " + maSP + "?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+            
+            if (confirm == JOptionPane.YES_OPTION) {
+                if (sp_dao.xoaSanPham(maSP)) {
+                    JOptionPane.showMessageDialog(this, "Xóa sản phẩm thành công!");
+                    loadTableData();
+                    xoaTrangForm();
+                } else {
+                    JOptionPane.showMessageDialog(this, "Xóa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }
+        
+       
+        else if (o.equals(btnLamMoi)) {
+            xoaTrangForm();
+            loadTableData();
+            txtTimMaSP.setText("");
+        }
+	}
+	private void xoaTrangForm() {
+        txtMaSP.setText("");
+        txtTenSP.setText("");
+        txtSoLuongTon.setText("");
+        txtGiaNiemYet.setText("");
+        txtGiaBan.setText("");
+        cboDonViTinh.setSelectedIndex(0);
+        tblSanPham.clearSelection();
+    }
+
+    private void loadTableData() {
+        model.setRowCount(0);
+        ArrayList<SanPham> dsSP = sp_dao.getAllSanPham();
+        for (SanPham sp : dsSP) {
+            model.addRow(new Object[] {
+                null,
+                sp.getMaSP(),
+                sp.getTenSP(),
+                sp.getDonViTinh() != null ? sp.getDonViTinh().name() : "",
+                sp.getSoLuongTon(),
+                sp.getGiaNY(),
+                sp.getGiaNY()
+            });
+        }
+    }
 }

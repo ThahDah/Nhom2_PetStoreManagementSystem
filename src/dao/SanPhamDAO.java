@@ -68,4 +68,63 @@ public class SanPhamDAO {
 
 	     return null;
 	 }
+	 public boolean themSanPham(SanPham sp) {
+		    ConnectDB.getInstance();
+		    Connection con = ConnectDB.getConnection();
+
+		    String sql = "INSERT INTO SanPham (maSP, tenSP, giaNY, soLuongTon, donViTinh) "
+		               + "VALUES (?, ?, ?, ?, ?)";
+
+		    try (PreparedStatement stm = con.prepareStatement(sql)) {
+		        stm.setString(1, sp.getMaSP());
+		        stm.setString(2, sp.getTenSP());
+		        stm.setDouble(3, sp.getGiaNY());
+		        stm.setInt(4, sp.getSoLuongTon());
+		        
+		        
+		        if (sp.getDonViTinh() != null) {
+		            stm.setString(5, sp.getDonViTinh().name()); 
+		        } else {
+		            stm.setString(5, "CAI"); 
+
+		        }   return stm.executeUpdate() > 0;
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		    }
+		    return false;
+		}
+	 public String phatSinhMaSanPhamMoi() {
+		    ConnectDB.getInstance();
+		    Connection con = ConnectDB.getConnection();
+		    String maMoi = "";
+		    
+		    String sql = "SELECT TOP 1 maSP FROM SanPham ORDER BY maSP DESC";
+		    try (Statement statement = con.createStatement();
+		         ResultSet rs = statement.executeQuery(sql)) {
+		        if (rs.next()) {
+		            String maCu = rs.getString(1); // 
+		            int so = Integer.parseInt(maCu.substring(2));  
+		            so++; // 
+		            maMoi = String.format("SP%03d", so); 
+		        }
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		    }
+		    return maMoi;
+		}
+
+		
+		public boolean xoaSanPham(String maSP) {
+		    ConnectDB.getInstance();
+		    Connection con = ConnectDB.getConnection();
+		    String sql = "DELETE FROM SanPham WHERE maSP = ?";
+		    try (PreparedStatement stm = con.prepareStatement(sql)) {
+		        stm.setString(1, maSP);
+		        return stm.executeUpdate() > 0;
+		    } catch (SQLException e) {
+		        e.printStackTrace();
+		    }
+		    return false;
+		}
+		
 }

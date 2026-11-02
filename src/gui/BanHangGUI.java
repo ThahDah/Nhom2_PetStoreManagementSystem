@@ -76,7 +76,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	private int diemTichLuyKhachHang = 0;
 	private double tongTienHang = 0;
 	private JButton btnXoa;
-
+	private KhachHang khachHangHienTai;
 	public BanHangGUI() {
 		//Dùng Panel để chuyển trang
 		
@@ -534,26 +534,27 @@ public class BanHangGUI extends JPanel implements ActionListener {
 		txtSearch.addActionListener(this);
 		chkPoints.addActionListener(this);
 		 btnXoa.addActionListener(this);
+		 btnConfirm.addActionListener(this);
 	}
 	
-	private void updateButtonColor(JButton clickedButton) {
-	    //Reset màu cho nút đã chọn trước đó 
-		
-	    if (btnSelected  != null) {
-	        btnSelected.setOpaque(false);
-	        btnSelected.setBackground(Color.white);
-	    }
-
-	    //Thiết lập màu cho nút vừa click
-	    clickedButton.setOpaque(true); 
-	    clickedButton.setBackground(new Color(173, 255, 47)); 
-	    
-	    // Cập nhật nút hiện tại vào biến tạm
-	    btnSelected = clickedButton;
-	    
-	    // Vẽ lại nút đang chọn
-	    clickedButton.repaint();
-	}
+//	private void updateButtonColor(JButton clickedButton) {
+//	    //Reset màu cho nút đã chọn trước đó 
+//		
+//	    if (btnSelected  != null) {
+//	        btnSelected.setOpaque(false);
+//	        btnSelected.setBackground(Color.white);
+//	    }
+//
+//	    //Thiết lập màu cho nút vừa click
+//	    clickedButton.setOpaque(true); 
+//	    clickedButton.setBackground(new Color(173, 255, 47)); 
+//	    
+//	    // Cập nhật nút hiện tại vào biến tạm
+//	    btnSelected = clickedButton;
+//	    
+//	    // Vẽ lại nút đang chọn
+//	    clickedButton.repaint();
+//	}
 	
 	// Tùy chỉnh bo góc các component
 			public void setRoundBorder(JComponent cmp, int arc) {
@@ -596,13 +597,13 @@ public class BanHangGUI extends JPanel implements ActionListener {
 		    KhachHang kh = kh_dao.timKiemKhachHangTheoSDT(sdt);
 
 		    if (kh != null) {
+		    	khachHangHienTai  = kh;
 		        lblNameDetail.setText(kh.getTenKH());
 		        lblPointDetail.setText(String.valueOf(kh.getDiemTichLuy()));
 
-		        // Lưu điểm tích lũy của khách hàng
+		       
 		        diemTichLuyKhachHang = kh.getDiemTichLuy();
 
-		        // Cho phép sử dụng điểm
 		        chkPoints.setEnabled(diemTichLuyKhachHang > 0);
 		        chkPoints.setSelected(false);
 
@@ -615,6 +616,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 		        lblPointDetail.setText("0");
 
 		        diemTichLuyKhachHang = 0;
+		        khachHangHienTai = null;
 
 		        chkPoints.setSelected(false);
 		        chkPoints.setEnabled(false);
@@ -646,6 +648,8 @@ public class BanHangGUI extends JPanel implements ActionListener {
 		    model.removeRow(modelRow);
 
 		    capNhatThongTinThanhToan();
+		}else if (o == btnConfirm) {
+		   
 		}
 }
 			
@@ -708,7 +712,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	    int tongSoLuong = 0;
 	    double tongTien = 0;
 
-	    // Tính tổng tiền hàng từ bảng sản phẩm
+	    
 	    for (int i = 0; i < model.getRowCount(); i++) {
 
 	        int soLuong = Integer.parseInt(
