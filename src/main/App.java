@@ -50,9 +50,11 @@ public class App {
 			System.out.println("Lỗi kết nối CSDL! Hãy kiểm tra lại SQL Server.");
 		}
 
+
 //		SwingUtilities.invokeLater(() -> moTrangLichHen());
 		SwingUtilities.invokeLater(() -> moTrangDichVu());
 //		SwingUtilities.invokeLater(() -> moTrangHoaDon());
+
 	}
 
 	public static void moTrangLichHen() {
