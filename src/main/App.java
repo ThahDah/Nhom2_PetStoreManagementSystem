@@ -12,25 +12,47 @@ import entity.NhanVien;
 import gui.LichHenGUI;
 import com.formdev.flatlaf.FlatLightLaf;
 
+import connectDB.ConnectDB;
+
 
 import gui.LoginGUI;
 import gui.HoaDonGUI;
 public class App {
 
+//	public static void main(String[] args) {
+//		try {
+//			  FlatLightLaf.setup();
+//	        } catch (Exception e1) {
+//	            e1.printStackTrace();
+//	        }
+//		
+////		SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true))
+////		test UI lich hẹn
+//		//  SwingUtilities.invokeLater(() -> moTrangLichHen());
+////		 Test UI login
+////		new LoginGUI().setVisible(true);
+////test UI hoa don
+//			SwingUtilities.invokeLater(() -> moTrangHoaDon());
+//	}
+	
 	public static void main(String[] args) {
 		try {
-			  FlatLightLaf.setup();
-	        } catch (Exception e1) {
-	            e1.printStackTrace();
-	        }
+			FlatLightLaf.setup();
+		} catch (Exception e1) {
+			e1.printStackTrace();
+		}
 		
-//		SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true))
-//		test UI lich hẹn
-		//  SwingUtilities.invokeLater(() -> moTrangLichHen());
-//		 Test UI login
-//		new LoginGUI().setVisible(true);
-//test UI hoa don
-			SwingUtilities.invokeLater(() -> moTrangHoaDon());
+		try {
+			ConnectDB.getInstance().connect();
+			System.out.println("Kết nối CSDL thành công!");
+		} catch (SQLException e) {
+			e.printStackTrace();
+			System.out.println("Lỗi kết nối CSDL! Hãy kiểm tra lại SQL Server.");
+		}
+
+		
+		SwingUtilities.invokeLater(() -> moTrangLichHen());
+//		SwingUtilities.invokeLater(() -> moTrangHoaDon());
 	}
 
 	public static void moTrangLichHen() {

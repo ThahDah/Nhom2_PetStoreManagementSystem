@@ -15,8 +15,8 @@ public class DichVuDAO {
 	public List<DichVu> layTatCa() throws SQLException {
 		List<DichVu> dsDichVu = new ArrayList<>();
 		String sql = "SELECT maDV, tenDV, giaTieuChuan FROM DichVu ORDER BY maDV";
-		try (Connection con = ConnectDB.getConnection();
-				Statement stm = con.createStatement();
+		Connection con = ConnectDB.getConnection();
+		try (Statement stm = con.createStatement();
 				ResultSet rs = stm.executeQuery(sql)) {
 			while (rs.next()) {
 				dsDichVu.add(taoDichVu(rs));

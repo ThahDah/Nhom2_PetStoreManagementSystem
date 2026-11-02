@@ -16,7 +16,7 @@ public class ConnectDB {
 
 	public void connect() throws SQLException {
 		Security.setProperty("jdk.tls.disabledAlgorithms", "");
-		String url = "jdbc:sqlserver://localhost:1433;databaseName=PetShopDB;encrypt=false;trustServerCertificate=true";
+		String url = "jdbc:sqlserver://localhost:1433;databaseName=PetShopLAND;encrypt=false;trustServerCertificate=true";
 		String user = "sa";
 		String pwd = "sapassword";
 		con = DriverManager.getConnection(url, user, pwd);

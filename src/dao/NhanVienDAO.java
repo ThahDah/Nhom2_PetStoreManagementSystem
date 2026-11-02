@@ -134,4 +134,21 @@ public class NhanVienDAO {
 		return n > 0;
 	}
 	
+	// tim nhan vien theo ma	
+	public NhanVien timTheoMa(String maNV) throws SQLException {
+		String sql = "SELECT maNV, tenNV, soDienThoai, email, trangThaiNV, hinhAnh FROM NhanVien WHERE maNV = ?";
+		Connection con = ConnectDB.getConnection();
+		try (PreparedStatement stm = con.prepareStatement(sql)) {
+			stm.setString(1, maNV);
+			try (ResultSet rs = stm.executeQuery()) {
+				if (!rs.next()) {
+					return null;
+				}
+				return new NhanVien(rs.getString("maNV"), rs.getString("tenNV"), rs.getString("soDienThoai"),
+						rs.getString("email"), TrangThai.valueOf(rs.getString("trangThaiNV")),
+						rs.getString("hinhAnh"));
+			}
+		}
+	}
+	
 }

@@ -20,7 +20,8 @@ public class ThuCungDAO {
 		List<ThuCung> dsThuCung = new ArrayList<>();
 		String sql = "SELECT maThuCung, tenThuCung, loai, canNang, ghiChu, trangThaiThuCung, doHungDu "
 				+ "FROM ThuCung WHERE maKH = ? ORDER BY tenThuCung";
-		try (Connection con = ConnectDB.getConnection(); PreparedStatement stm = con.prepareStatement(sql)) {
+		Connection con = ConnectDB.getConnection();
+		try (PreparedStatement stm = con.prepareStatement(sql)) {
 			stm.setString(1, khachHang.getMaKH());
 			try (ResultSet rs = stm.executeQuery()) {
 				while (rs.next()) {

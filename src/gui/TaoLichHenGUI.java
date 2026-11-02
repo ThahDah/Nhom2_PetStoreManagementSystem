@@ -470,7 +470,8 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 				return;
 			}
 			try {
-				khachHangHienTai = khachHangDAO.timTheoSoDienThoai(soDienThoai);
+//				khachHangHienTai = khachHangDAO.timTheoSoDienThoai(soDienThoai);
+				khachHangHienTai = khachHangDAO.timKiemKhachHangTheoSDT(soDienThoai);
 				cbTenThuCung.removeAllItems();
 				if (khachHangHienTai == null) {
 					txtTenKhachHang.setText("");
