@@ -28,6 +28,13 @@ public class KhachHang {
 		this.diemTichLuy = diemTichLuy;
 		
 	}
+	
+public KhachHang(String maKH, String tenKH) { // them constructor de goi trong ThuCungDAO
+		
+		this.maKH = maKH;
+		this.tenKH = tenKH;
+		
+	}
 
 	
 
