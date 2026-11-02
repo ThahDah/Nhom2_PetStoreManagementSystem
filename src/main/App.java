@@ -1,6 +1,5 @@
 package main;
 
-
 import java.sql.SQLException;
 
 import javax.swing.JFrame;
@@ -25,8 +24,9 @@ public class App {
 	        }
 		
 //		SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true))
+		
 //		test UI lich hẹn
-		 SwingUtilities.invokeLater(() -> moTrangLichHen());
+		SwingUtilities.invokeLater(() -> moTrangLichHen());
 //		 Test UI login
 //		new LoginGUI().setVisible(true);
 
