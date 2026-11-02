@@ -59,35 +59,35 @@ public class ThuCungDAO {
 		try {
 			ConnectDB.getInstance();
 			Connection con = ConnectDB.getConnection();
-			String sql = "SELECT tc.*, kh.tenKhachHang " +
-                    "FROM ThuCung tc " +
-                    "JOIN KhachHang kh ON tc.maKH = kh.maKH";
+			String sql = "SELECT tc.*, kh.tenKH " +
+		             "FROM ThuCung tc " +
+		             "JOIN KhachHang kh ON tc.maKH = kh.maKH";
 			Statement statement = con.createStatement();
 			ResultSet rs = statement.executeQuery(sql);
 			
 			while (rs.next()) {
-					String ma = rs.getString("maThuCung"); // hoac   rs.getString(1)
-					String ten = rs.getString("tenThuCung");
-					
-	
-					// doc chuoi tu dataSQL
-					String loaiStr = rs.getString("LoaiTC"); 
-					Loai loai = Loai.valueOf(loaiStr); 
-					
-					int canNang=rs.getInt("canNang");
-					String ghiChu=rs.getString("ghiChu");
-					String trangThaiTCStr=rs.getString("trangThaiThuCung");
-					TrangThai trangThai=TrangThai.valueOf(trangThaiTCStr);
-					String doHungDuStr=rs.getNString("doHungDu");
-					DoHungDu doHungDu=DoHungDu.valueOf(doHungDuStr);
-					String maKH = rs.getString("maKH");
-		            String tenKH = rs.getString("tenKhachHang");
-		            
-		            KhachHang khachHang = new KhachHang(maKH, tenKH); //AI hỗ trợ sửa lỗi
+				String ma = rs.getString("maThuCung");
+	            String ten = rs.getString("tenThuCung");
 
-				
-				// constructor
-				ThuCung tc=new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
+	            String loaiStr = rs.getString("loai"); 
+	            Loai loai = Loai.valueOf(loaiStr.trim()); 
+	            
+	            double canNang = rs.getDouble("canNang");
+	            String ghiChu = rs.getString("ghiChu");
+	            
+	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
+	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
+	            
+	            String doHungDuStr = rs.getString("doHungDu");
+	            DoHungDu doHungDu = DoHungDu.valueOf(doHungDuStr.trim());
+	            
+	            String maKH = rs.getString("maKH");
+	            String tenKH = rs.getString("tenKH");
+	            
+	            KhachHang khachHang = new KhachHang(maKH, tenKH);
+
+	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
+	            
 				dsTC.add(tc);
 			}
 		} catch (Exception e) {
@@ -152,38 +152,64 @@ public class ThuCungDAO {
 		Connection con  = ConnectDB.getConnection();
 		PreparedStatement stmt = null;
 		try {
-			String query = "Select * From ThuCung Where maThuCung = ?";
-					stmt = con.prepareStatement(query);
-					stmt.setString(1, maTC);
+			String query = "SELECT tc.*, kh.tenKH " +
+		               "FROM ThuCung tc " +
+		               "JOIN KhachHang kh ON tc.maKH = kh.maKH " +
+		               "WHERE tc.maThuCung = ?";
 			ResultSet rs = stmt.executeQuery();
 			while(rs.next()) {
-				String ma = rs.getString("maThuCung"); // hoac   rs.getString(1)
-				String ten = rs.getString("tenThuCung");
-				
+				String ma = rs.getString("maThuCung");
+	            String ten = rs.getString("tenThuCung");
 
-				// doc chuoi tu dataSQL
-				String loaiStr = rs.getString("LoaiTC"); 
-				Loai loai = Loai.valueOf(loaiStr); 
-				
-				int canNang=rs.getInt("canNang");
-				String ghiChu=rs.getString("ghiChu");
-				String trangThaiTCStr=rs.getString("trangThaiThuCung");
-				TrangThai trangThai=TrangThai.valueOf(trangThaiTCStr);
-				String doHungDuStr=rs.getNString("doHungDu");
-				DoHungDu doHungDu=DoHungDu.valueOf(doHungDuStr);
-				String maKH = rs.getString("maKH");
-	            String tenKH = rs.getString("tenKhachHang");
+	            String loaiStr = rs.getString("loai"); 
+	            Loai loai = Loai.valueOf(loaiStr.trim()); 
 	            
-	            KhachHang khachHang = new KhachHang(maKH, tenKH); //AI hỗ trợ sửa lỗi
+	            double canNang = rs.getDouble("canNang");
+	            String ghiChu = rs.getString("ghiChu");
+	            
+	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
+	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
+	            
+	            String doHungDuStr = rs.getString("doHungDu");
+	            DoHungDu doHungDu = DoHungDu.valueOf(doHungDuStr.trim());
+	            
+	            String maKH = rs.getString("maKH");
+	            String tenKH = rs.getString("tenKH");
+	            
+	            KhachHang khachHang = new KhachHang(maKH, tenKH);
 
-				// constructor
-				ThuCung tc=new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
-				return tc;
+	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
+	            return tc;
 				
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return null;
+	}
+	
+	// sua thong tin thu cung
+	public boolean suaThuCung(ThuCung tc) {
+	    Connection con = connectDB.ConnectDB.getConnection();
+	    PreparedStatement stmt = null;
+	    int n = 0;
+	    try {
+	        String sql = "UPDATE ThuCung SET tenThuCung = ?, loai = ?, canNang = ?, ghiChu = ?, trangThaiThuCung = ?, doHungDu = ?, maKH = ? WHERE maThuCung = ?";
+	        stmt = con.prepareStatement(sql);
+	        
+	        stmt.setString(1, tc.getTenThuCung());
+	        stmt.setString(2, tc.getLoai().name()); 
+	        stmt.setDouble(3, tc.getCanNang()); 
+	        stmt.setString(4, tc.getGhiChu());
+	        stmt.setString(5, tc.getTrangThaiThuCung().name());
+	        stmt.setString(6, tc.getDoHungDu().name()); 
+	        stmt.setString(7, tc.getChuSoHuu().getMaKH());
+	        stmt.setString(8, tc.getMaThuCung()); 
+	        
+	        n = stmt.executeUpdate();
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return n > 0;
 	}
 }
