@@ -61,6 +61,7 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	private JButton btnLamMoi;
 	private JTextField txtEmail;
 	private JButton btnTimKiem;
+	private JButton btnPhatSinhMa;
 
 	public KhachHang_GUI() {
 		
@@ -81,7 +82,7 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		JPanel thongTinKH = new JPanel();
 		thongTinKH.setBorder(BorderFactory.createTitledBorder("Thông tin khách hàng"));
 		
-		Box b,b1,b2,b3,b4,b5,b6,b7,b8,b9;
+		Box b,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10;
 		b=Box.createVerticalBox();
 		b1=Box.createHorizontalBox();
 		b2=Box.createHorizontalBox();
@@ -92,9 +93,11 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		b7=Box.createHorizontalBox();
 		b8=Box.createHorizontalBox();
 		b9=Box.createHorizontalBox();
+		b10=Box.createHorizontalBox();
 		
 		JLabel maKH=new JLabel("Mã khách hàng:   ");
 		txtMKH= new JTextField(10);
+		txtMKH.setEditable(false);
 		b1.add(maKH); b1.add(txtMKH);
 		b.add(b1);
 		b.add(Box.createVerticalStrut(40));
@@ -149,6 +152,16 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		menu.add(btnLamMoi);
 		b9.add(menu);
 		b.add(b9);
+		
+		//nut phat sinh ma
+		JMenuBar menu2=new JMenuBar();
+		
+		btnPhatSinhMa=new JButton("Phát sinh mã");
+		
+		menu2.add(Box.createHorizontalStrut(5));
+		menu2.add(btnPhatSinhMa);
+		b10.add(menu2);
+		b.add(b10);
 		
 		
 		thongTinKH.add(b);
@@ -217,7 +230,7 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		btnXoa.addActionListener(this);
 		btnLamMoi.addActionListener(this);
 		btnTimKiem.addActionListener(this);
-		
+		btnPhatSinhMa.addActionListener(this);
 		//dk sk click chuot
 		table.addMouseListener(this);
 		
@@ -364,7 +377,6 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
 
-		
 		if (o.equals(btnLamMoi)) {
 			txtMKH.setText(phatSinhMaKH()); 
 			txtMKH.setEditable(false);
@@ -471,6 +483,10 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		}
 		else if (o.equals(btnTimKiem)) {
 		    locDuLieu(); // goi ham locDuLieu
+		}
+		
+		else if (o.equals(btnPhatSinhMa)) {
+		    txtMKH.setText(phatSinhMaKH());
 		}
 	}
 

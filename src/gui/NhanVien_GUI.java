@@ -272,7 +272,8 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
         btnXoa.addActionListener(this);
         btnLamMoi.addActionListener(this);
         btnTim.addActionListener(this);
-        btnPickAvatar.addActionListener(this);      
+        btnPickAvatar.addActionListener(this); 
+        btnPhatSinhMa.addActionListener(this);
         table.addMouseListener(this);
 
         // ket noi csdl
@@ -422,6 +423,10 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 			table.clearSelection();
 			txtTenNV.requestFocus();
 		} 
+		
+		else if (o.equals(btnPhatSinhMa)) {
+		    txtMNV.setText(phatSinhMaNV());
+		}
 		
 		else if (o.equals(btnPickAvatar)) {
 		    javax.swing.JFileChooser fileChooser = new javax.swing.JFileChooser();
