@@ -119,4 +119,40 @@ public class HoaDonDAO {
 
         return danhSach;
     }
+
+public Object[] timHoaDonTheoMa(String maHD) throws SQLException {
+
+    String sql = "SELECT hd.maHD, hd.ngayLap, "
+            + "hd.tongTien, hd.trangThaiHD, hd.phuongThucTT, "
+            + "kh.tenKH, kh.soDienThoai, kh.email "
+            + "FROM HoaDon hd "
+            + "JOIN KhachHang kh ON hd.maKH = kh.maKH "
+            + "WHERE hd.maHD = ?";
+
+    Connection con = ConnectDB.getConnection();
+
+    try (PreparedStatement ps = con.prepareStatement(sql)) {
+
+        ps.setString(1, maHD);
+
+        try (ResultSet rs = ps.executeQuery()) {
+
+            if (rs.next()) {
+                return new Object[] {
+                    rs.getString("maHD"),        
+                    rs.getTimestamp("ngayLap"),  
+                    rs.getDouble("tongTien"),     
+                    rs.getString("trangThaiHD"),  
+                    rs.getString("phuongThucTT"), 
+                    rs.getString("tenKH"),        
+                    rs.getString("soDienThoai"),  
+                    rs.getString("email")        
+                };
+            }
+        }
+    }
+
+    return null;
+}
+
 }

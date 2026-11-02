@@ -373,3 +373,148 @@ VALUES
 ('HDDV02112601', '2026-11-02T11:15:00', 220000, 'CHUA_THANH_TOAN', NULL, 'KH0009'),
 ('HDDV02112602', '2026-11-02T13:20:00', 170000, 'CHUA_THANH_TOAN', NULL, 'KH0010');
 GO
+-- tao table SanPham
+CREATE TABLE SanPham (
+    maSP VARCHAR(8) NOT NULL PRIMARY KEY,
+    tenSP NVARCHAR(100) NOT NULL,
+    giaNY DECIMAL(18,2) NOT NULL,
+    soLuongTon INT NOT NULL,
+    donViTinh VARCHAR(10) NOT NULL,
+
+    CONSTRAINT CK_SanPham_Ma
+        CHECK (
+            maSP LIKE 'SPCC[0-9][0-9][0-9][0-9]'
+            OR maSP LIKE 'SPCM[0-9][0-9][0-9][0-9]'
+        ),
+
+    CONSTRAINT CK_SanPham_Gia CHECK (giaNY > 0),
+    CONSTRAINT CK_SanPham_SoLuongTon CHECK (soLuongTon >= 0),
+
+    CONSTRAINT CK_SanPham_DonViTinh
+        CHECK (donViTinh IN ('GOI', 'CHAI', 'CAI', 'TUI', 'HOP'))
+);
+GO
+-- tao table ChiTietHoaDon
+USE PetShopLand;
+GO
+
+CREATE TABLE ChiTietHoaDon (
+    maHD VARCHAR(12) NOT NULL,
+    maSP VARCHAR(8) NULL,
+    maDV VARCHAR(10) NULL,
+    soLuong INT NOT NULL,
+    donGia DECIMAL(18,2) NOT NULL,
+    thanhTien DECIMAL(18,2) NOT NULL,
+
+    CONSTRAINT FK_CTHD_HoaDon
+        FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
+
+    CONSTRAINT FK_CTHD_SanPham
+        FOREIGN KEY (maSP) REFERENCES SanPham(maSP),
+
+    CONSTRAINT FK_CTHD_DichVu
+        FOREIGN KEY (maDV) REFERENCES DichVu(maDV),
+
+    CONSTRAINT CK_CTHD_SoLuong
+        CHECK (soLuong > 0),
+
+    CONSTRAINT CK_CTHD_DonGia
+        CHECK (donGia > 0),
+
+    CONSTRAINT CK_CTHD_ThanhTien
+        CHECK (thanhTien > 0),
+
+    CONSTRAINT CK_CTHD_Loai
+        CHECK (
+            (maSP IS NOT NULL AND maDV IS NULL)
+            OR
+            (maSP IS NULL AND maDV IS NOT NULL)
+        )
+);
+GO
+
+CREATE UNIQUE INDEX UQ_CTHD_SanPham
+ON ChiTietHoaDon(maHD, maSP)
+WHERE maSP IS NOT NULL;
+GO
+
+CREATE UNIQUE INDEX UQ_CTHD_DichVu
+ON ChiTietHoaDon(maHD, maDV)
+WHERE maDV IS NOT NULL;
+GO
+-- du liệu mẫu
+
+USE PetShopLand;
+GO
+
+INSERT INTO SanPham
+    (maSP, tenSP, giaNY, soLuongTon, donViTinh)
+VALUES
+    -- Sản phẩm dành cho chó
+    ('SPCC0001', N'Thức ăn hạt cho chó 1kg', 150000, 50, 'GOI'),
+    ('SPCC0002', N'Sữa tắm cho chó', 120000, 30, 'CHAI'),
+    ('SPCC0003', N'Vòng cổ cho chó', 80000, 40, 'CAI'),
+    ('SPCC0004', N'Bóng cao su cho chó', 50000, 60, 'CAI'),
+    ('SPCC0005', N'Pate cho chó', 35000, 80, 'HOP'),
+
+    -- Sản phẩm dành cho mèo
+    ('SPCM0001', N'Thức ăn hạt cho mèo 1kg', 140000, 45, 'GOI'),
+    ('SPCM0002', N'Sữa tắm cho mèo', 110000, 25, 'CHAI'),
+    ('SPCM0003', N'Cát vệ sinh cho mèo', 90000, 35, 'TUI'),
+    ('SPCM0004', N'Pate cho mèo', 30000, 90, 'HOP'),
+    ('SPCM0005', N'Đồ chơi cho mèo', 50000, 40, 'CAI');
+GO
+
+INSERT INTO ChiTietHoaDon
+    (maHD, maSP, maDV, soLuong, donGia, thanhTien)
+VALUES
+    -- HDBH15102601: 350.000
+    ('HDBH15102601', 'SPCC0001', NULL, 1, 150000, 150000),
+    ('HDBH15102601', 'SPCC0002', NULL, 1, 120000, 120000),
+    ('HDBH15102601', 'SPCC0003', NULL, 1, 80000, 80000),
+
+    -- HDBH16102601: 450.000
+    ('HDBH16102601', 'SPCM0001', NULL, 2, 140000, 280000),
+    ('HDBH16102601', 'SPCM0002', NULL, 1, 110000, 110000),
+    ('HDBH16102601', 'SPCM0004', NULL, 2, 30000, 60000),
+
+    -- HDBH17102601: 210.000
+    ('HDBH17102601', 'SPCC0002', NULL, 1, 120000, 120000),
+    ('HDBH17102601', 'SPCM0003', NULL, 1, 90000, 90000),
+
+    -- HDBH18102601: 180.000
+    ('HDBH18102601', 'SPCC0001', NULL, 1, 150000, 150000),
+    ('HDBH18102601', 'SPCM0004', NULL, 1, 30000, 30000),
+
+    -- HDBH19102601: 250.000
+    ('HDBH19102601', 'SPCC0001', NULL, 1, 150000, 150000),
+    ('HDBH19102601', 'SPCC0004', NULL, 2, 50000, 100000),
+
+    -- HDBH20102601: 520.000
+    ('HDBH20102601', 'SPCC0001', NULL, 2, 150000, 300000),
+    ('HDBH20102601', 'SPCM0002', NULL, 2, 110000, 220000),
+
+    -- HDBH22102601: 175.000
+    ('HDBH22102601', 'SPCM0001', NULL, 1, 140000, 140000),
+    ('HDBH22102601', 'SPCC0005', NULL, 1, 35000, 35000),
+
+    -- HDBH25102601: 390.000
+    ('HDBH25102601', 'SPCC0001', NULL, 1, 150000, 150000),
+    ('HDBH25102601', 'SPCC0002', NULL, 2, 120000, 240000),
+
+    -- HDBH29102601: 120.000
+    ('HDBH29102601', 'SPCC0002', NULL, 1, 120000, 120000),
+
+    -- HDBH02112601: 265.000
+    ('HDBH02112601', 'SPCC0001', NULL, 1, 150000, 150000),
+    ('HDBH02112601', 'SPCC0003', NULL, 1, 80000, 80000),
+    ('HDBH02112601', 'SPCC0005', NULL, 1, 35000, 35000),
+
+    -- HDBH02112602: 430.000
+    ('HDBH02112602', 'SPCC0001', NULL, 2, 150000, 300000),
+    ('HDBH02112602', 'SPCC0003', NULL, 1, 80000, 80000),
+    ('HDBH02112602', 'SPCC0004', NULL, 1, 50000, 50000),
+
+    -- HDBH02112603: 150.000
+    ('HDBH02112603', 'SPCC0001', NULL, 1, 150000, 150000);
+GO

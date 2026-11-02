@@ -333,7 +333,33 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
 
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		
+		if (e.getSource() == table && e.getClickCount() == 2) {
+
+	        int row = table.getSelectedRow();
+
+	        if (row == -1) {
+	            return;
+	        }
+
+	        String maHD = table.getValueAt(row, 0).toString();
+
+	        Window owner = SwingUtilities.getWindowAncestor(this);
+
+	        if (maHD.startsWith("HDBH")) {
+	            ChiTietHoaDonBanHangGUI dialog =
+	                    new ChiTietHoaDonBanHangGUI(owner, maHD);
+
+	            dialog.setLocationRelativeTo(this);
+	            dialog.setVisible(true);
+
+	        } else if (maHD.startsWith("HDDV")) {
+	            ChiTietHoaDonDichVuGUI dialog =
+	                    new ChiTietHoaDonDichVuGUI(owner, maHD);
+
+	            dialog.setLocationRelativeTo(this);
+	            dialog.setVisible(true);
+	        }
+	    }
 	}
 
 	@Override
