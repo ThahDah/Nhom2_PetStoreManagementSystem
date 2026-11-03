@@ -29,6 +29,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.DefaultTableModel;
 
+import com.formdev.flatlaf.FlatLightLaf;
 import com.formdev.flatlaf.ui.FlatLineBorder;
 
 import java.sql.SQLException;
@@ -79,16 +80,12 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	private KhachHang khachHangHienTai;
 	public BanHangGUI() {
 		//Dùng Panel để chuyển trang
-		
+		FlatLightLaf.setup();
 		sp_dao = new SanPhamDAO();
 		kh_dao = new KhachHangDAO();
 		this.setLayout(new BorderLayout());
 		
-		//Phan nay can viet dao
 		
-		
-		//Tao con tro thanh ban tay
-		Cursor pointer = new Cursor(Cursor.HAND_CURSOR);
 		
 		//Phần nút chuyển chế độ sp/dịch vụ và thông tin khách hàng
 		JPanel pnlTop = new JPanel(new BorderLayout());
@@ -99,6 +96,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 		pnlButtonMode.add(btnProduct);
 		pnlButtonMode.add(btnService);
 		
+		//KHU VUC THONG TIN KHACH HANG
 		JPanel pnlCustomerInfo = new JPanel();
 		Box boxCustomerInfo = Box.createVerticalBox();
 
@@ -114,7 +112,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 
 		Box boxCustomerDetail = Box.createHorizontalBox();
 		JLabel lblName = new JLabel("Tên Khách hàng:");
-		lblNameDetail = new JLabel("");
+		lblNameDetail = new JLabel("Vãng Lai");
 		JLabel lblPoint = new JLabel("Điểm tích lũy:");
 		lblPointDetail = new JLabel("0");
 		
@@ -134,6 +132,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 		
 		pnlTop.add(pnlButtonMode, BorderLayout.WEST);
 		pnlTop.add(pnlCustomerInfo, BorderLayout.EAST);
+		pnlTop.setBorder(BorderFactory.createLineBorder(new Color(220,220,220),1));
 		
 		this.add(pnlTop, BorderLayout.NORTH);
 		
@@ -142,7 +141,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 		pnlMain = new JPanel(cardLayout);
 		
 		//Panel HDSP
-		 JPanel pnlSanPham = new JPanel(new BorderLayout());
+		 JPanel pnlProduct = new JPanel(new BorderLayout());
 	     
 	     JPanel pnlHeaderProduct = new JPanel(new BorderLayout());
 	     
@@ -154,13 +153,11 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	     JLabel lblTitle = new JLabel("Danh sách sản phẩm");
 	     lblTitle.setFont(new Font("Arial", Font.BOLD, 16));
 
-//	     lblCount = new JLabel("2 mặt hàng đã chọn");
-//	     lblCount.setFont(new Font("Arial", Font.PLAIN, 12));
-//	     lblCount.setForeground(Color.GRAY);
+
 
 	     pnlTitle.add(lblTitle);
 	     pnlTitle.add(Box.createVerticalStrut(5));
-//	     pnlTitle.add(lblCount);
+
 	     
 	     pnlHeaderProduct.add(pnlTitle, BorderLayout.WEST);
 	     
@@ -204,60 +201,10 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	    	        return column == 2;
 	    	    }
 	    	};
-	    	model.addTableModelListener(e -> {
-
-	    	    if (e.getType() == TableModelEvent.UPDATE
-	    	            && e.getColumn() == 2) {
-
-	    	        int row = e.getFirstRow();
-
-	    	        if (row < 0) {
-	    	            return;
-	    	        }
-
-	    	        try {
-	    	            String giaTri = model.getValueAt(row, 2).toString().trim();
-
-	    	            int soLuong = Integer.parseInt(giaTri);
-
-	    	            if (soLuong <= 0) {
-	    	                JOptionPane.showMessageDialog(
-	    	                    this,
-	    	                    "Số lượng phải lớn hơn 0!",
-	    	                    "Thông báo",
-	    	                    JOptionPane.WARNING_MESSAGE
-	    	                );
-
-	    	                model.setValueAt(1, row, 2);
-	    	                return;
-	    	            }
-
-	    	            double donGia = Double.parseDouble(
-	    	                model.getValueAt(row, 3).toString()
-	    	            );
-
-	    	          
-	    	            model.setValueAt(soLuong * donGia, row, 4);
-
-	    	            
-	    	            capNhatThongTinThanhToan();
-
-	    	        } catch (NumberFormatException ex) {
-
-	    	            JOptionPane.showMessageDialog(
-	    	                this,
-	    	                "Vui lòng nhập số lượng là số nguyên hợp lệ!",
-	    	                "Thông báo",
-	    	                JOptionPane.WARNING_MESSAGE
-	    	            );
-
-	    	            model.setValueAt(1, row, 2);
-	    	        }
-	    	    }
-	    	});
+	    	
 	     tblSanPham = new JTable(model);
 	     JScrollPane scrollPane = new JScrollPane(tblSanPham);
-	     scrollPane.setBorder(BorderFactory.createEmptyBorder());
+//	     scrollPane.setBorder(BorderFactory.createEmptyBorder());
 	     
 	     //Chi tiet Thanh toan
 	     JPanel pnlPayment = new JPanel();
@@ -271,7 +218,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	 
 	     pnlPaymentHeader.add(lblPaymentTitle, BorderLayout.WEST);
 	     
-	     //Thong tin thanh toan(Can sua lại)
+	     //Thong tin thanh toan
 	     JPanel pnlInfo = new JPanel();
 	     pnlInfo.setLayout(new BoxLayout(pnlInfo, BoxLayout.Y_AXIS));
 	     
@@ -293,7 +240,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	     pnlInfo.add(boxTemp);
 	     pnlInfo.add(Box.createVerticalStrut(15));
 	     
-	     //Diểm tích lũy
+	     //Điểm tích lũy
 	     Box boxPoints = Box.createHorizontalBox();
 
 	     JPanel pnlPointText = new JPanel();
@@ -302,13 +249,13 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	     JLabel lblPoints = new JLabel("Dùng điểm tích lũy");
 	     lblPoints.setFont(new Font("Arial", Font.BOLD, 12));
 
-//	     JLabel lblPointCount = new JLabel("Hiện có 0 điểm");
-//	     lblPointCount.setFont(new Font("Arial", Font.PLAIN, 11));
-//	     lblPointCount.setForeground(Color.GRAY);
+	     JLabel lblPointCount = new JLabel("Hiện có 0 điểm");
+	     lblPointCount.setFont(new Font("Arial", Font.PLAIN, 11));
+	     lblPointCount.setForeground(Color.GRAY);
 
 	     pnlPointText.add(lblPoints);
 	     pnlPointText.add(Box.createVerticalStrut(5));
-//	     pnlPointText.add(lblPointCount);
+	     pnlPointText.add(lblPointCount);
 
 	      chkPoints = new JCheckBox();
 	      chkPoints.setEnabled(false);
@@ -372,8 +319,8 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	    		    )
 	    		);
 	     
-	     pnlSanPham.add(pnlProductMainContent);
-	     pnlSanPham.add(pnlPayment, BorderLayout.EAST);
+	     pnlProduct.add(pnlProductMainContent);
+	     pnlProduct.add(pnlPayment, BorderLayout.EAST);
 	     
 	     
 	     
@@ -524,7 +471,7 @@ public class BanHangGUI extends JPanel implements ActionListener {
 	     pnlService.add(pnlServicePayment, BorderLayout.EAST);
 	     
 	    //Them 2 pnl SP va DV vo Main
-	    pnlMain.add(pnlSanPham,"SAN_PHAM");
+	    pnlMain.add(pnlProduct,"SAN_PHAM");
 	    pnlMain.add(pnlService,"DICH_VU");
 		this.add(pnlMain);
 		
@@ -533,28 +480,9 @@ public class BanHangGUI extends JPanel implements ActionListener {
 		btnService.addActionListener(this);
 		txtSearch.addActionListener(this);
 		chkPoints.addActionListener(this);
-		 btnXoa.addActionListener(this);
-		 btnConfirm.addActionListener(this);
+		btnXoa.addActionListener(this);
+		btnConfirm.addActionListener(this);
 	}
-	
-//	private void updateButtonColor(JButton clickedButton) {
-//	    //Reset màu cho nút đã chọn trước đó 
-//		
-//	    if (btnSelected  != null) {
-//	        btnSelected.setOpaque(false);
-//	        btnSelected.setBackground(Color.white);
-//	    }
-//
-//	    //Thiết lập màu cho nút vừa click
-//	    clickedButton.setOpaque(true); 
-//	    clickedButton.setBackground(new Color(173, 255, 47)); 
-//	    
-//	    // Cập nhật nút hiện tại vào biến tạm
-//	    btnSelected = clickedButton;
-//	    
-//	    // Vẽ lại nút đang chọn
-//	    clickedButton.repaint();
-//	}
 	
 	// Tùy chỉnh bo góc các component
 			public void setRoundBorder(JComponent cmp, int arc) {
@@ -566,195 +494,15 @@ public class BanHangGUI extends JPanel implements ActionListener {
 		Object o = e.getSource();
 		
 		if(o == btnProduct) {
-			cardLayout.show(pnlMain, "SAN_PHAM");
+			cardLayout.show(pnlMain,"SAN_PHAM");
 		}
-		else if(o == btnService) {
-			cardLayout.show(pnlMain, "DICH_VU");
+		else if(o == btnService)
+		{
+			cardLayout.show(pnlMain,"DICH_VU");
 		}
-		else if(o == txtSearchProduct) {
-			  String maSP = txtSearchProduct.getText();
-
-			    if (!maSP.isEmpty()) {
-			        try {
-						themSanPhamVaoBang(maSP);
-					} catch (SQLException e1) {
-						e1.printStackTrace();
-					}
-			    }
-		}else if (o == txtSearch) {
-		    String sdt = txtSearch.getText().trim();
-
-		    if (sdt.isEmpty()) {
-		        JOptionPane.showMessageDialog(
-		            this,
-		            "Vui lòng nhập số điện thoại khách hàng!",
-		            "Thông báo",
-		            JOptionPane.WARNING_MESSAGE
-		        );
-		        return;
-		    }
-
-		    KhachHang kh = kh_dao.timKiemKhachHangTheoSDT(sdt);
-
-		    if (kh != null) {
-		    	khachHangHienTai  = kh;
-		        lblNameDetail.setText(kh.getTenKH());
-		        lblPointDetail.setText(String.valueOf(kh.getDiemTichLuy()));
-
-		       
-		        diemTichLuyKhachHang = kh.getDiemTichLuy();
-
-		        chkPoints.setEnabled(diemTichLuyKhachHang > 0);
-		        chkPoints.setSelected(false);
-
-		        capNhatThongTinThanhToan();
-
-		        
-
-		    } else {
-		        lblNameDetail.setText("Unknown");
-		        lblPointDetail.setText("0");
-
-		        diemTichLuyKhachHang = 0;
-		        khachHangHienTai = null;
-
-		        chkPoints.setSelected(false);
-		        chkPoints.setEnabled(false);
-
-		        capNhatThongTinThanhToan();
-
-		        JOptionPane.showMessageDialog(
-		            this,
-		            "Không tìm thấy khách hàng với số điện thoại: " + sdt,
-		            "Thông báo",
-		            JOptionPane.WARNING_MESSAGE
-		        );
-		    }
-		}
-		else if (o == chkPoints) {
-		    capNhatThongTinThanhToan();
-		} else if (o == btnXoa) {
-		    int selectedRow = tblSanPham.getSelectedRow();
-
-		    if (selectedRow == -1) {
-		        JOptionPane.showMessageDialog(this,
-		                "Vui lòng chọn sản phẩm cần xóa!");
-		        return;
-		    }
-
 		
-		    int modelRow = tblSanPham.convertRowIndexToModel(selectedRow);
-
-		    model.removeRow(modelRow);
-
-		    capNhatThongTinThanhToan();
-		}else if (o == btnConfirm) {
-		   
-		}
-}
-			
-
-	private void themSanPhamVaoBang(String maSP) throws SQLException {
-	    // Tìm sản phẩm theo mã trong database
-		SanPham sp = sp_dao.timTheoMa(maSP);
-
-		if (sp != null) {
-
-		 
-		    boolean daTonTai = false;
-
-		    for (int i = 0; i < model.getRowCount(); i++) {
-		        String maSPTrongBang = model.getValueAt(i, 1).toString();
-
-		        if (maSPTrongBang.equals(sp.getMaSP())) {
-		            int soLuong = Integer.parseInt(
-		                model.getValueAt(i, 2).toString()
-		            );
-
-		           
-		            model.setValueAt(soLuong + 1, i, 2);
-
-		     
-		            model.setValueAt(
-		                sp.getGiaNY() * (soLuong + 1), i, 4
-		            );
-
-		            daTonTai = true;
-		            break;
-		        }
-		    }
-
-		  
-		    if (!daTonTai) {
-		        Object[] row = {
-		            sp.getTenSP(),
-		            sp.getMaSP(),
-		            1,
-		            sp.getGiaNY(),
-		            sp.getGiaNY()
-		        };
-
-		        model.addRow(row);
-		    }
-
-		    capNhatThongTinThanhToan();
-
-		    txtSearchProduct.setText("");
-
-		} else {
-		    JOptionPane.showMessageDialog(this,
-		        "Không tìm thấy sản phẩm có mã: " + maSP);
-		}
 	}
+		
 	
-	// cap nhat thong tin thanh toan
-	private void capNhatThongTinThanhToan() {
-	    int tongSoLuong = 0;
-	    double tongTien = 0;
-
-	    
-	    for (int i = 0; i < model.getRowCount(); i++) {
-
-	        int soLuong = Integer.parseInt(
-	            model.getValueAt(i, 2).toString()
-	        );
-
-	        double donGia = Double.parseDouble(
-	            model.getValueAt(i, 3).toString()
-	        );
-
-	        tongSoLuong += soLuong;
-	        tongTien += soLuong * donGia;
-	    }
-
-	    // Lưu tổng tiền hàng trước khi giảm
-	    tongTienHang = tongTien;
-
-	    // Tính tiền giảm từ điểm tích lũy
-	    double tienGiam = 0;
-
-	    if (chkPoints != null && chkPoints.isSelected()) {
-
-	        tienGiam = Math.min(
-	            diemTichLuyKhachHang * GIA_TRI_MOT_DIEM,
-	            tongTienHang
-	        );
-	    }
-
-	    // Tổng tiền sau khi giảm
-	    double tongThanhToan = tongTienHang - tienGiam;
-
-	    DecimalFormat df = new DecimalFormat("#,##0");
-
-	    // Cập nhật giao diện
-	    lblAmountDetail.setText(String.valueOf(tongSoLuong));
-
-	    lblTempDetail.setText(
-	        df.format(tongTienHang) + "đ"
-	    );
-
-	    lblTotalMoney.setText(
-	        df.format(tongThanhToan) + "đ"
-	    );
-	}
+	
 }
