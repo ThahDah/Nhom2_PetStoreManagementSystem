@@ -31,6 +31,7 @@ public class MainGUI extends JFrame implements ActionListener  {
 	private BanHangGUI banHang_UI;
 	private JButton btnBanHang;
 	private final String PANEL_BAN_HANG = "BanHang";
+	private JButton btnHoaDon;
 	public MainGUI() {
 		try {
 			ConnectDB.getInstance().connect();
@@ -94,6 +95,8 @@ public class MainGUI extends JFrame implements ActionListener  {
 		btnBanHang.setIconTextGap(15); 
 		btnBanHang.setBorder(BorderFactory.createEmptyBorder(5, 20, 5, 5));
 		
+		
+		
 		pnlTab.add(btnBanHang);
 		pnlLeft.add(pnlTab);
 		
@@ -109,6 +112,7 @@ public class MainGUI extends JFrame implements ActionListener  {
 	    banHang_UI = new BanHangGUI();
 	    pnlRight.add(banHang_UI, PANEL_BAN_HANG );
 		this.add(pnlRight);
+		
 		
 		btnBanHang.addActionListener(this);
 	}
