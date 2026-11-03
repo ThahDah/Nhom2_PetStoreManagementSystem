@@ -21,6 +21,7 @@ import entity.TrangThai;
 
 
 public class LichHenDAO {
+	private static final int GHI_CHU_TOI_DA = 255;
 	private static final DateTimeFormatter DINH_DANG_MA = DateTimeFormatter.ofPattern("ddMMyy");
 
 	private final ChiTietLichHenDAO chiTietLichHenDAO = new ChiTietLichHenDAO();
@@ -87,6 +88,10 @@ public class LichHenDAO {
 	public void taoLichHen(LichHen lichHen, List<ChiTietLichHen> dsChiTiet) throws NghiepVuException, SQLException {
 		if (dsChiTiet == null || dsChiTiet.isEmpty()) {
 			throw new NghiepVuException("Lịch hẹn phải có ít nhất một thú cưng và dịch vụ");
+		}
+		String ghiChu = lichHen.getGhiChu();
+		if (ghiChu != null && ghiChu.length() > GHI_CHU_TOI_DA) {
+			throw new NghiepVuException("Ghi chú không được quá " + GHI_CHU_TOI_DA + " ký tự");
 		}
 		Connection con = ConnectDB.getConnection();
 		try {

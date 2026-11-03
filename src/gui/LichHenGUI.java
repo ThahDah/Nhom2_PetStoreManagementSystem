@@ -78,7 +78,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		pnlHeader.add(pnlHeaderLeft, BorderLayout.WEST);
 
 		JPanel pnlTimKiem = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
-		JLabel lblTimKiem = new JLabel("Tìm khách hàng (mã hoặc tên):");
+		JLabel lblTimKiem = new JLabel("Tìm khách hàng (MãKH/TênKH/SĐT):");
 		lblTimKiem.setFont(lblTimKiem.getFont());
 		txtTimKiem = new JTextField(20);
 		btnTim = new JButton("Tìm");
@@ -138,7 +138,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 				        continue;
 				    }
 				    if (!chuanHoa(khachHang.getMaKH()).contains(tuKhoa)
-				            && !chuanHoa(khachHang.getTenKH()).contains(tuKhoa)) {
+				            && !chuanHoa(khachHang.getTenKH()).contains(tuKhoa) && !chuanHoa(khachHang.getSoDienThoai()).contains(tuKhoa)) {
 				        continue;
 				    }
 				}
