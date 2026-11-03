@@ -431,10 +431,12 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 	// ham doc ngay hen chi kiem tra dinh dang, quy tac nghiep vu do DAO xu ly
 	private LocalDate docNgayHen() {
 		try {
-			return LocalDate.parse(txtNgayHen.getText().trim(), DinhDang.NGAY);
+//			return LocalDate.parse(txtNgayHen.getText().trim(), DinhDang.NGAY);
+			return LocalDate.parse(txtNgayHen.getText().trim(), DinhDang.NGAY_NHAP);
 		} catch (DateTimeParseException ex) {
 			JOptionPane.showMessageDialog(this, "Ngày hẹn không hợp lệ. Định dạng: dd/MM/yyyy");
 			return null;
+			
 		}
 	}
 
