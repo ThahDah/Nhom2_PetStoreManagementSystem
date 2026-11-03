@@ -44,6 +44,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 	private NhanVien nhanVienDangNhap;
 	private ArrayList<LichHen> dsLichHen;
 	private JTextField txtTimKiem;
+	private JTextField txtTimMaLichHen;
 	private JButton btnTim;
 	private JButton btnLamMoi;
 
@@ -81,10 +82,14 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		JLabel lblTimKiem = new JLabel("Tìm khách hàng (MãKH/TênKH/SĐT):");
 		lblTimKiem.setFont(lblTimKiem.getFont());
 		txtTimKiem = new JTextField(20);
+		JLabel lblTimMaLichHen = new JLabel("Tìm mã lịch hẹn:");
+		txtTimMaLichHen = new JTextField(12);
 		btnTim = new JButton("Tìm");
 		btnLamMoi = new JButton("Làm mới");
 		pnlTimKiem.add(lblTimKiem);
 		pnlTimKiem.add(txtTimKiem);
+		pnlTimKiem.add(lblTimMaLichHen);
+		pnlTimKiem.add(txtTimMaLichHen);
 		pnlTimKiem.add(btnTim);
 		pnlTimKiem.add(btnLamMoi);
 		pnlTimKiem.setMaximumSize(new Dimension(Integer.MAX_VALUE, pnlTimKiem.getPreferredSize().height));
@@ -121,15 +126,20 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		btnTim.addActionListener(this);
 		btnLamMoi.addActionListener(this);
 		txtTimKiem.addActionListener(this);
+		txtTimMaLichHen.addActionListener(this);
 	}
 
 	// ham doc du lieu vao bang
 	public void docDuLieuVaoTable() {
 		String tuKhoa = chuanHoa(txtTimKiem.getText());
+		String maLichHenTim = chuanHoa(txtTimMaLichHen.getText());
 		model.setRowCount(0);
 		dsLichHen.clear();
 		try {
 			for (LichHen lichHen : lichHenDAO.layTatCa()) {
+				if (!chuanHoa(lichHen.getMaLH()).contains(maLichHenTim)) {
+					continue;
+				}
 				ArrayList<ChiTietLichHen> dsChiTiet = new ArrayList<ChiTietLichHen>(
 						chiTietLichHenDAO.timTheoLichHen(lichHen));
 				KhachHang khachHang = dsChiTiet.isEmpty() ? null : dsChiTiet.get(0).getThuCung().getChuSoHuu();
@@ -215,14 +225,26 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 			if (taoLichHenGUI.isDaTao()) {
 				docDuLieuVaoTable();
 			}
-		}else if (o.equals(btnTim) || o.equals(txtTimKiem)) {
+//		}else if (o.equals(btnTim) || o.equals(txtTimKiem)) {
+//		    docDuLieuVaoTable();
+//		    if (model.getRowCount() == 0 && !txtTimKiem.getText().trim().isEmpty()) {
+//		        JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn của khách hàng này",
+//		                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+//		    }
+//		} else if (o.equals(btnLamMoi)) {
+//		    txtTimKiem.setText("");
+//		    docDuLieuVaoTable();
+//		}
+		}else if (o.equals(btnTim) || o.equals(txtTimKiem) || o.equals(txtTimMaLichHen)) {
 		    docDuLieuVaoTable();
-		    if (model.getRowCount() == 0 && !txtTimKiem.getText().trim().isEmpty()) {
-		        JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn của khách hàng này",
+		    if (model.getRowCount() == 0 && (!txtTimKiem.getText().trim().isEmpty()
+		            || !txtTimMaLichHen.getText().trim().isEmpty())) {
+		        JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn phù hợp",
 		                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
 		    }
 		} else if (o.equals(btnLamMoi)) {
 		    txtTimKiem.setText("");
+		    txtTimMaLichHen.setText("");
 		    docDuLieuVaoTable();
 		}
 	}
