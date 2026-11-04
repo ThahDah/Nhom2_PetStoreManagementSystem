@@ -25,6 +25,7 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
 
+import common.DinhDang;
 import dao.ChiTietLichHenDAO;
 import dao.LichHenDAO;
 import entity.ChiTietLichHen;

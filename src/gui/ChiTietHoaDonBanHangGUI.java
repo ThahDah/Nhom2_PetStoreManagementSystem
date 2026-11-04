@@ -23,6 +23,8 @@ import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
+
+import common.DinhDang;
 import dao.ChiTietHoaDonDAO;
 import dao.HoaDonDAO;
 import entity.ChiTietHoaDon;

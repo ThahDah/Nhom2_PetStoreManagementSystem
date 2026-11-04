@@ -30,6 +30,7 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import common.DinhDang;
 import dao.DichVuDAO;
 import dao.KhachHangDAO;
 import dao.LichHenDAO;

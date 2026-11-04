@@ -107,6 +107,7 @@ public class LoginGUI extends JFrame implements ActionListener{
 		pnlMain.add(pnlFeature, BorderLayout.SOUTH);
 		
 		btnExit.addActionListener(this);
+		btnLogin.addActionListener(this);
 	}
 
 	@Override
@@ -115,6 +116,9 @@ public class LoginGUI extends JFrame implements ActionListener{
 		
 		if(o == btnExit) {
 			System.exit(1);
+		}
+		else {
+			new MainGUI().setVisible(true);
 		}
 	}
 	

@@ -31,21 +31,21 @@ import javax.swing.table.DefaultTableModel;
 import com.formdev.flatlaf.FlatLightLaf;
 
 @SuppressWarnings("serial")
-public class ThongKeTaiChinh_GUI extends JPanel {
+public class ThongKeTaiChinhGUI extends JPanel {
 
-	private PanelThongKeTuan_GUI pnlTuan;
-	private PanelThongKeThang_GUI pnlThang;
-	private PanelThongKeNam_GUI pnlNam;
+	private PanelThongKeTuanGUI pnlTuan;
+	private PanelThongKeThangGUI pnlThang;
+	private PanelThongKeNamGUI pnlNam;
 
-	public ThongKeTaiChinh_GUI() {
+	public ThongKeTaiChinhGUI() {
 		setSize(1400,700);
         setLayout(new BorderLayout());
         
         JTabbedPane tabbedPane = new JTabbedPane();
-        pnlTuan = new PanelThongKeTuan_GUI();
+        pnlTuan = new PanelThongKeTuanGUI();
         
-		pnlThang = new PanelThongKeThang_GUI();
-		pnlNam = new PanelThongKeNam_GUI();
+		pnlThang = new PanelThongKeThangGUI();
+		pnlNam = new PanelThongKeNamGUI();
         
         // danh sach tab con
         tabbedPane.addTab("Theo Tuần", pnlTuan);
@@ -101,7 +101,7 @@ public class ThongKeTaiChinh_GUI extends JPanel {
             frame.setLocationRelativeTo(null); // Hiển thị cửa sổ ở giữa màn hình
             
             // 2. Khởi tạo JPanel của bạn
-            ThongKeTaiChinh_GUI mainPanel = new ThongKeTaiChinh_GUI();
+            ThongKeTaiChinhGUI mainPanel = new ThongKeTaiChinhGUI();
             
             // 3. Thêm JPanel vào JFrame
             frame.add(mainPanel);

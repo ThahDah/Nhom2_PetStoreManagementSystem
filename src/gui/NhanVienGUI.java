@@ -46,7 +46,9 @@ import entity.NhanVien;
 import entity.TrangThai;
 
 
-public class NhanVien_GUI extends JFrame implements ActionListener, MouseListener{
+//import dao.NhanVien_dao;
+
+public class NhanVienGUI extends JPanel implements ActionListener, MouseListener{
 /**
 	 * 
 	 */
@@ -85,7 +87,7 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 
 	private AbstractButton btnPhatSinhMa;
 
-	public NhanVien_GUI() {
+	public NhanVienGUI() {
 		
 		setSize(1450, 800);
 		setLayout(new BorderLayout());
@@ -284,22 +286,7 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
             JOptionPane.showMessageDialog(this, "Không thể kết nối tới Cơ sở dữ liệu!\n" + e.getMessage());
         }
 }
-	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			
-
-	        UIManager.put("Button.arc", 15);
-	        UIManager.put("Component.arc", 12);
-	        UIManager.put("TextComponent.arc", 10);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		SwingUtilities.invokeLater(() -> {
-			new NhanVien_GUI().setVisible(true);
-		});
-	}
+	
 	
 	private void DocDuLieuVaoTable() {
 	    model.setRowCount(0); 
