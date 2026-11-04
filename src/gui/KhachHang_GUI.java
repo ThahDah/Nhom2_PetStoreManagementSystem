@@ -33,15 +33,14 @@ import javax.swing.table.TableRowSorter;
 import com.formdev.flatlaf.FlatLightLaf;
 
 
-//import entity.KhachHang;
-//import connectDB.ConnectDB;
-//import dao.KhachHang_dao;
-//import entity.LoaiKhachHang;
+import entity.KhachHang;
+import connectDB.ConnectDB;
+import dao.KhachHangDAO;
 
 
 public class KhachHang_GUI extends JFrame implements ActionListener, MouseListener{
 		
-//	private KhachHang_dao kh_dao = new KhachHang_dao();
+	private KhachHangDAO kh_dao = new KhachHangDAO();
 	private TableRowSorter<DefaultTableModel> rowSorter; //bo loc tim kiem
 	
 	private JTextField txtMKH;
@@ -62,6 +61,7 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	private JButton btnLamMoi;
 	private JTextField txtEmail;
 	private JButton btnTimKiem;
+	private JButton btnPhatSinhMa;
 
 	public KhachHang_GUI() {
 		
@@ -82,7 +82,7 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		JPanel thongTinKH = new JPanel();
 		thongTinKH.setBorder(BorderFactory.createTitledBorder("Thông tin khách hàng"));
 		
-		Box b,b1,b2,b3,b4,b5,b6,b7,b8,b9;
+		Box b,b1,b2,b3,b4,b5,b6,b7,b8,b9,b10;
 		b=Box.createVerticalBox();
 		b1=Box.createHorizontalBox();
 		b2=Box.createHorizontalBox();
@@ -93,9 +93,11 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		b7=Box.createHorizontalBox();
 		b8=Box.createHorizontalBox();
 		b9=Box.createHorizontalBox();
+		b10=Box.createHorizontalBox();
 		
 		JLabel maKH=new JLabel("Mã khách hàng:   ");
 		txtMKH= new JTextField(10);
+		txtMKH.setEditable(false);
 		b1.add(maKH); b1.add(txtMKH);
 		b.add(b1);
 		b.add(Box.createVerticalStrut(40));
@@ -150,6 +152,16 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		menu.add(btnLamMoi);
 		b9.add(menu);
 		b.add(b9);
+		
+		//nut phat sinh ma
+		JMenuBar menu2=new JMenuBar();
+		
+		btnPhatSinhMa=new JButton("Phát sinh mã");
+		
+		menu2.add(Box.createHorizontalStrut(5));
+		menu2.add(btnPhatSinhMa);
+		b10.add(menu2);
+		b.add(b10);
 		
 		
 		thongTinKH.add(b);
@@ -218,21 +230,21 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		btnXoa.addActionListener(this);
 		btnLamMoi.addActionListener(this);
 		btnTimKiem.addActionListener(this);
-		
+		btnPhatSinhMa.addActionListener(this);
 		//dk sk click chuot
 		table.addMouseListener(this);
 		
-//		try {
-//			connectDB.ConnectDB.getInstance().connect();
-//			System.out.println("Kết nối cơ sở dữ liệu thành công!");
-//			
-//			// ghi mo app, du lieu hien len lien
-//			DocDuLieuVaoTable(); 
-//			
-//		} catch (java.sql.SQLException e) {
-//			e.printStackTrace();
-//			JOptionPane.showMessageDialog(this, "Không thể kết nối tới Cơ sở dữ liệu!\n" + e.getMessage());
-//		}
+		try {
+			connectDB.ConnectDB.getInstance().connect();
+			System.out.println("Kết nối cơ sở dữ liệu thành công!");
+			
+			// ghi mo app, du lieu hien len lien
+			DocDuLieuVaoTable(); 
+			
+		} catch (java.sql.SQLException e) {
+			e.printStackTrace();
+			JOptionPane.showMessageDialog(this, "Không thể kết nối tới Cơ sở dữ liệu!\n" + e.getMessage());
+		}
 	}
 
 	public static void main(String[] args) {
@@ -254,40 +266,40 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	}
 
 	// doc du lieu tu table
-//	private void DocDuLieuVaoTable() {
-//		model.setRowCount(0); //xoa du lieu cu
-//		ArrayList<KhachHang> listKH = kh_dao.getTableKhachHang();
-//		for (KhachHang kh : listKH) {
-//			model.addRow(new Object[] { 
-//				    kh.getMaKH(), 
-//				    kh.getTenKH(),
-//				    kh.getSoDienThoai(),
-//				    kh.getDiemTichLuy(),
-//				    kh.getDiemDaNhan()
-//				});
-//		}
-//	}
+	private void DocDuLieuVaoTable() {
+		model.setRowCount(0); //xoa du lieu cu
+		ArrayList<KhachHang> listKH = kh_dao.getTableKhachHang();
+		for (KhachHang kh : listKH) {
+			model.addRow(new Object[] { 
+				    kh.getMaKH(), 
+				    kh.getTenKH(),
+				    kh.getSoDienThoai(),
+				    kh.getEmail(),
+				    kh.getDiemTichLuy()
+				});
+		}
+	}
 
 	//Phat sinh ma: KH1 KH2
-//	private String phatSinhMaKH() {
-//		ArrayList<KhachHang> listKH = kh_dao.getTableKhachHang();
-//		if (listKH.isEmpty()) {
-//			return "KH1";
-//		}
-//		int max = 0;
-//		for (KhachHang kh : listKH) {
-//			String ma = kh.getMaKH();
-//			try {
-//				int so = Integer.parseInt(ma.substring(2)); // Cat chu KH, lay so
-//				if (so > max) {
-//					max = so;
-//				}
-//			} catch (Exception e) {
-//				// Bỏ qua lỗi parse
-//			}
-//		}
-//		return String.format("KH%d", max + 1);
-//	}
+	private String phatSinhMaKH() {
+		ArrayList<KhachHang> listKH = kh_dao.getTableKhachHang();
+		if (listKH.isEmpty()) {
+			return "KH1";
+		}
+		int max = 0;
+		for (KhachHang kh : listKH) {
+			String ma = kh.getMaKH();
+			try {
+				int so = Integer.parseInt(ma.substring(2)); // Cat chu KH, lay so
+				if (so > max) {
+					max = so;
+				}
+			} catch (Exception e) {
+				// Bỏ qua lỗi parse
+			}
+		}
+		return String.format("KH%d", max + 1);
+	}
 
 	//Bieu thuc chinh quy
 	private boolean validData() {
@@ -365,9 +377,8 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
 
-		
 		if (o.equals(btnLamMoi)) {
-//			txtMKH.setText(phatSinhMaKH()); 
+			txtMKH.setText(phatSinhMaKH()); 
 			txtMKH.setEditable(false);
 			txtTenKH.setText("");
 			txtSDT.setText("");
@@ -393,19 +404,16 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 					String ma = txtMKH.getText().trim();
 					String ten = txtTenKH.getText().trim();
 					String sdt = txtSDT.getText().trim();
+					String email=txtEmail.getText().trim();
 					int diemTL = Integer.parseInt(txtDiemTLKH.getText().trim()); //ep kieu
-					int diemDN = Integer.parseInt(txtDiemDaNhan.getText().trim());
 
-					// lay obj tu Enum vao Combobox
-//					LoaiKhachHang loai = (LoaiKhachHang) loaiKH.getSelectedItem();
-//
-//					KhachHang kh = new KhachHang(ma, ten, sdt, diemTL, diemDN, loai);
+					KhachHang kh = new KhachHang(ma, ten, sdt, email, diemTL);
 
-//					if (kh_dao.themKhachHang(kh)) {
-//						model.addRow(new Object[] {ma, ten, sdt, diemTL, diemDN, loai});
-//						JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công!");
-//						btnLamMoi.doClick(); 
-//					}
+					if (kh_dao.themKhachHang(kh)) {
+						model.addRow(new Object[] {ma, ten, sdt, email, diemTL});
+						JOptionPane.showMessageDialog(this, "Thêm khách hàng thành công!");
+						btnLamMoi.doClick(); 
+					}
 				} catch (Exception ex) {
 					JOptionPane.showMessageDialog(this, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
 				}
@@ -426,19 +434,19 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 					String ma = txtMKH.getText().trim();
 					String ten = txtTenKH.getText().trim();
 					String sdt = txtSDT.getText().trim();
+					String email=txtEmail.getText().trim();
 					int diemTL = Integer.parseInt(txtDiemTLKH.getText().trim()); //ep kieu
-					int diemDN = Integer.parseInt(txtDiemDaNhan.getText().trim());
 
 				
-//					KhachHang kh = new KhachHang(ma, ten, sdt, diemTL, diemDN);
+					KhachHang kh = new KhachHang(ma, ten, sdt, email, diemTL);
 
-//					if (kh_dao.suaKhachHang(kh)) {
-//						model.setValueAt(ten, row, 1);
-//						model.setValueAt(sdt, row, 2);
-//						model.setValueAt(diemTL, row, 3);
-//						model.setValueAt(diemDN,row,4);
-//						JOptionPane.showMessageDialog(this, "Cập nhật khách hàng thành công!");
-//					}
+					if (kh_dao.suaKhachHang(kh)) {
+						model.setValueAt(ten, row, 1);
+						model.setValueAt(sdt, row, 2);
+						model.setValueAt(email, row, 3);
+						model.setValueAt(diemTL, row, 4);
+						JOptionPane.showMessageDialog(this, "Cập nhật khách hàng thành công!");
+					}
 				} catch (Exception ex) {
 					JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật!", "Lỗi", JOptionPane.ERROR_MESSAGE);
 				}
@@ -461,20 +469,24 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 				"Bạn có chắc muốn xóa khách hàng '" + tenKH + "'?", "Xác nhận", 
 				JOptionPane.YES_NO_OPTION);
 
-//			if (confirm == JOptionPane.YES_OPTION) {
-//				try {
-//					if (kh_dao.xoaKhachHang(maKH)) {
-//						model.removeRow(row);
-//						JOptionPane.showMessageDialog(this, "Xóa thành công!");
-//						btnLamMoi.doClick();
-//					}
-//				} catch (Exception ex) {
-//					JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi xóa", JOptionPane.ERROR_MESSAGE);
-//				}
-//			}
+			if (confirm == JOptionPane.YES_OPTION) {
+				try {
+					if (kh_dao.xoaKhachHang(maKH)) {
+						model.removeRow(row);
+						JOptionPane.showMessageDialog(this, "Xóa thành công!");
+						btnLamMoi.doClick();
+					}
+				} catch (Exception ex) {
+					JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi xóa", JOptionPane.ERROR_MESSAGE);
+				}
+			}
 		}
 		else if (o.equals(btnTimKiem)) {
 		    locDuLieu(); // goi ham locDuLieu
+		}
+		
+		else if (o.equals(btnPhatSinhMa)) {
+		    txtMKH.setText(phatSinhMaKH());
 		}
 	}
 
