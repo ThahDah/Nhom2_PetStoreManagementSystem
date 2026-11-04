@@ -22,6 +22,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
@@ -43,7 +44,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
     private JTextField txtTenTC;
     private JComboBox<Loai> loaiTC;
     private JTextField txtCanNang;
-    private JTextField txtGhiChu;
+    private JTextArea txtGhiChu;
     private JComboBox<TrangThai> trangThai;
     private JComboBox<DoHungDu> doHungDu;
     private JComboBox<KhachHang> chuSoHuu;
@@ -125,7 +126,11 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
 
         JLabel ghiChu = new JLabel("Ghi chú:");
         ghiChu.setPreferredSize(maTC.getPreferredSize());
-        txtGhiChu = new JTextField(10);
+        txtGhiChu = new JTextArea(10, 3);
+        txtGhiChu.setLineWrap(true);
+        txtGhiChu.setWrapStyleWord(true);  
+
+        JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
         b5.add(ghiChu);
         b5.add(txtGhiChu);
         b.add(b5);
@@ -155,7 +160,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
         b.add(b8);
         b.add(Box.createVerticalStrut(20));
 
-        JMenuBar menu = new JMenuBar();
+        JPanel menu = new JPanel();
         btnThem = new JButton("Thêm");
         btnCapNhat = new JButton("Cập nhật");
         btnXoa = new JButton("Xóa");
@@ -179,7 +184,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
         b.add(Box.createVerticalStrut(10));
 
         // nut phat sinh ma
-        JMenuBar menu2 = new JMenuBar();
+        JPanel menu2 = new JPanel();
         btnPhatSinhMa = new JButton("Phát sinh mã");
         btnPhatSinhMa.addActionListener(this); //dk su kien
         

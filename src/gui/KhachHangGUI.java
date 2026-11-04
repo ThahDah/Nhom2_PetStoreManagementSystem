@@ -138,7 +138,7 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 		b.add(b5);
 		b.add(Box.createVerticalStrut(40));
 		
-		JMenuBar menu=new JMenuBar();
+		JPanel menu=new JPanel();
 		btnThem=new JButton("Thêm");
 		btnCapNhat=new JButton("Cập nhật");
 		btnXoa=new JButton("Xóa");
@@ -153,9 +153,10 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 		b9.add(menu);
 		b.add(b9);
 		
-		//nut phat sinh ma
-		JMenuBar menu2=new JMenuBar();
 		
+		//nut phat sinh ma
+		JPanel menu2=new JPanel();
+		menu2.add(Box.createHorizontalStrut(5));
 		btnPhatSinhMa=new JButton("Phát sinh mã");
 		
 		menu2.add(Box.createHorizontalStrut(5));
@@ -482,12 +483,9 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 			txtMKH.setText(model.getValueAt(row, 0) != null ? model.getValueAt(row, 0).toString() : "");
 			txtTenKH.setText(model.getValueAt(row, 1) != null ? model.getValueAt(row, 1).toString() : "");
 			txtSDT.setText(model.getValueAt(row, 2) != null ? model.getValueAt(row, 2).toString() : "");
-//			txtEmail.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 3).toString() : "");
-			txtDiemTLKH.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 4).toString() : "");
-			txtDiemDaNhan.setText(model.getValueAt(row, 4).toString());
-			String loaiStr = model.getValueAt(row, 5).toString();
-			
-			
+			txtEmail.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 3).toString() : "");
+			txtDiemTLKH.setText(model.getValueAt(row, 4) != null ? model.getValueAt(row, 4).toString() : "");
+				
 			txtMKH.setEditable(false); // khong duoc sua ma khi xem
 		}
 	}
