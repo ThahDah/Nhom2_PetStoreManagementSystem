@@ -46,8 +46,6 @@ import entity.NhanVien;
 import entity.TrangThai;
 
 
-//import dao.NhanVien_dao;
-
 public class NhanVien_GUI extends JFrame implements ActionListener, MouseListener{
 /**
 	 * 
