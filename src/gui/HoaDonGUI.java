@@ -34,6 +34,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.JTableHeader;
 import com.toedter.calendar.JDateChooser;
+
+import common.DinhDang;
 import dao.HoaDonDAO;
 import entity.TrangThai;
 public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {

@@ -38,7 +38,7 @@ import java.util.ArrayList;
 
 import javax.swing.JOptionPane;
 
-public class SanPhamGUI extends JFrame implements ActionListener, MouseListener,KeyListener{
+public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,KeyListener{
 
     private JTextField txtMaSP, txtTenSP;
     private JTextField txtSoLuongTon, txtGiaNiemYet, txtGiaBan;
@@ -225,17 +225,7 @@ public class SanPhamGUI extends JFrame implements ActionListener, MouseListener,
         tblSanPham.addMouseListener(this);
         txtTimMaSP.addKeyListener(this);
     }
-    public static void main(String[] args) {
-    	FlatLightLaf.setup();
-    	SanPhamGUI frame = new SanPhamGUI();
-    	
-		
-        frame.setTitle("Quản lý sản phẩm");
-        frame.setSize(1200, 750);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
-	}
+  
 	@Override
 	public void keyTyped(KeyEvent e) {
 		// TODO Auto-generated method stub

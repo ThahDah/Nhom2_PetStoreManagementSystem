@@ -38,7 +38,7 @@ import entity.TrangThai;
 import dao.ThuCungDAO;
 import entity.ThuCung;
 
-public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener {
+public class ThuCungGUI extends JPanel implements ActionListener, MouseListener {
     private JTextField txtMTC;
     private JTextField txtTenTC;
     private JComboBox<Loai> loaiTC;
@@ -61,12 +61,10 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
 	
 	private ThuCungDAO tc_dao=new ThuCungDAO();
 
-    public ThuCung_GUI() {
+    public ThuCungGUI() {
         setSize(1200, 800);
         setLayout(new BorderLayout());
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-        setLocationRelativeTo(null); 
-
+    
         // --- NORTH PANEL ---
         JPanel nothTitle = new JPanel();
         JLabel lblNTitile = new JLabel("Quản lý thú cưng");
@@ -259,24 +257,7 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
          }
     } 
     
-    public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			
-			FlatLightLaf.setup();
-
-	        UIManager.put("Button.arc", 15);
-	        UIManager.put("Component.arc", 12);
-	        UIManager.put("TextComponent.arc", 10);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		SwingUtilities.invokeLater(() -> {
-			new ThuCung_GUI().setVisible(true);
-		});
-	}
-
+    
     // doc du lieu tu table
  	private void DocDuLieuVaoTable() {
  		model.setRowCount(0); //xoa du lieu cu

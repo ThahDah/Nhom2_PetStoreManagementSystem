@@ -18,18 +18,18 @@ import org.jfree.chart.ChartPanel;
 
 import com.formdev.flatlaf.ui.FlatLineBorder;
 
-public class PanelThongKeNam_GUI  extends JPanel{
+public class PanelThongKeThangGUI extends JPanel{
 	private JLabel lblDoanhThuValue, lblChiPhiValue, lblLoiNhuanValue, lblKhachHangValue, lblHoaDonValue, lblSanPhamValue;
     private ChartPanel chartPanel;
-//    private ThongKeTaiChinhNam_dao tkDao;
+//    private ThongKeTaiChinhThang_dao tkDao;
 	private JTextArea txtDeXuat;
-	public PanelThongKeNam_GUI() {
-//		tkDao = new ThongKeTaiChinhNam_dao(); //khoi tao dao
+	public PanelThongKeThangGUI() {
+//		tkDao = new ThongKeTaiChinhThang_dao(); //khoi tao dao
         setLayout(new BorderLayout(10, 10));
         setBackground(Color.WHITE);
 
         // --- tieu de ben tren
-        JLabel lblHeader = new JLabel("Thống kê Doanh thu: Theo năm", JLabel.CENTER);
+        JLabel lblHeader = new JLabel("Thống kê Doanh thu: Theo tháng", JLabel.CENTER);
         lblHeader.setFont(new Font("Arial", Font.BOLD, 22));
         lblHeader.setOpaque(true);
         lblHeader.setBackground(new Color(189, 215, 238));
@@ -126,11 +126,11 @@ public class PanelThongKeNam_GUI  extends JPanel{
         p.add(lblValue); 
         return p;
     }
-	
+		
 	//bo goc cho the
 	private void boGocComponent(JComponent comp, int doCong) {
 		comp.setBorder(new FlatLineBorder(
 		        new Insets(5, 10, 5, 10), new Color(200, 200, 200), 1, 15));
-	}
+	}	
 	
 }

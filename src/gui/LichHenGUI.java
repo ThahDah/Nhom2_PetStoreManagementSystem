@@ -27,6 +27,7 @@ import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
 
+import common.DinhDang;
 import dao.ChiTietLichHenDAO;
 import dao.LichHenDAO;
 import entity.ChiTietLichHen;
@@ -48,8 +49,8 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 	private JButton btnTim;
 	private JButton btnLamMoi;
 
-	public LichHenGUI(NhanVien nhanVienDangNhap) {
-		this.nhanVienDangNhap = nhanVienDangNhap;
+	public LichHenGUI() {
+//		this.nhanVienDangNhap = nhanVienDangNhap;
 		lichHenDAO = new LichHenDAO();
 		chiTietLichHenDAO = new ChiTietLichHenDAO();
 		dsLichHen = new ArrayList<LichHen>();
