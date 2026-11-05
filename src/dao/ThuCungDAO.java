@@ -53,6 +53,53 @@ public class ThuCungDAO {
 				chuSoHuu);
 	}
 	
+	// Tìm thú cưng theo số điện thoại khách hàng
+	public ArrayList<ThuCung> timThuCungTheoSoDienThoai(String soDienThoai) {
+	    ArrayList<ThuCung> dsTC = new ArrayList<ThuCung>();
+	    Connection con = ConnectDB.getConnection();
+	    PreparedStatement stmt = null;
+	    try {
+	        // Kết hợp 2 bảng ThuCung và KhachHang, lọc theo số điện thoại
+	        String sql = "SELECT tc.*, kh.tenKH " +
+	                     "FROM ThuCung tc " +
+	                     "JOIN KhachHang kh ON tc.maKH = kh.maKH " +
+	                     "WHERE kh.soDienThoai = ?";
+	                     
+	        stmt = con.prepareStatement(sql);
+	        stmt.setString(1, soDienThoai);
+	        ResultSet rs = stmt.executeQuery();
+	        
+	        while (rs.next()) {
+	            String ma = rs.getString("maThuCung");
+	            String ten = rs.getString("tenThuCung");
+
+	            String loaiStr = rs.getString("loai"); 
+	            Loai loai = Loai.valueOf(loaiStr.trim()); 
+	            
+	            double canNang = rs.getDouble("canNang");
+	            String ghiChu = rs.getString("ghiChu");
+	            
+	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
+	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
+	            
+	            String doHungDuStr = rs.getString("doHungDu");
+	            DoHungDu doHungDu = DoHungDu.valueOf(doHungDuStr.trim());
+	            
+	            String maKH = rs.getString("maKH");
+	            String tenKH = rs.getString("tenKH");
+	            
+	            // Khởi tạo đối tượng KhachHang và ThuCung giống như hàm getTableThuCung()
+	            KhachHang khachHang = new KhachHang(maKH, tenKH);
+	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
+	            
+	            dsTC.add(tc);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return dsTC;
+	}
+	
 	// doc du lieu tu database
 	public ArrayList<ThuCung> getTableThuCung() {
 		ArrayList<ThuCung> dsTC = new ArrayList<ThuCung>();
@@ -156,6 +203,7 @@ public class ThuCungDAO {
 		               "FROM ThuCung tc " +
 		               "JOIN KhachHang kh ON tc.maKH = kh.maKH " +
 		               "WHERE tc.maThuCung = ?";
+			stmt = con.prepareStatement(query);
 			ResultSet rs = stmt.executeQuery();
 			while(rs.next()) {
 				String ma = rs.getString("maThuCung");

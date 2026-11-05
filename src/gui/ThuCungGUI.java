@@ -61,6 +61,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
 	private JTextField txtTimMTC;
 	
 	private ThuCungDAO tc_dao=new ThuCungDAO();
+	private JTextField txtTimTCTheoSdtKH;
 
     public ThuCungGUI() {
         setSize(1200, 800);
@@ -206,13 +207,14 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
   		pTimKH.setBorder(BorderFactory.createTitledBorder("Tìm kiếm thú cưng"));
 
   		
-  		JLabel lblSDTKH=new JLabel("Nhập mã thú cưng:");
-  		txtTimMTC=new JTextField(10);
-  		pTimKH.add(lblSDTKH); pTimKH.add(txtTimMTC);
+  		JLabel lblSDTKH=new JLabel("Nhập số điện thoại khách hàng:");
+  		txtTimTCTheoSdtKH=new JTextField(10);
+  		pTimKH.add(lblSDTKH); pTimKH.add(txtTimTCTheoSdtKH);
   		
   		
   		btnTimKiem = new JButton("Tìm kiếm");
   		pTimKH.add(btnTimKiem);
+  		btnTimKiem.addActionListener(this);
   		
   		c.add(pTimKH);
   		
@@ -305,23 +307,33 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
 	
 	// loc du lieu tren table, btn tim
 	private void locDuLieu() {
-		try {
-			ArrayList<RowFilter<Object, Object>> filters = new ArrayList<>();
-			
-			String maTC = txtTimMTC.getText().trim();
-			if (!maTC.isEmpty()) {
-				filters.add(RowFilter.regexFilter("(?i)" + maTC, 0)); // Cột 0: Mã KH
-			}
-
-			
-			if (filters.isEmpty()) {
-				rowSorter.setRowFilter(null);
-			} else {
-				rowSorter.setRowFilter(RowFilter.andFilter(filters));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	    String sdt = txtTimTCTheoSdtKH.getText().trim();
+	    
+	    if (sdt.isEmpty()) {
+	        DocDuLieuVaoTable();
+	    } else {
+	        ArrayList<ThuCung> listTC = tc_dao.timThuCungTheoSoDienThoai(sdt);
+	        
+	        model.setRowCount(0); // Xóa dữ liệu cũ trên bảng đang hiển thị
+	        
+	        if (listTC.isEmpty()) {
+	            JOptionPane.showMessageDialog(this, "Không tìm thấy thú cưng nào với số điện thoại: " + sdt);
+	            
+	        } else {
+	            for (ThuCung tc : listTC) {
+	                model.addRow(new Object[] { 
+	                    tc.getMaThuCung(), 
+	                    tc.getTenThuCung(),
+	                    tc.getLoai(),
+	                    tc.getCanNang(),
+	                    tc.getGhiChu(),
+	                    tc.getTrangThaiThuCung(),
+	                    tc.getDoHungDu(),
+	                    tc.getChuSoHuu().getTenKH()
+	                });
+	            }
+	        }
+	    }
 	}
 	
 	private boolean validData() {

@@ -1,6 +1,7 @@
 -- =====================================================================
 --  CSDL PetShop LAND (SQL Server) - phần phục vụ chức năng Lịch hẹn
 -- =====================================================================
+
 USE master;
 GO
 IF DB_ID('PetShopLand') IS NOT NULL
@@ -29,8 +30,13 @@ CREATE TABLE NhanVien (
     tenNV        NVARCHAR(100) NOT NULL,
     soDienThoai  VARCHAR(10)   NOT NULL UNIQUE,
     email        VARCHAR(100)  NULL,
-    trangThaiNV  VARCHAR(20)   NOT NULL DEFAULT 'CON_LAM',   -- tên hằng enum TrangThai
-    hinhAnh      VARCHAR(255)  NULL
+    trangThaiNV  VARCHAR(20)   NOT NULL DEFAULT 'CON_LAM',   
+    hinhAnh      VARCHAR(255)  NULL,
+
+    CONSTRAINT CHK_NhanVien_maNV CHECK (maNV LIKE 'NV[0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
+    CONSTRAINT CHK_NhanVien_soDienThoai CHECK (soDienThoai LIKE '0[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]'),
+    CONSTRAINT CHK_NhanVien_email CHECK (email LIKE '%_@__%.__%'),
+    CONSTRAINT CHK_NhanVien_trangThaiNV CHECK (trangThaiNV IN ('CON_LAM', 'DA_NGHI')) 
 );
 
 CREATE TABLE DichVu (
@@ -74,7 +80,20 @@ CREATE TABLE ChiTietLichHen (
     CONSTRAINT FK_CTLH_DichVu   FOREIGN KEY (maDV)      REFERENCES DichVu(maDV),
     CONSTRAINT CK_CTLH_DonGia   CHECK (donGia > 0)
 );
+
+CREATE TABLE TaiKhoan (
+    tenTaiKhoan VARCHAR(50) NOT NULL PRIMARY KEY,
+    matKhau VARCHAR(255) NOT NULL,
+    vaiTroTK VARCHAR(20) NOT NULL, -- Vd: 'QUAN_LY', 'NHAN_VIEN'
+    trangThaiTK VARCHAR(20) NOT NULL DEFAULT 'HOAT_DONG',
+    maNV VARCHAR(9) NOT NULL UNIQUE, -- Đảm bảo quan hệ 1-1
+
+    CONSTRAINT FK_TaiKhoan_NhanVien FOREIGN KEY (maNV) REFERENCES NhanVien(maNV),
+    CONSTRAINT CK_TaiKhoan_TrangThai CHECK (trangThaiTK IN ('HOAT_DONG', 'KHOA'))
+);
 GO
+
+
 
 -- ------------------------------- DỮ LIỆU MẪU -------------------------------
 -- =====================================================================
@@ -317,85 +336,38 @@ CREATE TABLE HoaDon (
     maHD VARCHAR(12) NOT NULL PRIMARY KEY,
     ngayLap DATETIME NOT NULL DEFAULT GETDATE(),
     tongTien DECIMAL(18,2) NOT NULL,
-    trangThaiHD VARCHAR(30) NOT NULL
-        DEFAULT 'CHUA_THANH_TOAN',
+    trangThaiHD VARCHAR(30) NOT NULL DEFAULT 'CHUA_THANH_TOAN',
     phuongThucTT VARCHAR(30) NULL,
     maKH VARCHAR(10) NOT NULL,
+    maNV VARCHAR(9) NOT NULL, -- Khóa ngoại NhanVien
 
-    CONSTRAINT FK_HoaDon_KhachHang
-        FOREIGN KEY (maKH)
-        REFERENCES KhachHang(maKH),
-
-    CONSTRAINT CK_HoaDon_TongTien
-        CHECK (tongTien > 0),
-
-    CONSTRAINT CK_HoaDon_TrangThai
-        CHECK (trangThaiHD IN (
-            'CHUA_THANH_TOAN',
-            'DA_THANH_TOAN'
-        )),
-
-    CONSTRAINT CK_HoaDon_PhuongThuc
-        CHECK (
-            phuongThucTT IS NULL
-            OR phuongThucTT IN (
-                'TIEN_MAT',
-                'THE_TIN_DUNG'
-            )
-        )
+    CONSTRAINT FK_HoaDon_KhachHang FOREIGN KEY (maKH) REFERENCES KhachHang(maKH),
+    CONSTRAINT FK_HoaDon_NhanVien FOREIGN KEY (maNV) REFERENCES NhanVien(maNV),
+    CONSTRAINT CK_HoaDon_TongTien CHECK (tongTien > 0),
+    CONSTRAINT CK_HoaDon_TrangThai CHECK (trangThaiHD IN ('CHUA_THANH_TOAN', 'DA_THANH_TOAN')),
+    CONSTRAINT CK_HoaDon_PhuongThuc CHECK (phuongThucTT IS NULL OR phuongThucTT IN ('TIEN_MAT', 'THE_TIN_DUNG'))
 );
 GO
--- Dữ liệu mẫu 
-INSERT INTO HoaDon
-    (maHD, ngayLap, tongTien, trangThaiHD, phuongThucTT, maKH)
-VALUES
--- HÓA ĐƠN BÁN HÀNG
-('HDBH15102601', '2026-10-15T09:30:00', 350000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0001'),
-('HDBH16102601', '2026-10-16T10:15:00', 450000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0002'),
-('HDBH17102601', '2026-10-17T14:20:00', 210000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0003'),
-('HDBH18102601', '2026-10-18T08:45:00', 180000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0004'),
-('HDBH19102601', '2026-10-19T11:00:00', 250000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0005'),
-('HDBH20102601', '2026-10-20T15:30:00', 520000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0006'),
-('HDBH22102601', '2026-10-22T09:10:00', 175000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0007'),
-('HDBH25102601', '2026-10-25T13:40:00', 390000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0008'),
-('HDBH29102601', '2026-10-29T16:00:00', 120000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0009'),
-('HDBH02112601', '2026-11-02T09:00:00', 265000, 'CHUA_THANH_TOAN', NULL, 'KH0010'),
-('HDBH02112602', '2026-11-02T10:30:00', 430000, 'CHUA_THANH_TOAN', NULL, 'KH0001'),
-('HDBH02112603', '2026-11-02T14:00:00', 150000, 'CHUA_THANH_TOAN', NULL, 'KH0002'),
 
--- HÓA ĐƠN DỊCH VỤ
-('HDDV15102601', '2026-10-15T11:00:00', 180000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0003'),
-('HDDV17102601', '2026-10-17T15:00:00', 250000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0004'),
-('HDDV20102601', '2026-10-20T10:00:00', 320000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0005'),
-('HDDV23102601', '2026-10-23T14:30:00', 200000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0006'),
-('HDDV27102601', '2026-10-27T09:45:00', 280000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0007'),
-('HDDV30102601', '2026-10-30T16:15:00', 350000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0008'),
-('HDDV02112601', '2026-11-02T11:15:00', 220000, 'CHUA_THANH_TOAN', NULL, 'KH0009'),
-('HDDV02112602', '2026-11-02T13:20:00', 170000, 'CHUA_THANH_TOAN', NULL, 'KH0010');
-GO
--- tao table SanPham
+-- =====================================================================
+-- 1. TẠO BẢNG (HoaDon, SanPham, ChiTietHoaDon)
+-- =====================================================================
+
+
 CREATE TABLE SanPham (
     maSP VARCHAR(8) NOT NULL PRIMARY KEY,
     tenSP NVARCHAR(100) NOT NULL,
-    giaNY DECIMAL(18,2) NOT NULL,
+    giaNhap DECIMAL(18,2) NOT NULL,
+    giaBan DECIMAL(18,2) NOT NULL,
     soLuongTon INT NOT NULL,
     donViTinh VARCHAR(10) NOT NULL,
 
-    CONSTRAINT CK_SanPham_Ma
-        CHECK (
-            maSP LIKE 'SPCC[0-9][0-9][0-9][0-9]'
-            OR maSP LIKE 'SPCM[0-9][0-9][0-9][0-9]'
-        ),
-
-    CONSTRAINT CK_SanPham_Gia CHECK (giaNY > 0),
+    CONSTRAINT CK_SanPham_Ma CHECK (maSP LIKE 'SPCC[0-9][0-9][0-9][0-9]' OR maSP LIKE 'SPCM[0-9][0-9][0-9][0-9]'),
+    CONSTRAINT CK_SanPham_GiaNhap CHECK (giaNhap > 0),
+    CONSTRAINT CK_SanPham_GiaBan CHECK (giaBan >= giaNhap),
     CONSTRAINT CK_SanPham_SoLuongTon CHECK (soLuongTon >= 0),
-
-    CONSTRAINT CK_SanPham_DonViTinh
-        CHECK (donViTinh IN ('GOI', 'CHAI', 'CAI', 'TUI', 'HOP'))
+    CONSTRAINT CK_SanPham_DonViTinh CHECK (donViTinh IN ('GOI', 'CHAI', 'CAI', 'TUI', 'HOP'))
 );
-GO
--- tao table ChiTietHoaDon
-USE PetShopLand;
 GO
 
 CREATE TABLE ChiTietHoaDon (
@@ -406,115 +378,219 @@ CREATE TABLE ChiTietHoaDon (
     donGia DECIMAL(18,2) NOT NULL,
     thanhTien DECIMAL(18,2) NOT NULL,
 
-    CONSTRAINT FK_CTHD_HoaDon
-        FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
-
-    CONSTRAINT FK_CTHD_SanPham
-        FOREIGN KEY (maSP) REFERENCES SanPham(maSP),
-
-    CONSTRAINT FK_CTHD_DichVu
-        FOREIGN KEY (maDV) REFERENCES DichVu(maDV),
-
-    CONSTRAINT CK_CTHD_SoLuong
-        CHECK (soLuong > 0),
-
-    CONSTRAINT CK_CTHD_DonGia
-        CHECK (donGia > 0),
-
-    CONSTRAINT CK_CTHD_ThanhTien
-        CHECK (thanhTien > 0),
-
-    CONSTRAINT CK_CTHD_Loai
-        CHECK (
-            (maSP IS NOT NULL AND maDV IS NULL)
-            OR
-            (maSP IS NULL AND maDV IS NOT NULL)
-        )
+    CONSTRAINT FK_CTHD_HoaDon FOREIGN KEY (maHD) REFERENCES HoaDon(maHD),
+    CONSTRAINT FK_CTHD_SanPham FOREIGN KEY (maSP) REFERENCES SanPham(maSP),
+    CONSTRAINT FK_CTHD_DichVu FOREIGN KEY (maDV) REFERENCES DichVu(maDV),
+    CONSTRAINT CK_CTHD_SoLuong CHECK (soLuong > 0),
+    CONSTRAINT CK_CTHD_DonGia CHECK (donGia > 0),
+    CONSTRAINT CK_CTHD_ThanhTien CHECK (thanhTien > 0),
+    CONSTRAINT CK_CTHD_Loai CHECK ((maSP IS NOT NULL AND maDV IS NULL) OR (maSP IS NULL AND maDV IS NOT NULL))
 );
 GO
 
-CREATE UNIQUE INDEX UQ_CTHD_SanPham
-ON ChiTietHoaDon(maHD, maSP)
-WHERE maSP IS NOT NULL;
+CREATE UNIQUE INDEX UQ_CTHD_SanPham ON ChiTietHoaDon(maHD, maSP) WHERE maSP IS NOT NULL;
+GO
+CREATE UNIQUE INDEX UQ_CTHD_DichVu ON ChiTietHoaDon(maHD, maDV) WHERE maDV IS NOT NULL;
 GO
 
-CREATE UNIQUE INDEX UQ_CTHD_DichVu
-ON ChiTietHoaDon(maHD, maDV)
-WHERE maDV IS NOT NULL;
-GO
--- du liệu mẫu
-
-USE PetShopLand;
-GO
-
-INSERT INTO SanPham
-    (maSP, tenSP, giaNY, soLuongTon, donViTinh)
-VALUES
-    -- Sản phẩm dành cho chó
-    ('SPCC0001', N'Thức ăn hạt cho chó 1kg', 150000, 50, 'GOI'),
-    ('SPCC0002', N'Sữa tắm cho chó', 120000, 30, 'CHAI'),
-    ('SPCC0003', N'Vòng cổ cho chó', 80000, 40, 'CAI'),
-    ('SPCC0004', N'Bóng cao su cho chó', 50000, 60, 'CAI'),
-    ('SPCC0005', N'Pate cho chó', 35000, 80, 'HOP'),
-
-    -- Sản phẩm dành cho mèo
-    ('SPCM0001', N'Thức ăn hạt cho mèo 1kg', 140000, 45, 'GOI'),
-    ('SPCM0002', N'Sữa tắm cho mèo', 110000, 25, 'CHAI'),
-    ('SPCM0003', N'Cát vệ sinh cho mèo', 90000, 35, 'TUI'),
-    ('SPCM0004', N'Pate cho mèo', 30000, 90, 'HOP'),
-    ('SPCM0005', N'Đồ chơi cho mèo', 50000, 40, 'CAI');
+-- =====================================================================
+-- 2. THÊM DỮ LIỆU MẪU (Đúng thứ tự quan hệ khóa ngoại)
+-- =====================================================================
+-- Thêm tài khoản nhân viên trước
+INSERT INTO TaiKhoan (tenTaiKhoan, matKhau, vaiTroTK, trangThaiTK, maNV) VALUES
+('lan.nguyen', '123456', 'QUAN_LY', 'HOAT_DONG', 'NV2601001'),
+('tuan.tran', '123456', 'NHAN_VIEN', 'HOAT_DONG', 'NV2601002'),
+('thu.le', '123456', 'NHAN_VIEN', 'HOAT_DONG', 'NV2601003');
 GO
 
-INSERT INTO ChiTietHoaDon
-    (maHD, maSP, maDV, soLuong, donGia, thanhTien)
-VALUES
-    -- HDBH15102601: 350.000
-    ('HDBH15102601', 'SPCC0001', NULL, 1, 150000, 150000),
-    ('HDBH15102601', 'SPCC0002', NULL, 1, 120000, 120000),
-    ('HDBH15102601', 'SPCC0003', NULL, 1, 80000, 80000),
+-- Thêm Sản Phẩm
+INSERT INTO SanPham (maSP, tenSP, giaNhap, giaBan, soLuongTon, donViTinh) VALUES
+ -- Sản phẩm dành cho chó
+ ('SPCC0001', N'Thức ăn hạt cho chó 1kg', 105000, 150000, 50, 'GOI'),
+ ('SPCC0002', N'Sữa tắm cho chó', 80000, 120000, 30, 'CHAI'),
+ ('SPCC0003', N'Vòng cổ cho chó', 50000, 80000, 40, 'CAI'),
+ ('SPCC0004', N'Bóng cao su cho chó', 30000, 50000, 60, 'CAI'),
+ ('SPCC0005', N'Pate cho chó', 22000, 35000, 80, 'HOP'),
 
-    -- HDBH16102601: 450.000
-    ('HDBH16102601', 'SPCM0001', NULL, 2, 140000, 280000),
-    ('HDBH16102601', 'SPCM0002', NULL, 1, 110000, 110000),
-    ('HDBH16102601', 'SPCM0004', NULL, 2, 30000, 60000),
-
-    -- HDBH17102601: 210.000
-    ('HDBH17102601', 'SPCC0002', NULL, 1, 120000, 120000),
-    ('HDBH17102601', 'SPCM0003', NULL, 1, 90000, 90000),
-
-    -- HDBH18102601: 180.000
-    ('HDBH18102601', 'SPCC0001', NULL, 1, 150000, 150000),
-    ('HDBH18102601', 'SPCM0004', NULL, 1, 30000, 30000),
-
-    -- HDBH19102601: 250.000
-    ('HDBH19102601', 'SPCC0001', NULL, 1, 150000, 150000),
-    ('HDBH19102601', 'SPCC0004', NULL, 2, 50000, 100000),
-
-    -- HDBH20102601: 520.000
-    ('HDBH20102601', 'SPCC0001', NULL, 2, 150000, 300000),
-    ('HDBH20102601', 'SPCM0002', NULL, 2, 110000, 220000),
-
-    -- HDBH22102601: 175.000
-    ('HDBH22102601', 'SPCM0001', NULL, 1, 140000, 140000),
-    ('HDBH22102601', 'SPCC0005', NULL, 1, 35000, 35000),
-
-    -- HDBH25102601: 390.000
-    ('HDBH25102601', 'SPCC0001', NULL, 1, 150000, 150000),
-    ('HDBH25102601', 'SPCC0002', NULL, 2, 120000, 240000),
-
-    -- HDBH29102601: 120.000
-    ('HDBH29102601', 'SPCC0002', NULL, 1, 120000, 120000),
-
-    -- HDBH02112601: 265.000
-    ('HDBH02112601', 'SPCC0001', NULL, 1, 150000, 150000),
-    ('HDBH02112601', 'SPCC0003', NULL, 1, 80000, 80000),
-    ('HDBH02112601', 'SPCC0005', NULL, 1, 35000, 35000),
-
-    -- HDBH02112602: 430.000
-    ('HDBH02112602', 'SPCC0001', NULL, 2, 150000, 300000),
-    ('HDBH02112602', 'SPCC0003', NULL, 1, 80000, 80000),
-    ('HDBH02112602', 'SPCC0004', NULL, 1, 50000, 50000),
-
-    -- HDBH02112603: 150.000
-    ('HDBH02112603', 'SPCC0001', NULL, 1, 150000, 150000);
+ -- Sản phẩm dành cho mèo
+ ('SPCM0001', N'Thức ăn hạt cho mèo 1kg', 95000, 140000, 45, 'GOI'),
+ ('SPCM0002', N'Sữa tắm cho mèo', 75000, 110000, 25, 'CHAI'),
+ ('SPCM0003', N'Cát vệ sinh cho mèo', 60000, 90000, 35, 'TUI'),
+ ('SPCM0004', N'Pate cho mèo', 20000, 30000, 90, 'HOP'),
+ ('SPCM0005', N'Đồ chơi cho mèo', 30000, 50000, 40, 'CAI');
 GO
+
+-- =====================================================================
+-- SCRIPT SINH TỰ ĐỘNG HÓA ĐƠN & CHI TIẾT HÓA ĐƠN (01/01/2024 -> HÔM NAY)
+-- =====================================================================
+SET NOCOUNT ON;
+
+-- 1. Xóa dữ liệu Hóa đơn cũ để tránh trùng khóa chính khi chạy lại
+DELETE FROM ChiTietHoaDon;
+DELETE FROM HoaDon;
+
+BEGIN TRAN;
+
+DECLARE @ngayHienTai DATE = '2024-01-01';
+DECLARE @ngayKetThuc DATE = CAST(GETDATE() AS DATE);
+
+DECLARE @soHDTrongNgay INT;
+DECLARE @i INT;
+DECLARE @loaiHD VARCHAR(4);
+DECLARE @maHD VARCHAR(12);
+DECLARE @ngayLap DATETIME;
+DECLARE @maKH VARCHAR(10);
+DECLARE @maNV VARCHAR(9);
+DECLARE @trangThaiHD VARCHAR(30);
+DECLARE @phuongThucTT VARCHAR(30);
+DECLARE @soMon INT;
+
+-- 2. Vòng lặp duyệt qua từng ngày từ 01/01/2024 đến hôm nay
+WHILE @ngayHienTai <= @ngayKetThuc
+BEGIN
+    -- Random từ 1 đến 5 hóa đơn mỗi ngày (bạn có thể tăng số 5 lên nếu muốn nhiều hơn nữa)
+    SET @soHDTrongNgay = ABS(CHECKSUM(NEWID())) % 5 + 1;
+    SET @i = 1;
+
+    WHILE @i <= @soHDTrongNgay
+    BEGIN
+        -- Tỷ lệ: 60% Hóa đơn bán hàng (HDBH), 40% Hóa đơn dịch vụ (HDDV)
+        IF (ABS(CHECKSUM(NEWID())) % 10) < 6
+            SET @loaiHD = 'HDBH';
+        ELSE
+            SET @loaiHD = 'HDDV';
+
+        -- Tạo mã HĐ: HDBH/HDDV + ddMMyy + số thứ tự 2 chữ số (VD: HDBH01012401)
+        SET @maHD = @loaiHD 
+                    + FORMAT(@ngayHienTai, 'ddMMyy') 
+                    + RIGHT('00' + CAST(@i AS VARCHAR(2)), 2);
+
+        -- Random giờ lập hóa đơn trong khoảng 08:00 sáng đến 21:00 tối
+        SET @ngayLap = DATEADD(MINUTE, ABS(CHECKSUM(NEWID())) % 780 + 480, CAST(@ngayHienTai AS DATETIME));
+
+        -- Chọn ngẫu nhiên 1 Khách hàng và 1 Nhân viên đang còn làm
+        SELECT TOP 1 @maKH = maKH FROM KhachHang ORDER BY NEWID();
+        SELECT TOP 1 @maNV = maNV FROM NhanVien WHERE trangThaiNV = 'CON_LAM' ORDER BY NEWID();
+
+        -- Hóa đơn cách đây hơn 3 ngày thì 100% ĐÃ THANH TOÁN; 3 ngày gần đây thì có tỷ lệ CHƯA THANH TOÁN
+        IF (@ngayHienTai >= DATEADD(DAY, -3, @ngayKetThuc)) AND (ABS(CHECKSUM(NEWID())) % 10 < 3)
+        BEGIN
+            SET @trangThaiHD = 'CHUA_THANH_TOAN';
+            SET @phuongThucTT = NULL;
+        END
+        ELSE
+        BEGIN
+            SET @trangThaiHD = 'DA_THANH_TOAN';
+            IF (ABS(CHECKSUM(NEWID())) % 2 = 0)
+                SET @phuongThucTT = 'TIEN_MAT';
+            ELSE
+                SET @phuongThucTT = 'THE_TIN_DUNG';
+        END
+
+        -- Thêm Hóa Đơn (để tạm tongTien = 1 để qua ràng buộc CHECK > 0, lát nữa cập nhật tổng thực tế sau)
+        INSERT INTO HoaDon (maHD, ngayLap, tongTien, trangThaiHD, phuongThucTT, maKH, maNV)
+        VALUES (@maHD, @ngayLap, 1, @trangThaiHD, @phuongThucTT, @maKH, @maNV);
+
+        -- Random số lượng mặt hàng/dịch vụ trong hóa đơn (từ 1 đến 4 dòng)
+        SET @soMon = ABS(CHECKSUM(NEWID())) % 4 + 1;
+
+        IF @loaiHD = 'HDBH'
+        BEGIN
+            -- Thêm chi tiết Sản phẩm (Lấy TOP ngẫu nhiên từ bảng SanPham để không bao giờ bị trùng SP)
+            INSERT INTO ChiTietHoaDon (maHD, maSP, maDV, soLuong, donGia, thanhTien)
+            SELECT TOP (@soMon) 
+                @maHD, 
+                maSP, 
+                NULL, 
+                ABS(CHECKSUM(NEWID())) % 3 + 1, -- Số lượng từ 1 đến 3
+                giaBan, 
+                giaBan -- Để tạm, cập nhật soLuong * donGia ở bước dưới
+            FROM SanPham
+            ORDER BY NEWID();
+        END
+        ELSE
+        BEGIN
+            -- Thêm chi tiết Dịch vụ (Lấy TOP ngẫu nhiên từ bảng DichVu để không bị trùng DV)
+            INSERT INTO ChiTietHoaDon (maHD, maSP, maDV, soLuong, donGia, thanhTien)
+            SELECT TOP (@soMon) 
+                @maHD, 
+                NULL, 
+                maDV, 
+                ABS(CHECKSUM(NEWID())) % 2 + 1, -- Số lượng từ 1 đến 2
+                giaTieuChuan, 
+                giaTieuChuan
+            FROM DichVu
+            ORDER BY NEWID();
+        END
+
+        SET @i = @i + 1;
+    END
+
+    -- Tăng lên 1 ngày
+    SET @ngayHienTai = DATEADD(DAY, 1, @ngayHienTai);
+END
+
+-- 3. Cập nhật lại cột thanhTien chuẩn xác (= soLuong * donGia) trong ChiTietHoaDon
+UPDATE ChiTietHoaDon
+SET thanhTien = soLuong * donGia;
+
+-- 4. Cập nhật lại cột tongTien trong HoaDon bằng tổng thanhTien của ChiTietHoaDon
+UPDATE hd
+SET hd.tongTien = ct.tongCong
+FROM HoaDon hd
+JOIN (
+    SELECT maHD, SUM(thanhTien) AS tongCong
+    FROM ChiTietHoaDon
+    GROUP BY maHD
+) ct ON hd.maHD = ct.maHD;
+
+COMMIT TRAN;
+SET NOCOUNT OFF;
+GO
+
+-- =====================================================================
+-- KIỂM TRA KẾT QUẢ SAU KHI SINH DỮ LIỆU
+-- =====================================================================
+-- 1. Thống kê số lượng hóa đơn và doanh thu theo từng năm (2024, 2025, 2026)
+SELECT 
+    YEAR(ngayLap) AS Nam,
+    COUNT(*) AS TongSoHoaDon,
+    SUM(tongTien) AS TongDoanhThu
+FROM HoaDon
+WHERE trangThaiHD = 'DA_THANH_TOAN'
+GROUP BY YEAR(ngayLap)
+ORDER BY Nam;
+
+-- 2. Xem thử 20 hóa đơn mới nhất
+SELECT TOP 20 * FROM HoaDon ORDER BY ngayLap DESC;
+GO
+---- Dữ liệu mẫu 
+--INSERT INTO HoaDon
+--    (maHD, ngayLap, tongTien, trangThaiHD, phuongThucTT, maKH)
+--VALUES
+---- HÓA ĐƠN BÁN HÀNG
+--('HDBH15102601', '2026-10-15T09:30:00', 350000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0001'),
+--('HDBH16102601', '2026-10-16T10:15:00', 450000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0002'),
+--('HDBH17102601', '2026-10-17T14:20:00', 210000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0003'),
+--('HDBH18102601', '2026-10-18T08:45:00', 180000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0004'),
+--('HDBH19102601', '2026-10-19T11:00:00', 250000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0005'),
+--('HDBH20102601', '2026-10-20T15:30:00', 520000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0006'),
+--('HDBH22102601', '2026-10-22T09:10:00', 175000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0007'),
+--('HDBH25102601', '2026-10-25T13:40:00', 390000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0008'),
+--('HDBH29102601', '2026-10-29T16:00:00', 120000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0009'),
+--('HDBH02112601', '2026-11-02T09:00:00', 265000, 'CHUA_THANH_TOAN', NULL, 'KH0010'),
+--('HDBH02112602', '2026-11-02T10:30:00', 430000, 'CHUA_THANH_TOAN', NULL, 'KH0001'),
+--('HDBH02112603', '2026-11-02T14:00:00', 150000, 'CHUA_THANH_TOAN', NULL, 'KH0002'),
+
+---- HÓA ĐƠN DỊCH VỤ
+--('HDDV15102601', '2026-10-15T11:00:00', 180000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0003'),
+--('HDDV17102601', '2026-10-17T15:00:00', 250000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0004'),
+--('HDDV20102601', '2026-10-20T10:00:00', 320000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0005'),
+--('HDDV23102601', '2026-10-23T14:30:00', 200000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0006'),
+--('HDDV27102601', '2026-10-27T09:45:00', 280000, 'DA_THANH_TOAN', 'TIEN_MAT', 'KH0007'),
+--('HDDV30102601', '2026-10-30T16:15:00', 350000, 'DA_THANH_TOAN', 'THE_TIN_DUNG', 'KH0008'),
+--('HDDV02112601', '2026-11-02T11:15:00', 220000, 'CHUA_THANH_TOAN', NULL, 'KH0009'),
+--('HDDV02112602', '2026-11-02T13:20:00', 170000, 'CHUA_THANH_TOAN', NULL, 'KH0010');
+--GO
+
+select count(*) from HoaDon
