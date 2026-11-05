@@ -119,6 +119,7 @@ public class LoginGUI extends JFrame implements ActionListener{
 		}
 		else {
 			new MainGUI().setVisible(true);
+			this.dispose();
 		}
 	}
 	
