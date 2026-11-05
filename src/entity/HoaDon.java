@@ -7,20 +7,23 @@ public class HoaDon {
 	private String maHD;
 	private LocalDate ngayLap;
 	private double tongTien;
+	private double giamGia;
 	private TrangThai trangThaiHD;
 	private PhuongThucTT phuongThucTT;
-	
+	private KhachHang khachHang;
 	public HoaDon() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public HoaDon(String maHD, LocalDate ngayLap, double tongTien, TrangThai trangThaiHD, PhuongThucTT phuongThucTT) {
+	public HoaDon(String maHD, LocalDate ngayLap, double tongTien, double giamGia,TrangThai trangThaiHD, PhuongThucTT phuongThucTT, KhachHang khachHang) {
 		super();
 		this.maHD = maHD;
 		this.ngayLap = ngayLap;
 		this.tongTien = tongTien;
+		this.giamGia = giamGia;
 		this.trangThaiHD = trangThaiHD;
 		this.phuongThucTT = phuongThucTT;
+		this.khachHang = khachHang;
 	}
 
 	public String getMaHD() {
@@ -46,7 +49,13 @@ public class HoaDon {
 	public void setTongTien(double tongTien) {
 		this.tongTien = tongTien;
 	}
+	public double getGiamGia() {
+	    return giamGia;
+	}
 
+	public void setGiamGia(double giamGia) {
+	    this.giamGia = giamGia;
+	}
 	public TrangThai getTrangThaiHD() {
 		return trangThaiHD;
 	}
@@ -61,6 +70,13 @@ public class HoaDon {
 
 	public void setPhuongThucTT(PhuongThucTT phuongThucTT) {
 		this.phuongThucTT = phuongThucTT;
+	}
+	public KhachHang getKhachHang() {
+	    return khachHang;
+	}
+
+	public void setKhachHang(KhachHang khachHang) {
+	    this.khachHang = khachHang;
 	}
 
 	@Override

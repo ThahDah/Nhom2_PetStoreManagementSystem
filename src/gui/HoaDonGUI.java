@@ -36,7 +36,7 @@ import common.DinhDang;
 
 import dao.HoaDonDAO;
 import entity.TrangThai;
-
+import entity.HoaDon;
 public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
     private HoaDonDAO hoaDonDAO;
     private DefaultTableModel model;
@@ -149,40 +149,49 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
         return button;
     }
     // Doc du lieu hoa don vao bang
-    private void taiDuLieu() {
-        try {
-            String maHD = txtTimKiem.getText().trim();
-            List<Object[]> danhSachHoaDon;
-            if (maHD.isEmpty()
-                    && trangThaiDangLoc == null
-                    && tuNgay == null
-                    && denNgay == null) {
-                danhSachHoaDon = hoaDonDAO.getAllHoaDon();
-            } else {
 
-                danhSachHoaDon = hoaDonDAO.timKiemHoaDon(
-                        maHD, trangThaiDangLoc, tuNgay, denNgay);
-            }
-            model.setRowCount(0);
-            for (Object[] hoaDon : danhSachHoaDon) {
-                model.addRow(new Object[] {
-                        hoaDon[0],
-                        hoaDon[1],
-                        hoaDon[2],
-                        hoaDon[3] == null ? ""
-                                : DinhDang.NGAY.format(
-                                        ((Date) hoaDon[3]).toLocalDate()),
-                        DinhDang.TIEN.format(hoaDon[4]),
-                        ((TrangThai) hoaDon[5]).getMoTa()
-                });
-            }
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(this,
-                    "Không thể tải hóa đơn: " + ex.getMessage(),
-                    "Lỗi cơ sở dữ liệu",
-                    JOptionPane.ERROR_MESSAGE);
+private void taiDuLieu() {
+    try {
+        String maHD = txtTimKiem.getText().trim();
+
+        List<HoaDon> danhSachHoaDon;
+
+        if (maHD.isEmpty()
+                && trangThaiDangLoc == null
+                && tuNgay == null
+                && denNgay == null) {
+
+            danhSachHoaDon = hoaDonDAO.getAllHoaDon();
+
+        } else {
+
+            danhSachHoaDon = hoaDonDAO.timKiemHoaDon(
+                    maHD, trangThaiDangLoc, tuNgay, denNgay);
         }
+
+        model.setRowCount(0);
+
+        for (HoaDon hoaDon : danhSachHoaDon) {
+
+            model.addRow(new Object[] {
+                    hoaDon.getMaHD(),
+                    hoaDon.getKhachHang().getTenKH(),
+                    hoaDon.getKhachHang().getSoDienThoai(),
+                    hoaDon.getNgayLap() == null ? ""
+                            : DinhDang.NGAY.format(hoaDon.getNgayLap()),
+                    DinhDang.TIEN.format(hoaDon.getTongTien()),
+                    hoaDon.getTrangThaiHD().getMoTa()
+            });
+        }
+
+    } catch (SQLException ex) {
+        JOptionPane.showMessageDialog(this,
+                "Không thể tải hóa đơn: " + ex.getMessage(),
+                "Lỗi cơ sở dữ liệu",
+                JOptionPane.ERROR_MESSAGE);
     }
+}
+
     // Mo hop thoai chon khoang ngay
     private void moChonKhoangNgay() {
         Window owner = SwingUtilities.getWindowAncestor(this);

@@ -11,7 +11,6 @@ import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -23,11 +22,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.table.DefaultTableModel;
 import dao.ChiTietHoaDonDAO;
-import dao.HoaDonDAO;
 import entity.ChiTietHoaDon;
 import entity.SanPham;
 import entity.TrangThai;
 import common.DinhDang;
+import entity.HoaDon;
+import entity.PhuongThucTT;
 public class ChiTietHoaDonGUI extends JDialog implements ActionListener {
     private String maHD;
     private boolean laHoaDonBanHang;
@@ -45,14 +45,12 @@ public class ChiTietHoaDonGUI extends JDialog implements ActionListener {
     private JLabel lblPhuongThuc;
     private DefaultTableModel model;
     private JTable table;
-    private HoaDonDAO hoaDonDAO;
-    private ChiTietHoaDonDAO chiTietDAO;
+    private ChiTietHoaDonDAO chiTietHoaDonDAO;
     public ChiTietHoaDonGUI(Window owner, String maHD) {
         super(owner, "Chi tiết hóa đơn",Dialog.ModalityType.APPLICATION_MODAL);
         this.maHD = maHD;
         this.laHoaDonBanHang = maHD.startsWith("HDBH");
-        hoaDonDAO = new HoaDonDAO();
-        chiTietDAO = new ChiTietHoaDonDAO();
+        chiTietHoaDonDAO = new ChiTietHoaDonDAO();
         setSize(1050, 600);
         setLocationRelativeTo(owner);
         setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
@@ -242,69 +240,93 @@ public class ChiTietHoaDonGUI extends JDialog implements ActionListener {
         taiDuLieu();
     }
     // DOC DU LIEU HOA DON
-    private void taiDuLieu() {
-        try {
-            Object[] hd = hoaDonDAO.timHoaDonTheoMa(maHD);
-            if (hd == null) {
-                JOptionPane.showMessageDialog(this,
-                        "Không tìm thấy hóa đơn: " + maHD);
-                return;
-            }
-            lblMaHD.setText((String) hd[0]);
-            Timestamp ngayLap = (Timestamp) hd[1];
-            lblNgayLap.setText(
-                    ngayLap.toLocalDateTime()
-                            .toLocalDate()
-                            .format(DinhDang.NGAY));
-            TrangThai trangThai =TrangThai.valueOf((String) hd[3]);
-            lblTrangThai.setText(trangThai.getMoTa());
-            // Chi hien nut khi chua thanh toan
-            btnThanhToan.setVisible( trangThai == TrangThai.CHUA_THANH_TOAN);
-            lblTenKH.setText((String) hd[5]);
-            lblSDT.setText((String) hd[6]);
-            String email = (String) hd[7];
-            lblEmail.setText(
-                    email == null || email.trim().isEmpty()
-                            ? "Không có" : email);
 
-            model.setRowCount(0);
-            if (laHoaDonBanHang) {
-                taiChiTietBanHang();
-            } else {
-                taiChiTietDichVu();
-            }
-            double tongCong =((Number) hd[2]).doubleValue();
-            lblTongCong.setText( DinhDang.TIEN.format(tongCong));
-            String phuongThuc = (String) hd[4];
-            if (phuongThuc == null) {
-                lblPhuongThuc.setText("Chưa thanh toán");
-            } else if ("TIEN_MAT".equals(phuongThuc)) {
-                lblPhuongThuc.setText("Tiền mặt");
-            } else if ("THE_TIN_DUNG".equals(phuongThuc)) {
-                lblPhuongThuc.setText("Thẻ tín dụng");
-            } else {
-                lblPhuongThuc.setText(phuongThuc);
-            }
-            lblGiamGia.setText("Chưa có dữ liệu");
+private void taiDuLieu() {
+    try {
+    	HoaDon hd = chiTietHoaDonDAO.timHoaDonTheoMa(maHD);
 
-        } catch (SQLException e) {
+        if (hd == null) {
             JOptionPane.showMessageDialog(this,
-                    "Lỗi tải dữ liệu hóa đơn: "
-                            + e.getMessage(),
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-
-        } catch (IllegalArgumentException e) {
-            JOptionPane.showMessageDialog(this,
-                    "Dữ liệu hóa đơn không hợp lệ: "
-                            + e.getMessage(),
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
+                    "Không tìm thấy hóa đơn: " + maHD);
+            return;
         }
+
+        // Thong tin hoa don
+        lblMaHD.setText(hd.getMaHD());
+
+        lblNgayLap.setText(
+                hd.getNgayLap() == null ? ""
+                        : DinhDang.NGAY.format(hd.getNgayLap())
+        );
+
+        TrangThai trangThai = hd.getTrangThaiHD();
+
+        lblTrangThai.setText(trangThai.getMoTa());
+
+        // Chi hien nut thanh toan khi hoa don chua thanh toan
+        btnThanhToan.setVisible(
+                trangThai == TrangThai.CHUA_THANH_TOAN
+        );
+
+        // Thong tin khach hang
+        lblTenKH.setText(hd.getKhachHang().getTenKH());
+
+        lblSDT.setText(hd.getKhachHang().getSoDienThoai());
+
+        String email = hd.getKhachHang().getEmail();
+
+        lblEmail.setText(
+                email == null || email.trim().isEmpty()
+                        ? "Không có" : email
+        );
+
+        // Tai bang chi tiet hoa don
+        model.setRowCount(0);
+
+        if (laHoaDonBanHang) {
+            taiChiTietBanHang();
+        } else {
+            taiChiTietDichVu();
+        }
+
+        // Thong tin thanh toan
+        double tongCong = hd.getTongTien();
+
+        lblTongCong.setText(
+                DinhDang.TIEN.format(tongCong)
+        );
+
+        PhuongThucTT phuongThuc = hd.getPhuongThucTT();
+
+        if (phuongThuc == null) {
+            lblPhuongThuc.setText("Chưa thanh toán");
+        } else if (phuongThuc == PhuongThucTT.TIEN_MAT) {
+            lblPhuongThuc.setText("Tiền mặt");
+        } else if (phuongThuc == PhuongThucTT.THE_TIN_DUNG) {
+            lblPhuongThuc.setText("Thẻ tín dụng");
+        } else {
+            lblPhuongThuc.setText(phuongThuc.toString());
+        }
+
+        lblGiamGia.setText(DinhDang.TIEN.format(hd.getGiamGia()));
+
+    } catch (SQLException e) {
+        JOptionPane.showMessageDialog(this,
+                "Lỗi tải dữ liệu hóa đơn: " + e.getMessage(),
+                "Lỗi",
+                JOptionPane.ERROR_MESSAGE);
+
+    } catch (IllegalArgumentException e) {
+        JOptionPane.showMessageDialog(this,
+                "Dữ liệu hóa đơn không hợp lệ: " + e.getMessage(),
+                "Lỗi",
+                JOptionPane.ERROR_MESSAGE);
     }
+}
+
     // CHI TIET HOA DON BAN HANG
     private void taiChiTietBanHang() throws SQLException {
-        ArrayList<ChiTietHoaDon> danhSach =chiTietDAO.timTheoHoaDon(maHD);
+        ArrayList<ChiTietHoaDon> danhSach =chiTietHoaDonDAO.layDanhSachChiTietHoaDon(maHD);
         int stt = 1;
         double tamTinh = 0;
         for (ChiTietHoaDon ct : danhSach) {
