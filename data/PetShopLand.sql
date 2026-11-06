@@ -462,9 +462,12 @@ GO
 -- SCRIPT SINH TỰ ĐỘNG HÓA ĐƠN & CHI TIẾT HÓA ĐƠN (01/01/2024 -> HÔM NAY)
 -- =====================================================================
 
+USE PetShopLand;
+GO
+
 SET NOCOUNT ON;
 
--- 1. Xóa dữ liệu Hóa đơn cũ để tránh trùng khóa chính
+-- 1. Xóa dữ liệu cũ
 DELETE FROM ChiTietHoaDon;
 DELETE FROM HoaDon;
 
@@ -472,7 +475,6 @@ BEGIN TRAN;
 
 DECLARE @ngayHienTai DATE = '2024-01-01';
 DECLARE @ngayKetThuc DATE = CAST(GETDATE() AS DATE);
-
 DECLARE @soHDTrongNgay INT;
 DECLARE @i INT;
 DECLARE @loaiHD VARCHAR(4);
@@ -484,46 +486,26 @@ DECLARE @trangThaiHD VARCHAR(30);
 DECLARE @phuongThucTT VARCHAR(30);
 DECLARE @soMon INT;
 
--- 2. Vòng lặp duyệt qua từng ngày từ 01/01/2024 đến hôm nay
+-- 2. Vòng lặp từ 01/01/2024 đến hôm nay
 WHILE @ngayHienTai <= @ngayKetThuc
 BEGIN
-    -- Random từ 1 đến 5 hóa đơn mỗi ngày
     SET @soHDTrongNgay = ABS(CHECKSUM(NEWID())) % 5 + 1;
     SET @i = 1;
 
     WHILE @i <= @soHDTrongNgay
     BEGIN
-        -- 60% Hóa đơn bán hàng, 40% Hóa đơn dịch vụ
         IF (ABS(CHECKSUM(NEWID())) % 10) < 6
             SET @loaiHD = 'HDBH';
         ELSE
             SET @loaiHD = 'HDDV';
 
-        -- Tạo mã HĐ: HDBH/HDDV + ddMMyy + 2 chữ số
-        SET @maHD = @loaiHD
-                    + FORMAT(@ngayHienTai, 'ddMMyy')
-                    + RIGHT('00' + CAST(@i AS VARCHAR(2)), 2);
+        SET @maHD = @loaiHD + FORMAT(@ngayHienTai, 'ddMMyy') + RIGHT('00' + CAST(@i AS VARCHAR(2)), 2);
+        SET @ngayLap = DATEADD(MINUTE, ABS(CHECKSUM(NEWID())) % 780 + 480, CAST(@ngayHienTai AS DATETIME));
 
-        -- Random giờ lập từ 08:00 đến 21:00
-        SET @ngayLap = DATEADD(
-            MINUTE,
-            ABS(CHECKSUM(NEWID())) % 780 + 480,
-            CAST(@ngayHienTai AS DATETIME)
-        );
+        SELECT TOP 1 @maKH = maKH FROM KhachHang ORDER BY NEWID();
+        SELECT TOP 1 @maNV = maNV FROM NhanVien WHERE trangThaiNV = 'CON_LAM' ORDER BY NEWID();
 
-        -- Chọn ngẫu nhiên khách hàng và nhân viên còn làm
-        SELECT TOP 1 @maKH = maKH
-        FROM KhachHang ORDER BY NEWID();
-
-        SELECT TOP 1 @maNV = maNV
-        FROM NhanVien
-        WHERE trangThaiNV = 'CON_LAM'
-        ORDER BY NEWID();
-
-        -- Hóa đơn hơn 3 ngày: đã thanh toán
-        -- 3 ngày gần đây: có thể chưa thanh toán
-        IF (@ngayHienTai >= DATEADD(DAY, -3, @ngayKetThuc))
-           AND (ABS(CHECKSUM(NEWID())) % 10 < 3)
+        IF (@ngayHienTai >= DATEADD(DAY, -3, @ngayKetThuc)) AND (ABS(CHECKSUM(NEWID())) % 10 < 3)
         BEGIN
             SET @trangThaiHD = 'CHUA_THANH_TOAN';
             SET @phuongThucTT = NULL;
@@ -531,77 +513,47 @@ BEGIN
         ELSE
         BEGIN
             SET @trangThaiHD = 'DA_THANH_TOAN';
-
             IF (ABS(CHECKSUM(NEWID())) % 2 = 0)
                 SET @phuongThucTT = 'TIEN_MAT';
             ELSE
                 SET @phuongThucTT = 'THE_TIN_DUNG';
         END
 
-        -- Thêm Hóa Đơn
-        -- tongTien tạm = 1 để qua CHECK > 0
-        -- giamGia tạm = 0, sẽ cập nhật ở dưới
-        INSERT INTO HoaDon
-            (maHD, ngayLap, tongTien, giamGia,
-             trangThaiHD, phuongThucTT, maKH, maNV)
-        VALUES
-            (@maHD, @ngayLap, 1, 0,
-             @trangThaiHD, @phuongThucTT, @maKH, @maNV);
+        -- Insert Hóa Đơn
+        INSERT INTO HoaDon (maHD, ngayLap, tongTien, giamGia, trangThaiHD, phuongThucTT, maKH, maNV)
+        VALUES (@maHD, @ngayLap, 1, 0, @trangThaiHD, @phuongThucTT, @maKH, @maNV);
 
-        -- Random 1 đến 4 dòng chi tiết
         SET @soMon = ABS(CHECKSUM(NEWID())) % 4 + 1;
 
         IF @loaiHD = 'HDBH'
         BEGIN
-            -- Chi tiết sản phẩm
-            INSERT INTO ChiTietHoaDon
-                (maHD, maSP, maDV, soLuong, donGia, thanhTien)
-            SELECT TOP (@soMon)
-                @maHD,
-                maSP,
-                NULL,
-                ABS(CHECKSUM(NEWID())) % 3 + 1,
-                giaBan,
-                giaBan
-            FROM SanPham
-            ORDER BY NEWID();
+            INSERT INTO ChiTietHoaDon (maHD, maSP, maDV, soLuong, donGia, thanhTien)
+            SELECT TOP (@soMon) @maHD, maSP, NULL, ABS(CHECKSUM(NEWID())) % 3 + 1, giaBan, giaBan
+            FROM SanPham ORDER BY NEWID();
         END
         ELSE
         BEGIN
-            -- Chi tiết dịch vụ
-            INSERT INTO ChiTietHoaDon
-                (maHD, maSP, maDV, soLuong, donGia, thanhTien)
-            SELECT TOP (@soMon)
-                @maHD,
-                NULL,
-                maDV,
-                ABS(CHECKSUM(NEWID())) % 2 + 1,
-                giaTieuChuan,
-                giaTieuChuan
-            FROM DichVu
-            ORDER BY NEWID();
+            INSERT INTO ChiTietHoaDon (maHD, maSP, maDV, soLuong, donGia, thanhTien)
+            SELECT TOP (@soMon) @maHD, NULL, maDV, ABS(CHECKSUM(NEWID())) % 2 + 1, giaTieuChuan, giaTieuChuan
+            FROM DichVu ORDER BY NEWID();
         END
 
         SET @i = @i + 1;
     END
-
-    -- Tăng lên 1 ngày
     SET @ngayHienTai = DATEADD(DAY, 1, @ngayHienTai);
 END
 
--- 3. Cập nhật thanhTien = soLuong * donGia
-UPDATE ChiTietHoaDon
-SET thanhTien = soLuong * donGia;
+-- 3. Cập nhật thành tiền
+UPDATE ChiTietHoaDon SET thanhTien = soLuong * donGia;
 
--- THÊM DỮ LIỆU MẪU GIẢM GIÁ
--- Các mức: 0, 10000, 20000, 30000 đồng
--- Dựa theo mã hóa đơn để phân bổ các mức giảm giá
-UPDATE HoaDon
-SET giamGia = (ABS(CONVERT(BIGINT, CHECKSUM(maHD))) % 4) * 10000;
+-- 4. Random giảm giá
+UPDATE HoaDon SET giamGia = (ABS(CONVERT(BIGINT, CHECKSUM(maHD))) % 4) * 10000;
 
--- 4. Cập nhật tongTien = tổng thành tiền - giảm giá
+-- 5. Cập nhật Tổng tiền (ĐÃ FIX LỖI 100%)
 UPDATE hd
-SET hd.tongTien = ct.tongCong - hd.giamGia
+SET 
+    hd.giamGia = CASE WHEN hd.giamGia >= ct.tongCong THEN 0 ELSE hd.giamGia END,
+    hd.tongTien = ct.tongCong - CASE WHEN hd.giamGia >= ct.tongCong THEN 0 ELSE hd.giamGia END
 FROM HoaDon hd
 JOIN (
     SELECT maHD, SUM(thanhTien) AS tongCong
@@ -662,4 +614,6 @@ GO
 --('HDDV02112602', '2026-11-02T13:20:00', 170000, 'CHUA_THANH_TOAN', NULL, 'KH0010');
 --GO
 
-select count(*) from HoaDon
+select * from HoaDon
+SELECT * FROM HoaDon 
+WHERE CAST(ngayLap AS DATE) BETWEEN '2026-11-02' AND '2026-11-06';
