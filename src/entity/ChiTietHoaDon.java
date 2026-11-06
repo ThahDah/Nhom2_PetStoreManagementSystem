@@ -7,7 +7,7 @@ public class ChiTietHoaDon {
 	private int soLuong;
 	private double donGia;
 	private double thanhTien;
-	
+	private ThuCung thuCung;
 	public ChiTietHoaDon() {
 		// TODO Auto-generated constructor stub
 	}
@@ -68,7 +68,13 @@ public class ChiTietHoaDon {
 	public void setThanhTien(double thanhTien) {
 		this.thanhTien = thanhTien;
 	}
-	
+	public ThuCung getThuCung() {
+	    return thuCung;
+	}
+
+	public void setThuCung(ThuCung thuCung) {
+	    this.thuCung = thuCung;
+	}
 	
 	
 	
