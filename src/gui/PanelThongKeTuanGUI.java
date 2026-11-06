@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.border.TitledBorder;
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.ChartPanel;
@@ -36,13 +37,21 @@ import dao.ThongKeTheoTuanDAO;
 @SuppressWarnings("serial")
 public class PanelThongKeTuanGUI extends JPanel {
     
-    private JLabel lblDoanhThuValue, lblChiPhiValue, lblLoiNhuanValue, lblKhachHangValue, lblHoaDonValue, lblSanPhamValue;
-    
+    // --- KHAI BÁO BIẾN CHO PHẦN 1: TỔNG QUAN
+    private JLabel tq_DoanhThu, tq_ChiPhi, tq_LoiNhuan, tq_KhachHang, tq_HoaDon, tq_SanPham;
     private ChartPanel chartLineTongQuan;
-    private ChartPanel chartBarSanPham;
-    private ChartPanel chartBarDichVu;
+    private JTextArea txtDeXuatTongQuan;
     
-    private JTextArea txtDeXuat;
+    // --- KHAI BÁO BIẾN CHO PHẦN 2: SẢN PHẨM
+    private JLabel sp_DoanhThu, sp_ChiPhi, sp_LoiNhuan, sp_KhachHang, sp_HoaDon, sp_SanPham;
+    private ChartPanel chartBarSanPham;
+    private JTextArea txtDeXuatSanPham;
+
+    // --- KHAI BÁO BIẾN CHO PHẦN 3: DỊCH VỤ
+    private JLabel dv_DoanhThu, dv_ChiPhi, dv_LoiNhuan, dv_KhachHang, dv_HoaDon, dv_DichVu;
+    private ChartPanel chartBarDichVu;
+    private JTextArea txtDeXuatDichVu;
+    
     private ThongKeTheoTuanDAO tkDao;
     
     public PanelThongKeTuanGUI() {
@@ -66,72 +75,39 @@ public class PanelThongKeTuanGUI extends JPanel {
         pnlMainContent.setBackground(Color.WHITE);
         pnlMainContent.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-        // --- KHỐI 1: CÁC THẺ CHỈ SỐ (KPI CARDS)
-        lblDoanhThuValue = createLabelValue();
-        lblChiPhiValue = createLabelValue();
-        lblLoiNhuanValue = createLabelValue();
-        lblKhachHangValue = createLabelValue();
-        lblHoaDonValue = createLabelValue();
-        lblSanPhamValue = createLabelValue();
-        
-        JPanel pnlCards = new JPanel(new GridLayout(1, 6, 15, 15));
-        pnlCards.setPreferredSize(new Dimension(0, 100));
-        pnlCards.setMaximumSize(new Dimension(Integer.MAX_VALUE, 100));
-        pnlCards.setBackground(Color.WHITE);
-        
-        Color nenChanh = new Color(239, 227, 202);
-        pnlCards.add(createCard("Tổng doanh thu", lblDoanhThuValue, Color.GREEN, nenChanh));
-        pnlCards.add(createCard("Tổng chi phí", lblChiPhiValue, Color.ORANGE, nenChanh));
-        pnlCards.add(createCard("Lợi nhuận", lblLoiNhuanValue, new Color(0, 128, 0), nenChanh));
-        pnlCards.add(createCard("Khách hàng", lblKhachHangValue, new Color(100, 0, 100), nenChanh));
-        pnlCards.add(createCard("Tổng hóa đơn", lblHoaDonValue, new Color(50, 50, 50), nenChanh));
-        pnlCards.add(createCard("Tổng SP & DV", lblSanPhamValue, new Color(50, 50, 50), nenChanh));
-        
-        pnlMainContent.add(pnlCards);
-        pnlMainContent.add(Box.createVerticalStrut(15)); // Khoảng cách
+        // --- 1. KHỞI TẠO & THÊM SECTION TỔNG QUAN
+        initTongQuanComponents();
+        JPanel pnlSectionTongQuan = createThongKeSection(
+            "1. THỐNG KÊ TỔNG QUAN", 
+            new JLabel[]{tq_DoanhThu, tq_ChiPhi, tq_LoiNhuan, tq_KhachHang, tq_HoaDon, tq_SanPham}, 
+            new String[]{"Tổng doanh thu", "Tổng chi phí", "Lợi nhuận", "Khách hàng", "Tổng hóa đơn", "Tổng SP & DV"}, 
+            chartLineTongQuan, txtDeXuatTongQuan
+        );
 
-        // --- KHỐI 2: BIỂU ĐỒ ĐƯỜNG & ĐỀ XUẤT
-        JPanel pnlMiddle = new JPanel(new BorderLayout(15, 0));
-        pnlMiddle.setPreferredSize(new Dimension(0, 400));
-        pnlMiddle.setMaximumSize(new Dimension(Integer.MAX_VALUE, 400));
-        pnlMiddle.setBackground(Color.WHITE);
-        
-        chartLineTongQuan = createLineChartPanel(); 
-        pnlMiddle.add(chartLineTongQuan, BorderLayout.CENTER);
+        // --- 2. KHỞI TẠO & THÊM SECTION SẢN PHẨM
+        initSanPhamComponents();
+        JPanel pnlSectionSanPham = createThongKeSection(
+            "2. THỐNG KÊ HOẠT ĐỘNG BÁN SẢN PHẨM", 
+            new JLabel[]{sp_DoanhThu, sp_ChiPhi, sp_LoiNhuan, sp_KhachHang, sp_HoaDon, sp_SanPham}, 
+            new String[]{"Doanh thu SP", "Chi phí SP", "Lợi nhuận SP", "KH mua SP", "Hóa đơn SP", "Số SP bán ra"}, 
+            chartBarSanPham, txtDeXuatSanPham
+        );
 
-        JPanel pnlDeXuat = new JPanel(new BorderLayout());
-        pnlDeXuat.setPreferredSize(new Dimension(350, 0)); 
-        pnlDeXuat.setBorder(BorderFactory.createTitledBorder("Đề xuất kinh doanh"));
-        pnlDeXuat.setBackground(Color.WHITE);
-        
-        txtDeXuat = new JTextArea("Đang tải dữ liệu...");
-        txtDeXuat.setEditable(false);
-        txtDeXuat.setLineWrap(true); 
-        txtDeXuat.setWrapStyleWord(true);
-        txtDeXuat.setFont(new Font("Arial", Font.ITALIC, 14));
-        boGocComponent(txtDeXuat, 15);
-        
-        JScrollPane scrollDeXuat = new JScrollPane(txtDeXuat);
-        boGocComponent(scrollDeXuat, 15);
-        pnlDeXuat.add(scrollDeXuat);
-        pnlMiddle.add(pnlDeXuat, BorderLayout.EAST);
-        
-        pnlMainContent.add(pnlMiddle);
-        pnlMainContent.add(Box.createVerticalStrut(15)); // Khoảng cách
+        // --- 3. KHỞI TẠO & THÊM SECTION DỊCH VỤ
+        initDichVuComponents();
+        JPanel pnlSectionDichVu = createThongKeSection(
+            "3. THỐNG KÊ HOẠT ĐỘNG DỊCH VỤ", 
+            new JLabel[]{dv_DoanhThu, dv_ChiPhi, dv_LoiNhuan, dv_KhachHang, dv_HoaDon, dv_DichVu}, 
+            new String[]{"Doanh thu DV", "Chi phí DV", "Lợi nhuận DV", "KH dùng DV", "Hóa đơn DV", "Số lượt DV"}, 
+            chartBarDichVu, txtDeXuatDichVu
+        );
 
-        // --- KHỐI 3: BIỂU ĐỒ TOP SẢN PHẨM & TOP DỊCH VỤ (Nằm ngang nhau)
-        JPanel pnlBottom = new JPanel(new GridLayout(1, 2, 15, 0));
-        pnlBottom.setPreferredSize(new Dimension(0, 350));
-        pnlBottom.setMaximumSize(new Dimension(Integer.MAX_VALUE, 350));
-        pnlBottom.setBackground(Color.WHITE);
-        
-        chartBarSanPham = createBarChartPanel("Top 5 Sản Phẩm Doanh Thu Cao");
-        chartBarDichVu = createBarChartPanel("Top 5 Dịch Vụ Doanh Thu Cao");
-        
-        pnlBottom.add(chartBarSanPham);
-        pnlBottom.add(chartBarDichVu);
-        
-        pnlMainContent.add(pnlBottom);
+        // Thêm cả 3 section vào màn hình chính
+        pnlMainContent.add(pnlSectionTongQuan);
+        pnlMainContent.add(Box.createVerticalStrut(20)); // Khoảng cách giữa các phần
+        pnlMainContent.add(pnlSectionSanPham);
+        pnlMainContent.add(Box.createVerticalStrut(20));
+        pnlMainContent.add(pnlSectionDichVu);
 
         // Bọc toàn bộ vào JScrollPane để thanh cuộn hoạt động
         JScrollPane mainScrollPane = new JScrollPane(pnlMainContent);
@@ -140,11 +116,104 @@ public class PanelThongKeTuanGUI extends JPanel {
         add(mainScrollPane, BorderLayout.CENTER);
     }
 
-    // Các hàm tạo UI phụ trợ
+    // ====================================================================
+    // HÀM TẠO 1 KHỐI (SECTION) CHUẨN ĐỂ TÁI SỬ DỤNG CHO CẢ 3 PHẦN
+    // ====================================================================
+    private JPanel createThongKeSection(String titleStr, JLabel[] kpis, String[] kpiTitles, ChartPanel chart, JTextArea txtDeXuat) {
+        JPanel pnlSection = new JPanel();
+        pnlSection.setLayout(new BoxLayout(pnlSection, BoxLayout.Y_AXIS));
+        pnlSection.setBackground(Color.WHITE);
+        
+        // Viền và tiêu đề cho từng Section
+        pnlSection.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(150, 150, 150), 1), titleStr,
+            TitledBorder.LEFT, TitledBorder.TOP, new Font("Arial", Font.BOLD, 18), new Color(0, 102, 204)
+        ));
+
+        // --- KHỐI KPI CARDS ---
+        JPanel pnlCards = new JPanel(new GridLayout(1, 6, 15, 15));
+        pnlCards.setBackground(Color.WHITE);
+        pnlCards.setPreferredSize(new Dimension(0, 90));
+        pnlCards.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
+        
+        Color nenChanh = new Color(239, 227, 202);
+        Color[] colors = {Color.GREEN, Color.ORANGE, new Color(0, 128, 0), new Color(100, 0, 100), new Color(50, 50, 50), new Color(50, 50, 50)};
+        
+        for (int i = 0; i < 6; i++) {
+            pnlCards.add(createCard(kpiTitles[i], kpis[i], colors[i], nenChanh));
+        }
+
+        // --- KHỐI BIỂU ĐỒ & ĐỀ XUẤT ---
+        JPanel pnlMiddle = new JPanel(new BorderLayout(15, 0));
+        pnlMiddle.setBackground(Color.WHITE);
+        pnlMiddle.setPreferredSize(new Dimension(0, 350));
+        pnlMiddle.setMaximumSize(new Dimension(Integer.MAX_VALUE, 350));
+        
+        pnlMiddle.add(chart, BorderLayout.CENTER);
+
+        JPanel pnlDeXuat = new JPanel(new BorderLayout());
+        pnlDeXuat.setPreferredSize(new Dimension(350, 0)); 
+        pnlDeXuat.setBorder(BorderFactory.createTitledBorder("Đề xuất & Nhận xét"));
+        pnlDeXuat.setBackground(Color.WHITE);
+        
+        JScrollPane scrollDeXuat = new JScrollPane(txtDeXuat);
+        boGocComponent(scrollDeXuat, 15);
+        pnlDeXuat.add(scrollDeXuat);
+        pnlMiddle.add(pnlDeXuat, BorderLayout.EAST);
+
+        // Ghép các thành phần vào Section
+        pnlSection.add(Box.createVerticalStrut(10));
+        pnlSection.add(pnlCards);
+        pnlSection.add(Box.createVerticalStrut(15));
+        pnlSection.add(pnlMiddle);
+        pnlSection.add(Box.createVerticalStrut(10));
+
+        return pnlSection;
+    }
+
+    // ====================================================================
+    // CÁC HÀM KHỞI TẠO BIẾN CHO TỪNG PHẦN
+    // ====================================================================
+    private void initTongQuanComponents() {
+        tq_DoanhThu = createLabelValue(); tq_ChiPhi = createLabelValue();
+        tq_LoiNhuan = createLabelValue(); tq_KhachHang = createLabelValue();
+        tq_HoaDon = createLabelValue(); tq_SanPham = createLabelValue();
+        chartLineTongQuan = createLineChartPanel("Xu hướng Doanh thu, Chi phí, Lợi nhuận (Tổng)");
+        txtDeXuatTongQuan = createTextArea();
+    }
+
+    private void initSanPhamComponents() {
+        sp_DoanhThu = createLabelValue(); sp_ChiPhi = createLabelValue();
+        sp_LoiNhuan = createLabelValue(); sp_KhachHang = createLabelValue();
+        sp_HoaDon = createLabelValue(); sp_SanPham = createLabelValue();
+        chartBarSanPham = createBarChartPanel("Top 5 Sản Phẩm Bán Chạy");
+        txtDeXuatSanPham = createTextArea();
+    }
+
+    private void initDichVuComponents() {
+        dv_DoanhThu = createLabelValue(); dv_ChiPhi = createLabelValue();
+        dv_LoiNhuan = createLabelValue(); dv_KhachHang = createLabelValue();
+        dv_HoaDon = createLabelValue(); dv_DichVu = createLabelValue();
+        chartBarDichVu = createBarChartPanel("Top 5 Dịch Vụ Sử Dụng Nhiều");
+        txtDeXuatDichVu = createTextArea();
+    }
+
+    // ====================================================================
+    // CÁC HÀM TẠO UI PHỤ TRỢ
+    // ====================================================================
     private JLabel createLabelValue() {
         JLabel lbl = new JLabel("0", JLabel.CENTER);
         lbl.setFont(new Font("Arial", Font.BOLD, 18));
         return lbl;
+    }
+
+    private JTextArea createTextArea() {
+        JTextArea txt = new JTextArea("Đang tải dữ liệu...");
+        txt.setEditable(false);
+        txt.setLineWrap(true); 
+        txt.setWrapStyleWord(true);
+        txt.setFont(new Font("Arial", Font.ITALIC, 14));
+        return txt;
     }
 
     private JPanel createCard(String title, JLabel lblValue, Color titleColor, Color bgColor) {
@@ -162,11 +231,15 @@ public class PanelThongKeTuanGUI extends JPanel {
         return p;
     }
 
-    // TẠO BIỂU ĐỒ ĐƯỜNG
-    private ChartPanel createLineChartPanel() {
-        JFreeChart chart = ChartFactory.createLineChart("Xu hướng Doanh thu, Chi phí, Lợi nhuận", 
-            "Ngày", "Số tiền (VNĐ)", new DefaultCategoryDataset());
-        
+    private void boGocComponent(JComponent comp, int doCong) {
+        comp.setBorder(new FlatLineBorder(new Insets(5, 10, 5, 10), new Color(200, 200, 200), 1, 15));
+    }
+
+    // ====================================================================
+    // BIỂU ĐỒ
+    // ====================================================================
+    private ChartPanel createLineChartPanel(String title) {
+        JFreeChart chart = ChartFactory.createLineChart(title, "Ngày", "Số tiền (VNĐ)", new DefaultCategoryDataset());
         CategoryPlot plot = chart.getCategoryPlot();
         LineAndShapeRenderer renderer = new LineAndShapeRenderer();
         renderer.setSeriesShapesVisible(0, true);
@@ -177,52 +250,56 @@ public class PanelThongKeTuanGUI extends JPanel {
         renderer.setSeriesPaint(1, new Color(255, 140, 0)); 
         renderer.setSeriesPaint(2, new Color(0, 100, 255)); 
         plot.setRenderer(renderer);
-        
         plot.setBackgroundPaint(Color.WHITE);
         plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
         ((NumberAxis) plot.getRangeAxis()).setNumberFormatOverride(new DecimalFormat("#,###"));
         return new ChartPanel(chart);
     }
     
-    // TẠO BIỂU ĐỒ CỘT (Cho Sản Phẩm & Dịch Vụ)
     private ChartPanel createBarChartPanel(String title) {
-        JFreeChart chart = ChartFactory.createBarChart(title, 
-            "", "Doanh thu (VNĐ)", new DefaultCategoryDataset(), 
-            PlotOrientation.HORIZONTAL, false, true, false); // Cột ngang
-        
+        JFreeChart chart = ChartFactory.createBarChart(title, "", "Doanh thu (VNĐ)", new DefaultCategoryDataset(), 
+            PlotOrientation.HORIZONTAL, false, true, false); 
         CategoryPlot plot = chart.getCategoryPlot();
         plot.setBackgroundPaint(Color.WHITE);
         plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
-        
         BarRenderer renderer = (BarRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, new Color(0, 153, 204)); // Màu xanh dương nhạt
-
+        renderer.setSeriesPaint(0, new Color(0, 153, 204));
         ((NumberAxis) plot.getRangeAxis()).setNumberFormatOverride(new DecimalFormat("#,###"));
         return new ChartPanel(chart);
     }
 
+    // ====================================================================
     // HÀM CHÍNH ĐỔ DỮ LIỆU LÊN DASHBOARD
+    // ====================================================================
     public void updateDashboard(LocalDate start, LocalDate end) {
-        txtDeXuat.setText("Đang tải dữ liệu và phân tích...");
+        txtDeXuatTongQuan.setText("Đang tải dữ liệu tổng quan...");
+        txtDeXuatSanPham.setText("Đang tải dữ liệu sản phẩm...");
+        txtDeXuatDichVu.setText("Đang tải dữ liệu dịch vụ...");
         
         javax.swing.SwingWorker<Void, Void> worker = new javax.swing.SwingWorker<Void, Void>() {
-            double doanhThu = 0, chiPhi = 0, loiNhuan = 0;
-            int soKhach = 0;
+            double dtTQ = 0, cpTQ = 0, lnTQ = 0;
+            int khTQ = 0;
             Map<LocalDate, Double> mapDoanhThu, mapChiPhi;
             Map<String, Double> mapTopSP, mapTopDV;
 
             @Override
             protected Void doInBackground() throws Exception {
-                doanhThu = tkDao.getTongDoanhThu(start, end);
-                chiPhi = tkDao.getTongChiPhi(start, end);
-                loiNhuan = tkDao.getLoiNhuan(start, end);
-                soKhach = tkDao.getSoLuongKhachHang(start, end);
+                // Lấy data Tổng Quan
+                dtTQ = tkDao.getTongDoanhThu(start, end);
+                cpTQ = tkDao.getTongChiPhi(start, end);
+                lnTQ = tkDao.getLoiNhuan(start, end);
+                khTQ = tkDao.getSoLuongKhachHang(start, end);
                 
-                // Lấy data biểu đồ
                 mapDoanhThu = tkDao.getDoanhThuTheoNgay(start, end);
                 mapChiPhi = tkDao.getChiPhiTheoNgay(start, end);
+                
+                // Data cho Biểu đồ Cột SP & DV
                 mapTopSP = tkDao.getDoanhThuTop5SanPham(start, end);
                 mapTopDV = tkDao.getDoanhThuTop5DichVu(start, end);
+                
+                // TODO: Gọi thêm các hàm DAO để lấy Doanh thu, Chi phí riêng cho Sản Phẩm và Dịch Vụ
+                // Ví dụ: dtSP = tkDao.getDoanhThuSanPham(start, end);
+                
                 return null;
             }
 
@@ -230,21 +307,19 @@ public class PanelThongKeTuanGUI extends JPanel {
             protected void done() {
                 DecimalFormat df = new DecimalFormat("#,### đ");
                 
-                lblDoanhThuValue.setText(df.format(doanhThu));
-                lblChiPhiValue.setText(df.format(chiPhi));
-                lblLoiNhuanValue.setText(df.format(loiNhuan));
-                lblKhachHangValue.setText(soKhach + " khách");
-                lblHoaDonValue.setText("N/A"); // Bạn có thể viết thêm hàm Count HoaDon ở DAO
-                lblSanPhamValue.setText("N/A"); 
+                // ================== CẬP NHẬT TỔNG QUAN ==================
+                tq_DoanhThu.setText(df.format(dtTQ));
+                tq_ChiPhi.setText(df.format(cpTQ));
+                tq_LoiNhuan.setText(df.format(lnTQ));
+                tq_KhachHang.setText(khTQ + " khách");
+                tq_HoaDon.setText("N/A"); // Chờ gọi hàm DAO count hoá đơn
+                tq_SanPham.setText("N/A"); 
+                tq_LoiNhuan.setForeground(lnTQ >= 0 ? new Color(0, 150, 0) : Color.RED);
                 
-                lblLoiNhuanValue.setForeground(loiNhuan >= 0 ? new Color(0, 150, 0) : Color.RED);
-                
-                // Cập nhật Đề xuất
-                if (loiNhuan > 0) txtDeXuat.setText("Doanh thu tốt, đạt lợi nhuận " + df.format(loiNhuan) + ".");
-                else if (loiNhuan < 0) txtDeXuat.setText("Lợi nhuận đang âm (" + df.format(loiNhuan) + "), cần rà soát lại chi phí nhập hàng.");
-                else txtDeXuat.setText("Chưa có giao dịch.");
+                if (lnTQ > 0) txtDeXuatTongQuan.setText("Doanh thu tốt, đạt lợi nhuận " + df.format(lnTQ) + ".");
+                else if (lnTQ < 0) txtDeXuatTongQuan.setText("Lợi nhuận đang âm (" + df.format(lnTQ) + "), cần rà soát lại chi phí nhập hàng.");
+                else txtDeXuatTongQuan.setText("Chưa có giao dịch trong tuần này.");
 
-                // 1. Đổ data Biểu đồ đường (Line)
                 DefaultCategoryDataset lineData = new DefaultCategoryDataset();
                 DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM");
                 for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
@@ -257,14 +332,24 @@ public class PanelThongKeTuanGUI extends JPanel {
                 }
                 chartLineTongQuan.getChart().getCategoryPlot().setDataset(lineData);
 
-                // 2. Đổ data Biểu đồ cột ngang (Top Sản phẩm)
+                // ================== CẬP NHẬT SẢN PHẨM ==================
+                sp_DoanhThu.setText("N/A"); // Điền dtSP sau khi bạn cập nhật DAO
+                sp_ChiPhi.setText("N/A"); 
+                sp_LoiNhuan.setText("N/A");
+                txtDeXuatSanPham.setText("Đề xuất riêng cho mảng bán sản phẩm: Nên đẩy mạnh các sản phẩm thuộc TOP bán chạy ở biểu đồ bên cạnh.");
+                
                 DefaultCategoryDataset barSpData = new DefaultCategoryDataset();
                 for (Map.Entry<String, Double> entry : mapTopSP.entrySet()) {
                     barSpData.addValue(entry.getValue(), "Sản Phẩm", entry.getKey());
                 }
                 chartBarSanPham.getChart().getCategoryPlot().setDataset(barSpData);
 
-                // 3. Đổ data Biểu đồ cột ngang (Top Dịch vụ)
+                // ================== CẬP NHẬT DỊCH VỤ ==================
+                dv_DoanhThu.setText("N/A"); // Điền dtDV sau khi bạn cập nhật DAO
+                dv_ChiPhi.setText("N/A"); 
+                dv_LoiNhuan.setText("N/A");
+                txtDeXuatDichVu.setText("Đề xuất riêng cho mảng dịch vụ: Cải thiện chất lượng phục vụ của Top 5 dịch vụ phổ biến nhất.");
+                
                 DefaultCategoryDataset barDvData = new DefaultCategoryDataset();
                 for (Map.Entry<String, Double> entry : mapTopDV.entrySet()) {
                     barDvData.addValue(entry.getValue(), "Dịch Vụ", entry.getKey());
@@ -273,9 +358,5 @@ public class PanelThongKeTuanGUI extends JPanel {
             }
         };
         worker.execute();
-    }
-	
-    private void boGocComponent(JComponent comp, int doCong) {
-        comp.setBorder(new FlatLineBorder(new Insets(5, 10, 5, 10), new Color(200, 200, 200), 1, 15));
     }
 }
