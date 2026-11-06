@@ -395,8 +395,84 @@ public class PanelThongKeTuanGUI extends JPanel {
                     dv_HoaDon.setText(hdDV + " đơn");
                     dv_DichVu.setText(slDV + " lượt");
                     
-                    txtDeXuatDichVu.setText("Đề xuất mảng dịch vụ: " + (dtDV > 0 ? "Tập trung chăm sóc khách hàng và nâng cao chất lượng các dịch vụ thuộc Top đầu." : "Chưa có lượt đặt dịch vụ nào trong thời gian này."));
-                    
+//                    txtDeXuatDichVu.setText("Đề xuất mảng dịch vụ: " + (dtDV > 0 ? "Tập trung chăm sóc khách hàng và nâng cao chất lượng các dịch vụ thuộc Top đầu." : "Chưa có lượt đặt dịch vụ nào trong thời gian này."));
+                 // =========================================================================
+                 // 1. TẠO NHẬN XÉT ĐỘNG CHO TỔNG QUAN
+                 // =========================================================================
+                 if (dtTQ == 0) {
+                     txtDeXuatTongQuan.setText("Tuần này chưa có giao dịch phát sinh. Cần triển khai các chương trình marketing thu hút khách hàng.");
+                 } else {
+                     // Tính Giá trị đơn hàng trung bình (AOV)
+                     double aov = hdTQ > 0 ? (dtTQ / hdTQ) : 0;
+                     // Tính Biên lợi nhuận (%)
+                     double tySuatLN = (lnTQ / dtTQ) * 100;
+                     
+                     StringBuilder dxTQ = new StringBuilder();
+                     dxTQ.append("NHẬN XÉT:\n");
+                     dxTQ.append("- Biên lợi nhuận tuần này đạt ").append(String.format("%.1f%%", tySuatLN)).append(".\n");
+                     dxTQ.append("- Khách chi tiêu trung bình ").append(df.format(aov)).append(" / 1 Hóa đơn.\n\n");
+                     
+                     dxTQ.append("ĐỀ XUẤT:\n");
+                     if (tySuatLN < 35) {
+                         dxTQ.append("- Tỷ suất lợi nhuận khá thấp. Nên tư vấn khách dùng thêm Dịch vụ (biên LN cao) để tối ưu lợi nhuận tổng.\n");
+                     } else {
+                         dxTQ.append("- Lợi nhuận đang rất khỏe. Cố gắng duy trì!\n");
+                     }
+                     // Gợi ý mức freeship/giảm giá nhỉnh hơn AOV một chút để ép khách mua thêm
+                     double mucKichCau = aov + 100000; 
+                     dxTQ.append("- Kích cầu: Nên tạo voucher/freeship cho hóa đơn từ ").append(df.format(mucKichCau)).append(" để tăng giá trị trung bình mỗi đơn.");
+                     
+                     txtDeXuatTongQuan.setText(dxTQ.toString());
+                 }
+
+                 // =========================================================================
+                 // 2. TẠO NHẬN XÉT ĐỘNG CHO SẢN PHẨM
+                 // =========================================================================
+                 if (dtSP == 0) {
+                     txtDeXuatSanPham.setText("Mảng bán lẻ đang đứng im. Cần rà soát lại danh mục sản phẩm, kiểm tra date hàng hóa và chạy flash sale.");
+                 } else {
+                     double tyTrongSP = (dtSP / dtTQ) * 100;
+                     double spPerDon = hdSP > 0 ? ((double) slSP / hdSP) : 0;
+                     
+                     StringBuilder dxSP = new StringBuilder();
+                     dxSP.append("NHẬN XÉT:\n");
+                     dxSP.append("- Hàng hóa chiếm ").append(String.format("%.1f%%", tyTrongSP)).append(" tổng doanh thu cửa hàng.\n");
+                     dxSP.append("- Khách mua trung bình ").append(String.format("%.1f", spPerDon)).append(" sản phẩm / 1 đơn.\n\n");
+                     
+                     dxSP.append("ĐỀ XUẤT:\n");
+                     if (spPerDon < 2.0) {
+                         dxSP.append("- Khách chủ yếu mua lẻ tẻ 1 món. Cần làm các gói Combo (VD: Mua Hạt + Cát vệ sinh) hoặc mua 2 tặng 1 để đẩy mạnh số lượng bán ra.");
+                     } else {
+                         dxSP.append("- Tốc độ tiêu thụ hàng hóa tốt. Lưu ý theo dõi Tồn kho của các mặt hàng bán chạy để nhập bù kịp thời, tránh đứt gãy hàng.");
+                     }
+                     txtDeXuatSanPham.setText(dxSP.toString());
+                 }
+
+                 // =========================================================================
+                 // 3. TẠO NHẬN XÉT ĐỘNG CHO DỊCH VỤ
+                 // =========================================================================
+                 if (dtDV == 0) {
+                     txtDeXuatDichVu.setText("Chưa có lượt đặt dịch vụ nào. Khuyên gọi điện chăm sóc lại tệp khách hàng cũ hoặc tặng mã giảm giá trải nghiệm Spa.");
+                 } else {
+                     // Tìm dịch vụ Top 1 (Dịch vụ đầu tiên trong Map đã sắp xếp)
+                     String top1DV = "";
+                     if (mapTopDV != null && !mapTopDV.isEmpty()) {
+                         top1DV = mapTopDV.keySet().iterator().next(); // Lấy key đầu tiên
+                     }
+                     
+                     double tyTrongDV = (dtDV / dtTQ) * 100;
+                     
+                     StringBuilder dxDV = new StringBuilder();
+                     dxDV.append("NHẬN XÉT:\n");
+                     dxDV.append("- Mảng Dịch vụ đóng góp ").append(String.format("%.1f%%", tyTrongDV)).append(" vào tổng doanh thu.\n");
+                     dxDV.append("- '").append(top1DV).append("' đang là dịch vụ thu hút khách nhất tuần.\n\n");
+                     
+                     dxDV.append("ĐỀ XUẤT:\n");
+                     dxDV.append("- Nên đào tạo nhân viên kịch bản Upsell (Bán chéo): Khi khách sử dụng '").append(top1DV).append("', hãy tư vấn mua kèm các sản phẩm dưỡng lông, vitamin hoặc đồ chơi đang ế ẩm.\n");
+                     dxDV.append("- Xin review/đánh giá từ tệp khách hàng Dịch vụ để tăng uy tín cửa hàng.");
+                     
+                     txtDeXuatDichVu.setText(dxDV.toString());
+                 }
                     // Gắn data vào Biểu Đồ Cột Top 5
                     DefaultCategoryDataset barDvData = new DefaultCategoryDataset();
                     for (Map.Entry<String, Double> entry : mapTopDV.entrySet()) {
