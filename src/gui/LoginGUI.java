@@ -13,13 +13,16 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
 import connectDB.ConnectDB;
 import custom_gui.BackgroundPanel;
+import dao.NghiepVuException;
 import dao.NhanVienDAO;
+import dao.TaiKhoanDAO;
 import entity.NhanVien;
 
 //import custom_gui.BackgroundPanel;
@@ -36,6 +39,7 @@ public class LoginGUI extends JFrame implements ActionListener{
 	private JButton btnExit;
 	
 	private JTextField txtUserName;
+	private JPasswordField txtPassword;
 
 	public LoginGUI() {
 		setSize(500,300);
@@ -80,7 +84,7 @@ public class LoginGUI extends JFrame implements ActionListener{
 		Box boxPassword = Box.createHorizontalBox();		
 		JLabel lblPassword = new JLabel("Password:");
 		lblPassword.setForeground(Color.white);
-		JTextField txtPassword = new JTextField();
+		txtPassword = new JPasswordField();
 		txtPassword.setBorder(null);
 		txtPassword.setMaximumSize(sizeTxTField);
 		boxPassword.add(lblPassword);
@@ -129,7 +133,6 @@ public class LoginGUI extends JFrame implements ActionListener{
 //	}
 	
 	
-	// đoạn này để test thôi
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
@@ -137,20 +140,19 @@ public class LoginGUI extends JFrame implements ActionListener{
 		if (o == btnExit) {
 			System.exit(1);
 		} else if (o == btnLogin) {
-			String maNV = txtUserName.getText().trim();
-			if (maNV.isEmpty()) {
-				JOptionPane.showMessageDialog(this, "Vui lòng nhập username (mã nhân viên)");
+			String tenTaiKhoan = txtUserName.getText().trim();
+			String matKhau = new String(txtPassword.getPassword());
+			if (tenTaiKhoan.isEmpty() || matKhau.isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Vui lòng nhập tên tài khoản và mật khẩu");
 				return;
 			}
 			try {
 				ConnectDB.getInstance().connect();
-				NhanVien nv = new NhanVienDAO().timTheoMa(maNV);
-				if (nv == null) {
-					JOptionPane.showMessageDialog(this, "Không tìm thấy nhân viên có mã này");
-					return;
-				}
+				NhanVien nv = new TaiKhoanDAO().dangNhap(tenTaiKhoan, matKhau);
 				new MainGUI(nv).setVisible(true);
 				this.dispose();
+			} catch (NghiepVuException ex) {
+				JOptionPane.showMessageDialog(this, ex.getMessage(), "Thông báo", JOptionPane.WARNING_MESSAGE);
 			} catch (Exception ex) {
 				JOptionPane.showMessageDialog(this, "Lỗi đăng nhập: " + ex.getMessage(), "Lỗi",
 						JOptionPane.ERROR_MESSAGE);
