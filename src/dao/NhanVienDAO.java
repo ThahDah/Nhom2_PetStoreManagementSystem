@@ -89,7 +89,7 @@ public class NhanVienDAO {
 	    int n = 0;
 	    try {
 	    	// sua mau don
-	    	String sql = "UPDATE NhanVien SET TenNV = ?, SoDienThoai = ?, Email = ?, TrangThai = ?, hinhAnh = ? WHERE maNV = ?";	    
+	    	String sql = "UPDATE NhanVien SET TenNV = ?, SoDienThoai = ?, Email = ?, TrangThaiNV = ?, hinhAnh = ? WHERE maNV = ?";	    
 	    	stmt = con.prepareStatement(sql);
 
 	    	stmt.setString(1, nv.getTenNV());
