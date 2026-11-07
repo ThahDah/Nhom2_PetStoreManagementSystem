@@ -116,6 +116,8 @@ public class LoginGUI extends JFrame implements ActionListener{
 		pnlFeature.add(btnExit);
 		pnlMain.add(pnlFeature, BorderLayout.SOUTH);
 		
+		txtUserName.setText("lan.nguyen");
+		txtPassword.setText("123456");
 		btnExit.addActionListener(this);
 		btnLogin.addActionListener(this);
 	}

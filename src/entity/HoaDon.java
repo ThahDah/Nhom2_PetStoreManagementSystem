@@ -11,11 +11,14 @@ public class HoaDon {
 	private TrangThai trangThaiHD;
 	private PhuongThucTT phuongThucTT;
 	private KhachHang khachHang;
+	private NhanVien nhanVien;
 	public HoaDon() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public HoaDon(String maHD, LocalDate ngayLap, double tongTien, double giamGia,TrangThai trangThaiHD, PhuongThucTT phuongThucTT, KhachHang khachHang) {
+	
+	public HoaDon(String maHD, LocalDate ngayLap, double tongTien, double giamGia, TrangThai trangThaiHD,
+			PhuongThucTT phuongThucTT, KhachHang khachHang, NhanVien nhanVien) {
 		super();
 		this.maHD = maHD;
 		this.ngayLap = ngayLap;
@@ -24,60 +27,89 @@ public class HoaDon {
 		this.trangThaiHD = trangThaiHD;
 		this.phuongThucTT = phuongThucTT;
 		this.khachHang = khachHang;
+		this.nhanVien = nhanVien;
 	}
+	
 
 	public String getMaHD() {
 		return maHD;
 	}
 
+
 	public void setMaHD(String maHD) {
 		this.maHD = maHD;
 	}
+
 
 	public LocalDate getNgayLap() {
 		return ngayLap;
 	}
 
+
 	public void setNgayLap(LocalDate ngayLap) {
 		this.ngayLap = ngayLap;
 	}
+
 
 	public double getTongTien() {
 		return tongTien;
 	}
 
+
 	public void setTongTien(double tongTien) {
 		this.tongTien = tongTien;
 	}
+
+
 	public double getGiamGia() {
-	    return giamGia;
+		return giamGia;
 	}
 
+
 	public void setGiamGia(double giamGia) {
-	    this.giamGia = giamGia;
+		this.giamGia = giamGia;
 	}
+
+
 	public TrangThai getTrangThaiHD() {
 		return trangThaiHD;
 	}
+
 
 	public void setTrangThaiHD(TrangThai trangThaiHD) {
 		this.trangThaiHD = trangThaiHD;
 	}
 
+
 	public PhuongThucTT getPhuongThucTT() {
 		return phuongThucTT;
 	}
 
+
 	public void setPhuongThucTT(PhuongThucTT phuongThucTT) {
 		this.phuongThucTT = phuongThucTT;
 	}
+
+
 	public KhachHang getKhachHang() {
-	    return khachHang;
+		return khachHang;
 	}
 
+
 	public void setKhachHang(KhachHang khachHang) {
-	    this.khachHang = khachHang;
+		this.khachHang = khachHang;
 	}
+
+
+	public NhanVien getNhanVien() {
+		return nhanVien;
+	}
+
+
+	public void setNhanVien(NhanVien nhanVien) {
+		this.nhanVien = nhanVien;
+	}
+
 
 	@Override
 	public int hashCode() {

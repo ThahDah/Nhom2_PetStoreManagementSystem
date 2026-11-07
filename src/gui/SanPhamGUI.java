@@ -23,10 +23,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import com.formdev.flatlaf.FlatLightLaf;
 
+import common.DinhDang;
 import connectDB.ConnectDB;
 import dao.SanPhamDAO;
 import entity.DonViTinh;
@@ -41,7 +44,7 @@ import javax.swing.JOptionPane;
 public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,KeyListener{
 
     private JTextField txtMaSP, txtTenSP;
-    private JTextField txtSoLuongTon, txtGiaNiemYet, txtGiaBan;
+    private JTextField txtSoLuongTon, txtGiaNhap, txtGiaBan;
     private JTextField txtTimMaSP, txtTimTenSP, txtGiaTu, txtGiaDen;
     private SanPhamDAO sp_dao;
     private JComboBox<String> cboDonViTinh;
@@ -96,7 +99,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         txtMaSP.setEditable(false);
         txtTenSP = new JTextField();
         txtSoLuongTon = new JTextField();
-        txtGiaNiemYet = new JTextField();
+        txtGiaNhap = new JTextField();  
         txtGiaBan = new JTextField();
 
         cboDonViTinh = new JComboBox<>(new String[] {
@@ -110,8 +113,8 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 
         pnlThongTin.add(new JLabel("Tên sản phẩm:"));
         pnlThongTin.add(txtTenSP);
-        pnlThongTin.add(new JLabel("Giá niêm yết:"));
-        pnlThongTin.add(txtGiaNiemYet);
+        pnlThongTin.add(new JLabel("Giá nhập:"));
+        pnlThongTin.add(txtGiaNhap);
 
         pnlThongTin.add(new JLabel("Đơn vị tính:"));
         pnlThongTin.add(cboDonViTinh);
@@ -166,7 +169,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
                 "Tên sản phẩm",
                 "Đơn vị tính",
                 "Số lượng tồn",
-                "Giá niêm yết",
+                "Giá nhập",
                 "Giá bán"
         };
 
@@ -184,17 +187,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         tblSanPham.setGridColor(Color.GRAY);
         ArrayList<SanPham> dsSP = sp_dao.getAllSanPham();
 
-        for (SanPham sp : dsSP) {
-            model.addRow(new Object[] {
-                null,
-                sp.getMaSP(),
-                sp.getTenSP(),
-                sp.getDonViTinh(),
-                sp.getSoLuongTon(),
-                sp.getGiaNY(),
-                sp.getGiaNY()
-            });
-        }
+        loadTableData();
 
         tblSanPham.getColumnModel().getColumn(0).setPreferredWidth(90);
         tblSanPham.getColumnModel().getColumn(1).setPreferredWidth(120);
@@ -203,7 +196,16 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         tblSanPham.getColumnModel().getColumn(4).setPreferredWidth(120);
         tblSanPham.getColumnModel().getColumn(5).setPreferredWidth(130);
         tblSanPham.getColumnModel().getColumn(6).setPreferredWidth(120);
-
+        
+        DefaultTableCellRenderer tien = new DefaultTableCellRenderer() {
+            @Override
+            protected void setValue(Object v) {
+                setText(v instanceof Number ? DinhDang.TIEN.format(((Number) v).doubleValue()) : "");
+            }
+        };
+        tien.setHorizontalAlignment(SwingConstants.RIGHT);
+        tblSanPham.getColumnModel().getColumn(5).setCellRenderer(tien);
+        tblSanPham.getColumnModel().getColumn(6).setCellRenderer(tien);
         JScrollPane scrollPane = new JScrollPane(tblSanPham);
 
         
@@ -238,42 +240,36 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	}
 	@Override
 	public void keyReleased(KeyEvent e) {
-		Object o = e.getSource();
-        if (o.equals(txtTimMaSP)) {
-            String maTimKiem = txtTimMaSP.getText().trim().toLowerCase();
-            model.setRowCount(0); 
-            ArrayList<SanPham> dsSP = sp_dao.getAllSanPham();
-            for (SanPham sp : dsSP) {
-                if (sp.getMaSP().toLowerCase().contains(maTimKiem)) {
-                    model.addRow(new Object[] {
-                        null,
-                        sp.getMaSP(),
-                        sp.getTenSP(),
-                        sp.getDonViTinh() != null ? sp.getDonViTinh().name() : "",
-                        sp.getSoLuongTon(),
-                        sp.getGiaNY(),
-                        sp.getGiaNY()
-                    });
-                }
-            }
-        }
-		
+	    if (e.getSource().equals(txtTimMaSP)) {
+	        String key = txtTimMaSP.getText().trim().toLowerCase();
+	        model.setRowCount(0);
+	        for (SanPham sp : sp_dao.getAllSanPham()) {
+	            if (sp.getMaSP().toLowerCase().contains(key)) {
+	                themDongVaoBang(sp);
+	            }
+	        }
+	    }
 	}
 	@Override
 	public void mouseClicked(MouseEvent e) {
-		Object o = e.getSource();
-        if (o.equals(tblSanPham)) {
-            int row = tblSanPham.getSelectedRow();
-            if (row != -1) {
-                txtMaSP.setText(tblSanPham.getValueAt(row, 1).toString());
-                txtTenSP.setText(tblSanPham.getValueAt(row, 2).toString());
-                cboDonViTinh.setSelectedItem(tblSanPham.getValueAt(row, 3).toString());
-                txtSoLuongTon.setText(tblSanPham.getValueAt(row, 4).toString());
-                txtGiaNiemYet.setText(tblSanPham.getValueAt(row, 5).toString());
-                txtGiaBan.setText(tblSanPham.getValueAt(row, 6).toString());
-                
-            }
-        }
+		if (e.getSource().equals(tblSanPham)) {
+	        int row = tblSanPham.getSelectedRow();
+	        if (row == -1) return;
+
+	        String ma = tblSanPham.getValueAt(row, 1).toString();
+	        try {
+	            SanPham sp = sp_dao.timTheoMa(ma);
+	            if (sp == null) return;
+	            txtMaSP.setText(sp.getMaSP());
+	            txtTenSP.setText(sp.getTenSP());
+	            cboDonViTinh.setSelectedItem(donViTinhToText(sp.getDonViTinh()));
+	            txtSoLuongTon.setText(String.valueOf(sp.getSoLuongTon()));
+	            txtGiaNhap.setText(String.valueOf((long) sp.getGiaNhap()));
+	            txtGiaBan.setText(String.valueOf((long) sp.getGiaBan()));
+	        } catch (SQLException ex) {
+	            ex.printStackTrace();
+	        }
+	    }
 	}
 	@Override
 	public void mousePressed(MouseEvent e) {
@@ -302,60 +298,67 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
             txtMaSP.setText(maMoi);
             txtMaSP.setEditable(false);
         }
-        
-       
-        else if (o.equals(btnLuu)) {
-            try {
-                String maSP = txtMaSP.getText().trim();
-                String tenSP = txtTenSP.getText().trim();
-                String slStr = txtSoLuongTon.getText().trim();
-                String giaNYStr = txtGiaNiemYet.getText().trim();
-                Object selectedDv = cboDonViTinh.getSelectedItem();
-                DonViTinh dvt = DonViTinh.CAI;
-                
-                if (maSP.isEmpty() || tenSP.isEmpty() || slStr.isEmpty() || giaNYStr.isEmpty()) {
-                    JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!", "Cảnh báo", JOptionPane.WARNING_MESSAGE);
-                    return;
-                }
+		else if (o.equals(btnLuu)) {
+		    try {
+		        String maSP = txtMaSP.getText().trim();
+		        String tenSP = txtTenSP.getText().trim();
+		        String slStr = txtSoLuongTon.getText().trim();
+		        String giaNhapStr = txtGiaNhap.getText().trim();
+		        String giaBanStr = txtGiaBan.getText().trim();
 
-                int soLuongTon = Integer.parseInt(slStr);
-                double giaNY = Double.parseDouble(giaNYStr);
-                
-                if (giaNY <= 0) {
-                    JOptionPane.showMessageDialog(this, "Giá niêm yết phải lớn hơn 0!", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
-                    txtGiaNiemYet.requestFocus();
-                    return;
-                }
-                if (soLuongTon < 0) { 
-                    JOptionPane.showMessageDialog(this, "Số lượng tồn không hợp lệ (phải >= 0)!", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
-                    txtSoLuongTon.requestFocus();
-                    return;
-                }
-                if (selectedDv != null) {
-                    String text = selectedDv.toString();
-                  
-                    switch (text) {
-                        case "Gói": dvt = DonViTinh.GOI; break;
-                        case "Hộp": dvt = DonViTinh.HOP; break;
-                        case "Chai": dvt = DonViTinh.CHAI; break;
-                        case "Túi": dvt = DonViTinh.TUI; break;
-                        default: dvt = DonViTinh.CAI; break;
-                    }
-                }
+		        if (maSP.isEmpty() || tenSP.isEmpty() || slStr.isEmpty()
+		                || giaNhapStr.isEmpty() || giaBanStr.isEmpty()) {
+		            JOptionPane.showMessageDialog(this, "Vui lòng nhập đầy đủ thông tin!",
+		                    "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+		            return;
+		        }
 
-                SanPham sp = new SanPham(maSP, tenSP, giaNY, soLuongTon, dvt);
-                
-                if (sp_dao.themSanPham(sp)) {
-                    JOptionPane.showMessageDialog(this, "Thêm sản phẩm thành công!");
-                    loadTableData(); 
-                    xoaTrangForm();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Thêm sản phẩm thất bại (Có thể bị trùng mã hoặc lỗi CSDL)!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Số lượng tồn và Giá niêm yết phải là số hợp lệ!", "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
-            }
-        }
+		        int soLuongTon = Integer.parseInt(slStr);
+		        double giaNhap = Double.parseDouble(giaNhapStr);
+		        double giaBan = Double.parseDouble(giaBanStr);
+
+		        if (soLuongTon < 0) {
+		            JOptionPane.showMessageDialog(this, "Số lượng tồn không hợp lệ (phải >= 0)!",
+		                    "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+		            txtSoLuongTon.requestFocus();
+		            return;
+		        }
+		        if (giaNhap <= 0) {
+		            JOptionPane.showMessageDialog(this, "Giá nhập phải lớn hơn 0!",
+		                    "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+		            txtGiaNhap.requestFocus();
+		            return;
+		        }
+		        if (giaBan <= 0) {
+		            JOptionPane.showMessageDialog(this, "Giá bán phải lớn hơn 0!",
+		                    "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+		            txtGiaBan.requestFocus();
+		            return;
+		        }
+		        if (giaBan < giaNhap) {
+		            JOptionPane.showMessageDialog(this, "Giá bán không được nhỏ hơn giá nhập!",
+		                    "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+		            txtGiaBan.requestFocus();
+		            return;
+		        }
+
+		        DonViTinh dvt = textToDonViTinh(cboDonViTinh.getSelectedItem());
+		        SanPham sp = new SanPham(maSP, tenSP, giaNhap, giaBan, soLuongTon, dvt);
+
+		        if (sp_dao.themSanPham(sp)) {
+		            JOptionPane.showMessageDialog(this, "Thêm sản phẩm thành công!");
+		            loadTableData();
+		            xoaTrangForm();
+		        } else {
+		            JOptionPane.showMessageDialog(this,
+		                    "Thêm sản phẩm thất bại (Có thể bị trùng mã hoặc lỗi CSDL)!",
+		                    "Lỗi", JOptionPane.ERROR_MESSAGE);
+		        }
+		    } catch (NumberFormatException ex) {
+		        JOptionPane.showMessageDialog(this, "Số lượng tồn, giá nhập và giá bán phải là số hợp lệ!",
+		                "Lỗi định dạng", JOptionPane.ERROR_MESSAGE);
+		    }
+		}
         
         
         else if (o.equals(btnXoa)) {
@@ -387,28 +390,54 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         }
 	}
 	private void xoaTrangForm() {
-        txtMaSP.setText("");
-        txtTenSP.setText("");
-        txtSoLuongTon.setText("");
-        txtGiaNiemYet.setText("");
-        txtGiaBan.setText("");
-        cboDonViTinh.setSelectedIndex(0);
-        tblSanPham.clearSelection();
+		  txtMaSP.setText("");
+		  txtTenSP.setText("");
+		  txtSoLuongTon.setText("");
+		  txtGiaNhap.setText("");
+		  txtGiaBan.setText("");
+		  cboDonViTinh.setSelectedIndex(0);
+		  tblSanPham.clearSelection();
     }
 
-    private void loadTableData() {
-        model.setRowCount(0);
-        ArrayList<SanPham> dsSP = sp_dao.getAllSanPham();
-        for (SanPham sp : dsSP) {
-            model.addRow(new Object[] {
-                null,
-                sp.getMaSP(),
-                sp.getTenSP(),
-                sp.getDonViTinh() != null ? sp.getDonViTinh().name() : "",
-                sp.getSoLuongTon(),
-                sp.getGiaNY(),
-                sp.getGiaNY()
-            });
-        }
-    }
+	private void loadTableData() {
+	    model.setRowCount(0);
+	    for (SanPham sp : sp_dao.getAllSanPham()) {
+	        themDongVaoBang(sp);
+	    }
+	}
+	private void themDongVaoBang(SanPham sp) {
+	    model.addRow(new Object[] {
+	        null,
+	        sp.getMaSP(),
+	        sp.getTenSP(),
+	        donViTinhToText(sp.getDonViTinh()),
+	        sp.getSoLuongTon(),
+	        sp.getGiaNhap(),
+	        sp.getGiaBan()
+	    });
+	}
+
+	// Enum -> chữ hiển thị (khớp với combo box)
+	private String donViTinhToText(DonViTinh dv) {
+	    if (dv == null) return "Cái";
+	    switch (dv) {
+	        case GOI:  return "Gói";
+	        case HOP:  return "Hộp";
+	        case CHAI: return "Chai";
+	        case TUI:  return "Túi";
+	        default:   return "Cái";
+	    }
+	}
+
+	// Chữ trong combo box -> enum
+	private DonViTinh textToDonViTinh(Object text) {
+	    if (text == null) return DonViTinh.CAI;
+	    switch (text.toString()) {
+	        case "Gói":  return DonViTinh.GOI;
+	        case "Hộp":  return DonViTinh.HOP;
+	        case "Chai": return DonViTinh.CHAI;
+	        case "Túi":  return DonViTinh.TUI;
+	        default:     return DonViTinh.CAI;
+	    }
+	}
 }
