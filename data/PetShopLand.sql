@@ -3,7 +3,6 @@
 -- CSDL PetShop LAND (SQL Server) - phần phục vụ chức năng Lịch hẹn
 
 -- =====================================================================
-
 USE master;
 
 GO
