@@ -26,7 +26,7 @@ public class ChiTietHoaDonDAO {
         ArrayList<ChiTietHoaDon> danhSach = new ArrayList<>();
 
         String sql = "SELECT ct.maHD, ct.maSP, ct.maDV, ct.maThuCung, "
-                + "ct.soLuong, ct.donGia, ct.thanhTien, "
+                + "ct.soLuong, ct.donGia, "
                 + "sp.tenSP, dv.tenDV, dv.giaTieuChuan, "
                 + "tc.tenThuCung "
                 + "FROM ChiTietHoaDon ct "
@@ -88,7 +88,7 @@ public class ChiTietHoaDonDAO {
                     chiTiet.setThuCung(thuCung);
                     chiTiet.setSoLuong(rs.getInt("soLuong"));
                     chiTiet.setDonGia(rs.getDouble("donGia"));
-                    chiTiet.setThanhTien(rs.getDouble("thanhTien"));
+                   
 
                     danhSach.add(chiTiet);
 
@@ -141,9 +141,9 @@ public class ChiTietHoaDonDAO {
                             rs.getDouble("giamGia"),
                             TrangThai.valueOf(rs.getString("trangThaiHD")),
                             phuongThuc == null ? null : PhuongThucTT.valueOf(phuongThuc),
-                            kh
+                            kh,
+                            null
                     );
-
                     return hoaDon;
 
                 }

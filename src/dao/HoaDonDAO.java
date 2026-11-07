@@ -6,10 +6,16 @@ import java.sql.Date;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.sql.Types;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
 import connectDB.ConnectDB;
+import entity.ChiTietHoaDon;
 import entity.HoaDon;
 import entity.KhachHang;
 import entity.TrangThai;
@@ -44,8 +50,9 @@ public class HoaDonDAO {
                         resultSet.getDouble("tongTien"),
                         resultSet.getDouble("giamGia"),
                         TrangThai.valueOf(resultSet.getString("trangThaiHD")),
-                        phuongThuc == null ? null: PhuongThucTT.valueOf(phuongThuc),
-                        kh
+                        phuongThuc == null ? null : PhuongThucTT.valueOf(phuongThuc),
+                        kh,
+                        null         
                 );
                 danhSach.add(hd);
             }
@@ -113,8 +120,9 @@ public class HoaDonDAO {
                             resultSet.getDouble("tongTien"),
                             resultSet.getDouble("giamGia"),
                             TrangThai.valueOf(resultSet.getString("trangThaiHD")),
-                            phuongThuc == null ? null: PhuongThucTT.valueOf(phuongThuc),
-                            kh
+                            phuongThuc == null ? null : PhuongThucTT.valueOf(phuongThuc),
+                            kh,
+                            null         
                     );
                     danhSach.add(hd);
                 }
@@ -123,4 +131,106 @@ public class HoaDonDAO {
 
         return danhSach;
     }
+    public void taoHoaDon(HoaDon hd, List<ChiTietHoaDon> dsCT, long diemDung) throws SQLException {
+        Connection con = ConnectDB.getConnection();
+        boolean autoCu = con.getAutoCommit();
+        try {
+            con.setAutoCommit(false);
+
+            // 1. Thêm hóa đơn
+            hd.setMaHD(phatSinhMaHD(con, "BH", hd.getNgayLap()));
+            String sqlHD = "INSERT INTO HoaDon (maHD, maKH, maNV, ngayLap, tongTien, giamGia, trangThaiHD, phuongThucTT) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+            try (PreparedStatement stm = con.prepareStatement(sqlHD)) {
+            	stm.setString(1, hd.getMaHD());
+            	stm.setString(2, hd.getKhachHang().getMaKH());
+            	stm.setString(3, hd.getNhanVien().getMaNV());
+            	stm.setTimestamp(4, Timestamp.valueOf(hd.getNgayLap().atTime(LocalTime.now())));
+            	stm.setDouble(5, hd.getTongTien());
+            	stm.setDouble(6, hd.getGiamGia());
+            	stm.setString(7, hd.getTrangThaiHD().name());
+            	if (hd.getPhuongThucTT() != null) stm.setString(8, hd.getPhuongThucTT().name());
+		        else stm.setNull(8, java.sql.Types.VARCHAR);
+		        stm.executeUpdate();
+            }
+            
+            // 2 + 3. Thêm chi tiết và trừ tồn kho
+            String sqlCT = "INSERT INTO ChiTietHoaDon (maHD, maSP, maDV, maThuCung, soLuong, donGia, thanhTien) "
+                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sqlTon = "UPDATE SanPham SET soLuongTon = soLuongTon - ? "
+                     + "WHERE maSP = ? AND soLuongTon >= ?";
+       		try (PreparedStatement stmCT = con.prepareStatement(sqlCT);
+            PreparedStatement stmTon = con.prepareStatement(sqlTon)) {
+       		for (ChiTietHoaDon ct : dsCT) {
+               stmCT.setString(1, hd.getMaHD());
+
+               if (ct.getSanPham() != null) stmCT.setString(2, ct.getSanPham().getMaSP());
+               else stmCT.setNull(2, Types.VARCHAR);
+
+               if (ct.getDichVu() != null) stmCT.setString(3, ct.getDichVu().getMaDV());
+               else stmCT.setNull(3, Types.VARCHAR);
+
+               if (ct.getThuCung() != null) stmCT.setString(4, ct.getThuCung().getMaThuCung());
+               else stmCT.setNull(4, Types.VARCHAR);
+
+               stmCT.setInt(5, ct.getSoLuong());
+               stmCT.setDouble(6, ct.getDonGia());
+               stmCT.setDouble(7, ct.getThanhTien());
+               stmCT.executeUpdate();
+
+               // Chỉ sản phẩm mới trừ tồn kho (dịch vụ thì không)
+               if (ct.getSanPham() != null) {
+                   stmTon.setInt(1, ct.getSoLuong());
+                   stmTon.setString(2, ct.getSanPham().getMaSP());
+                   stmTon.setInt(3, ct.getSoLuong());
+                   if (stmTon.executeUpdate() == 0) {
+                       throw new SQLException("Sản phẩm " + ct.getSanPham().getMaSP() + " không đủ tồn kho!");
+                   }
+               }
+           }
+       }
+            // 4. Trừ điểm tích lũy của khách (nếu có dùng)
+            if (diemDung > 0 && hd.getKhachHang() != null) {
+                String sqlDiem = "UPDATE KhachHang SET diemTichLuy = diemTichLuy - ? "
+                               + "WHERE maKH = ? AND diemTichLuy >= ?";
+                try (PreparedStatement stm = con.prepareStatement(sqlDiem)) {
+                    stm.setLong(1, diemDung);
+                    stm.setString(2, hd.getKhachHang().getMaKH());
+                    stm.setLong(3, diemDung);
+                    if (stm.executeUpdate() == 0) {
+                        throw new SQLException("Điểm tích lũy của khách không đủ!");
+                    }
+                }
+            }
+
+            con.commit();
+        } catch (SQLException e) {
+            con.rollback();
+            throw e;   // GUI hiển thị e.getMessage()
+        } finally {
+            con.setAutoCommit(autoCu);
+        }
+    }
+
+    // Mã HD: "HD" + loại (BH/DV) + ddMMyy + STT trong ngày (2 số)
+    // Ví dụ: HDBH07112601
+    private String phatSinhMaHD(Connection con, String loai, LocalDate ngay) throws SQLException {
+     String prefix = "HD" + loai + ngay.format(DateTimeFormatter.ofPattern("ddMMyy"));  // 10 ký tự
+
+     // Lấy số thứ tự lớn nhất trong ngày của loại hóa đơn này
+     String sql = "SELECT MAX(maHD) FROM HoaDon WITH (UPDLOCK, HOLDLOCK) WHERE maHD LIKE ?";
+     int stt = 1;
+     try (PreparedStatement stm = con.prepareStatement(sql)) {
+         stm.setString(1, prefix + "%");
+         try (ResultSet rs = stm.executeQuery()) {
+             if (rs.next() && rs.getString(1) != null) {
+                 stt = Integer.parseInt(rs.getString(1).substring(10)) + 1;
+             }
+         }
+     }
+     if (stt > 99) {
+         throw new SQLException("Đã vượt quá 99 hóa đơn trong ngày!");
+     }
+     return prefix + String.format("%02d", stt);
+ }
 }
