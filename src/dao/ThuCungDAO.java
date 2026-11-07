@@ -237,27 +237,28 @@ public class ThuCungDAO {
 	}
 	
 	// sua thong tin thu cung
-	public boolean suaThuCung(ThuCung tc) {
+	// Thêm throws Exception để đẩy lỗi ra cho GUI hiển thị
+	public boolean suaThuCung(ThuCung tc) throws Exception {
 	    Connection con = connectDB.ConnectDB.getConnection();
 	    PreparedStatement stmt = null;
 	    int n = 0;
-	    try {
-	        String sql = "UPDATE ThuCung SET tenThuCung = ?, loai = ?, canNang = ?, ghiChu = ?, trangThaiThuCung = ?, doHungDu = ?, maKH = ? WHERE maThuCung = ?";
-	        stmt = con.prepareStatement(sql);
-	        
-	        stmt.setString(1, tc.getTenThuCung());
-	        stmt.setString(2, tc.getLoai().name()); 
-	        stmt.setDouble(3, tc.getCanNang()); 
-	        stmt.setString(4, tc.getGhiChu());
-	        stmt.setString(5, tc.getTrangThaiThuCung().name());
-	        stmt.setString(6, tc.getDoHungDu().name()); 
-	        stmt.setString(7, tc.getChuSoHuu().getMaKH());
-	        stmt.setString(8, tc.getMaThuCung()); 
-	        
-	        n = stmt.executeUpdate();
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
+	    String sql = "UPDATE ThuCung SET tenThuCung = ?, loai = ?, canNang = ?, ghiChu = ?, trangThaiThuCung = ?, doHungDu = ?, maKH = ? WHERE maThuCung = ?";
+	    stmt = con.prepareStatement(sql);
+	    stmt.setNString(1, tc.getTenThuCung());
+	    stmt.setString(2, tc.getLoai() != null ? tc.getLoai().name() : null);
+	    
+	    stmt.setDouble(3, tc.getCanNang());
+	    stmt.setNString(4, tc.getGhiChu());
+	    
+	    stmt.setString(5, tc.getTrangThaiThuCung() != null ? tc.getTrangThaiThuCung().name() : null);
+	    stmt.setString(6, tc.getDoHungDu() != null ? tc.getDoHungDu().name() : null);
+	    
+	    stmt.setString(7, tc.getChuSoHuu() != null ? tc.getChuSoHuu().getMaKH() : null);
+	    
+	    stmt.setString(8, tc.getMaThuCung());
+	    
+	    n = stmt.executeUpdate();
+	    
 	    return n > 0;
 	}
 }
