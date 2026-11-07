@@ -11,12 +11,16 @@ import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.UIManager;
 import javax.swing.border.EmptyBorder;
 
+import connectDB.ConnectDB;
 import custom_gui.BackgroundPanel;
+import dao.NhanVienDAO;
+import entity.NhanVien;
 
 //import custom_gui.BackgroundPanel;
 
@@ -30,6 +34,8 @@ public class LoginGUI extends JFrame implements ActionListener{
 	private JLabel lblForgetPassword;
 	private JButton btnLogin;
 	private JButton btnExit;
+	
+	private JTextField txtUserName;
 
 	public LoginGUI() {
 		setSize(500,300);
@@ -64,7 +70,7 @@ public class LoginGUI extends JFrame implements ActionListener{
 		Box boxUserName = Box.createHorizontalBox();
 		JLabel lblUserName = new JLabel("Username:");
 		lblUserName.setForeground(Color.white);
-		JTextField txtUserName = new JTextField();
+		txtUserName = new JTextField();
 		txtUserName.setBorder(null);
 		txtUserName.setMaximumSize(sizeTxTField);
 		boxUserName.add(lblUserName);
@@ -110,15 +116,45 @@ public class LoginGUI extends JFrame implements ActionListener{
 		btnLogin.addActionListener(this);
 	}
 
+//	@Override
+//	public void actionPerformed(ActionEvent e) {
+//		Object o = e.getSource();
+//		
+//		if(o == btnExit) {
+//			System.exit(1);
+//		}
+//		else {
+//			new MainGUI().setVisible(true);
+//		}
+//	}
+	
+	
+	// đoạn này để test thôi
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
-		
-		if(o == btnExit) {
+
+		if (o == btnExit) {
 			System.exit(1);
-		}
-		else {
-			new MainGUI().setVisible(true);
+		} else if (o == btnLogin) {
+			String maNV = txtUserName.getText().trim();
+			if (maNV.isEmpty()) {
+				JOptionPane.showMessageDialog(this, "Vui lòng nhập username (mã nhân viên)");
+				return;
+			}
+			try {
+				ConnectDB.getInstance().connect();
+				NhanVien nv = new NhanVienDAO().timTheoMa(maNV);
+				if (nv == null) {
+					JOptionPane.showMessageDialog(this, "Không tìm thấy nhân viên có mã này");
+					return;
+				}
+				new MainGUI(nv).setVisible(true);
+				this.dispose();
+			} catch (Exception ex) {
+				JOptionPane.showMessageDialog(this, "Lỗi đăng nhập: " + ex.getMessage(), "Lỗi",
+						JOptionPane.ERROR_MESSAGE);
+			}
 		}
 	}
 	

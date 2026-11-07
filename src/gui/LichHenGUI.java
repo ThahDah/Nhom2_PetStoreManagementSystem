@@ -49,8 +49,8 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 	private JButton btnTim;
 	private JButton btnLamMoi;
 
-	public LichHenGUI() {
-//		this.nhanVienDangNhap = nhanVienDangNhap;
+	public LichHenGUI(NhanVien nhanVienDangNhap) {
+		this.nhanVienDangNhap = nhanVienDangNhap;
 		lichHenDAO = new LichHenDAO();
 		chiTietLichHenDAO = new ChiTietLichHenDAO();
 		dsLichHen = new ArrayList<LichHen>();
@@ -129,6 +129,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		txtTimKiem.addActionListener(this);
 		txtTimMaLichHen.addActionListener(this);
 	}
+
 
 	// ham doc du lieu vao bang
 	public void docDuLieuVaoTable() {

@@ -23,6 +23,7 @@ import javax.swing.UIManager;
 import javax.swing.border.Border;
 
 import connectDB.ConnectDB;
+import entity.NhanVien;
 
 public class MainGUI extends JFrame implements ActionListener  {
 	private JPanel pnlTab;
@@ -38,6 +39,9 @@ public class MainGUI extends JFrame implements ActionListener  {
 	private TaoLichHenGUI taoLichHen_UI;
 	private LichHenGUI lichHen_UI;
 	private NhanVienGUI nhanVien_UI;
+	
+	private NhanVien nhanVienDangNhap;
+	
 	private final String PANEL_BAN_HANG = "BanHang";
 	private final String PANEL_SAN_PHAM = "SanPham";
 	private final String PANEL_HOA_DON = "HoaDon";
@@ -61,7 +65,8 @@ public class MainGUI extends JFrame implements ActionListener  {
 	private JButton btnDangXuat;
 	private JButton btnSelected = null;
 	private Object color;
-	public MainGUI() {
+	public MainGUI(NhanVien nhanVienDangNhap) {
+		this.nhanVienDangNhap = nhanVienDangNhap;
 		try {
 			ConnectDB.getInstance().connect();
 			System.out.println("Connected!!!");
@@ -258,7 +263,7 @@ public class MainGUI extends JFrame implements ActionListener  {
 	    thongKe_UI = new ThongKeTaiChinhGUI();
 	    dichVu_UI = new DichVuGUI();
 	    thuCung_UI = new ThuCungGUI();
-	    lichHen_UI = new LichHenGUI();
+	    lichHen_UI = new LichHenGUI(nhanVienDangNhap);
 	    nhanVien_UI = new NhanVienGUI();
 	
 	    pnlRight.add(banHang_UI, PANEL_BAN_HANG );
