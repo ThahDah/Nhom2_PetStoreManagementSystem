@@ -18,7 +18,7 @@ import entity.DichVu;
 import entity.LichHen;
 import entity.ThuCung;
 import entity.TrangThai;
-
+import entity.Loai;
 
 public class LichHenDAO {
 	private static final int GHI_CHU_TOI_DA = 255;
@@ -207,5 +207,47 @@ public class LichHenDAO {
 			stm.setString(4, lichHen.getTrangThaiHen().name());
 			stm.executeUpdate();
 		}
+	}
+	public List<ChiTietLichHen> layChiTietChoTheoKhachHang(String maKH) throws SQLException {
+	    List<ChiTietLichHen> ds = new ArrayList<>();
+	    String sql = "SELECT lh.maLH, lh.thoiGianHen, lh.ghiChu, lh.trangThaiHen, "
+	            + "tc.maThuCung, tc.tenThuCung, tc.loai, tc.canNang, "
+	            + "dv.maDV, dv.tenDV, dv.giaTieuChuan, ct.donGia "
+	            + "FROM ChiTietLichHen ct "
+	            + "JOIN LichHen lh ON ct.maLH = lh.maLH "
+	            + "JOIN ThuCung tc ON ct.maThuCung = tc.maThuCung "
+	            + "JOIN DichVu dv ON ct.maDV = dv.maDV "
+	            + "WHERE tc.maKH = ? AND lh.trangThaiHen = ? "
+	            + "ORDER BY lh.thoiGianHen, lh.maLH, tc.maThuCung";
+	    Connection con = ConnectDB.getConnection();
+	    try (PreparedStatement stm = con.prepareStatement(sql)) {
+	        stm.setString(1, maKH);
+	        stm.setString(2, TrangThai.CHO_DEN_HEN.name());
+	        try (ResultSet rs = stm.executeQuery()) {
+	            while (rs.next()) {
+	                LichHen lh = new LichHen(rs.getString("maLH"),
+	                        rs.getDate("thoiGianHen").toLocalDate(),
+	                        rs.getString("ghiChu"),
+	                        TrangThai.valueOf(rs.getString("trangThaiHen")));
+
+	                ThuCung tc = new ThuCung();
+	                tc.setMaThuCung(rs.getString("maThuCung"));
+	                tc.setTenThuCung(rs.getString("tenThuCung"));
+	                tc.setLoai(Loai.valueOf(rs.getString("loai")));
+	                tc.setCanNang(rs.getDouble("canNang"));
+
+	                DichVu dv = new DichVu(rs.getString("maDV"), rs.getString("tenDV"),
+	                        rs.getDouble("giaTieuChuan"));
+
+	                ChiTietLichHen ct = new ChiTietLichHen();
+	                ct.setLichHen(lh);
+	                ct.setThuCung(tc);
+	                ct.setDichVu(dv);
+	                ct.setDonGia(rs.getDouble("donGia"));
+	                ds.add(ct);
+	            }
+	        }
+	    }
+	    return ds;
 	}
 }
