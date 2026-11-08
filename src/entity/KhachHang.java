@@ -97,7 +97,10 @@ public KhachHang(String maKH, String tenKH) { // them constructor de goi trong T
 		this.diemTichLuy = diemTichLuy;
 	}
 
-
+	@Override
+	public String toString() {
+	    return tenKH;
+	}
 
 	
 

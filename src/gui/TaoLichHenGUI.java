@@ -248,6 +248,7 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 		lblLoai.setMaximumSize(kichThuocNhan);
 		cbLoai = new JComboBox<Loai>(Loai.values());
 		cbLoai.setMaximumSize(new Dimension(Integer.MAX_VALUE, lableHeight));
+		cbLoai.setEnabled(false);
 		pnlLoai.add(lblLoai);
 		pnlLoai.add(cbLoai);
 		pnlCol2.add(pnlLoai);
@@ -542,7 +543,6 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 			}
 
 			// gan thong tin nhan vien vua nhap, du lieu chi duoc luu khi xac nhan tao lich hen
-			thuCung.setLoai((Loai) cbLoai.getSelectedItem());
 			thuCung.setCanNang(canNang);
 			thuCung.setDoHungDu((DoHungDu) cbDoHungDu.getSelectedItem());
 

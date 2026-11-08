@@ -49,7 +49,6 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 	private JTextField txtDiemTLKH;
 	private JTextField txtLoaiKH;
 	private JTextField txtDiemDaNhan;
-//	private JComboBox<LoaiKhachHang> loaiKH;
 	private JButton btnThem;
 	private JButton btnCapNhat;
 	private JButton btnXoa;
@@ -126,16 +125,9 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 		JLabel diemTLKH=new JLabel("Điểm tích lũy:");
 		diemTLKH.setPreferredSize(maKH.getPreferredSize());
 		txtDiemTLKH= new JTextField(10);
+		txtDiemTLKH.setEditable(false);
 		b4.add(diemTLKH); b4.add(txtDiemTLKH);
 		b.add(b4);
-		b.add(Box.createVerticalStrut(40));
-		
-		//them diem da nhan tren ui
-		JLabel diemDN=new JLabel("Điểm đã nhận:");
-		diemDN.setPreferredSize(maKH.getPreferredSize());
-		txtDiemDaNhan= new JTextField(10);
-		b5.add(diemDN); b5.add(txtDiemDaNhan);
-		b.add(b5);
 		b.add(Box.createVerticalStrut(40));
 		
 		JPanel menu=new JPanel();
@@ -192,7 +184,7 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 		
 		JPanel dsKH=new JPanel();
 		dsKH.setBorder(BorderFactory.createTitledBorder("Danh sách khách hàng"));
-		String[] strDSKH= {"Mã KH","Tên khách hàng","SĐT","Điểm đã nhận","Điểm TL","Loại KH"};
+		String[] strDSKH= {"Mã KH","Tên khách hàng","SĐT","Email","Điểm TL"};
 		model = new DefaultTableModel(strDSKH, 0) {
 		    @Override
 		    public Class<?> getColumnClass(int columnIndex) {
@@ -282,16 +274,15 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 				// Bỏ qua lỗi parse
 			}
 		}
-		return String.format("KH%d", max + 1);
+		return String.format("KH%04d", max + 1);
 	}
 
 	//Bieu thuc chinh quy
 	private boolean validData() {
 		String ten = txtTenKH.getText().trim();
 		String sdt = txtSDT.getText().trim();
-//		String email = txtEmail.getText().trim();
+		String email = txtEmail.getText().trim();
 		String diemTL = txtDiemTLKH.getText().trim();
-		String diemDN = txtDiemDaNhan.getText().trim();
 
 		if (ten.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "Tên khách hàng không được để trống!");
@@ -324,13 +315,6 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 			return false;
 		}
 		
-		if (diemDN.isEmpty() || !diemDN.matches("^\\d+$")) {
-			JOptionPane.showMessageDialog(this, "Điểm đã nhận phải là số nguyên!");
-			txtDiemDaNhan.requestFocus();
-			txtDiemDaNhan.selectAll();
-			return false;
-		}
-
 		return true;
 	}
 
@@ -339,8 +323,6 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 		try {
 			ArrayList<RowFilter<Object, Object>> filters = new ArrayList<>();
 			
-			
-
 			String sdtKH = txtTimSDTKH.getText().trim();
 			if (!sdtKH.isEmpty()) {
 				filters.add(RowFilter.regexFilter("(?i)" + sdtKH, 2)); // Cột 2: SĐT
@@ -362,16 +344,13 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 		Object o = e.getSource();
 
 		if (o.equals(btnLamMoi)) {
-			txtMKH.setText(phatSinhMaKH()); 
+			txtMKH.setText(""); 
 			txtMKH.setEditable(false);
 			txtTenKH.setText("");
 			txtSDT.setText("");
-//			txtEmail.setText("");
-			txtDiemTLKH.setText("0"); // Mặc định điểm là 0
-			txtDiemDaNhan.setText("0");
+			txtEmail.setText("");
+			txtDiemTLKH.setText("0");
 			
-			txtTimMKH.setText("");
-			txtTimTenKH.setText("");
 			txtTimSDTKH.setText("");
 			if (rowSorter != null) {
 			    rowSorter.setRowFilter(null); //bo bo loc, hien thi tat ca
@@ -471,6 +450,12 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 		
 		else if (o.equals(btnPhatSinhMa)) {
 		    txtMKH.setText(phatSinhMaKH());
+		    txtTenKH.setText("");
+			txtSDT.setText("");
+			txtEmail.setText("");
+			txtDiemTLKH.setText("0");
+			
+			txtTimSDTKH.setText("");
 		}
 	}
 

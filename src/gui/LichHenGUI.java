@@ -104,7 +104,8 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		JPanel pnlTable = new JPanel();
 		pnlTable.setLayout(new BorderLayout());
 		pnlTable.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-		String col[] = { "Mã lịch hẹn", "Khách hàng", "Thú cưng", "Dịch vụ", "Ngày hẹn", "Trạng thái" };
+//		String col[] = { "Mã lịch hẹn", "Khách hàng", "Thú cưng", "Dịch vụ", "Ngày hẹn", "Trạng thái" };
+		String col[] = { "Mã lịch hẹn", "Khách hàng", "Số điện thoại", "Thú cưng", "Dịch vụ", "Ngày hẹn", "Trạng thái" };
 		model = new DefaultTableModel(col, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -180,8 +181,13 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 //						tenDichVu.toString(), lichHen.getThoiGianHen().format(DinhDang.NGAY),
 //						lichHen.getTrangThaiHen() });
 				
+//				dsLichHen.add(lichHen);
+//				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, String.join(", ", dsTenThuCung),
+//						String.join(", ", dsTenDichVu), lichHen.getThoiGianHen().format(DinhDang.NGAY),
+//						lichHen.getTrangThaiHen() });
+				String soDienThoai = khachHang == null ? "" : khachHang.getSoDienThoai();
 				dsLichHen.add(lichHen);
-				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, String.join(", ", dsTenThuCung),
+				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, soDienThoai, String.join(", ", dsTenThuCung),
 						String.join(", ", dsTenDichVu), lichHen.getThoiGianHen().format(DinhDang.NGAY),
 						lichHen.getTrangThaiHen() });
 			}
