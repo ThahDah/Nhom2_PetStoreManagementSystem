@@ -131,82 +131,97 @@ public class HoaDonDAO {
 
         return danhSach;
     }
-    public void taoHoaDon(HoaDon hd, List<ChiTietHoaDon> dsCT, long diemDung) throws SQLException {
+    public void taoHoaDon(HoaDon hd, List<ChiTietHoaDon> dsCT, long diemDung,
+            String loai, String maLH) throws SQLException {
+        if (hd.getKhachHang() == null) throw new SQLException("Hóa đơn phải có khách hàng!");
+        if (hd.getNhanVien() == null) throw new SQLException("Hóa đơn phải có nhân viên lập!");
+
         Connection con = ConnectDB.getConnection();
         boolean autoCu = con.getAutoCommit();
         try {
             con.setAutoCommit(false);
 
-            // 1. Thêm hóa đơn
-            hd.setMaHD(phatSinhMaHD(con, "BH", hd.getNgayLap()));
+            // 1. Hóa đơn
+            hd.setMaHD(phatSinhMaHD(con, loai, hd.getNgayLap()));
             String sqlHD = "INSERT INTO HoaDon (maHD, maKH, maNV, ngayLap, tongTien, giamGia, trangThaiHD, phuongThucTT) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
             try (PreparedStatement stm = con.prepareStatement(sqlHD)) {
-            	stm.setString(1, hd.getMaHD());
-            	stm.setString(2, hd.getKhachHang().getMaKH());
-            	stm.setString(3, hd.getNhanVien().getMaNV());
-            	stm.setTimestamp(4, Timestamp.valueOf(hd.getNgayLap().atTime(LocalTime.now())));
-            	stm.setDouble(5, hd.getTongTien());
-            	stm.setDouble(6, hd.getGiamGia());
-            	stm.setString(7, hd.getTrangThaiHD().name());
-            	if (hd.getPhuongThucTT() != null) stm.setString(8, hd.getPhuongThucTT().name());
-		        else stm.setNull(8, java.sql.Types.VARCHAR);
-		        stm.executeUpdate();
+                stm.setString(1, hd.getMaHD());
+                stm.setString(2, hd.getKhachHang().getMaKH());
+                stm.setString(3, hd.getNhanVien().getMaNV());
+                stm.setTimestamp(4, Timestamp.valueOf(hd.getNgayLap().atTime(LocalTime.now())));
+                stm.setDouble(5, hd.getTongTien());
+                stm.setDouble(6, hd.getGiamGia());
+                stm.setString(7, hd.getTrangThaiHD().name());
+                if (hd.getPhuongThucTT() != null) stm.setString(8, hd.getPhuongThucTT().name());
+                else stm.setNull(8, Types.VARCHAR);
+                stm.executeUpdate();
             }
-            
-            // 2 + 3. Thêm chi tiết và trừ tồn kho
+
+            // 2. Chi tiết (+ trừ tồn kho nếu là sản phẩm)
             String sqlCT = "INSERT INTO ChiTietHoaDon (maHD, maSP, maDV, maThuCung, soLuong, donGia, thanhTien) "
-                    + "VALUES (?, ?, ?, ?, ?, ?, ?)";
-            String sqlTon = "UPDATE SanPham SET soLuongTon = soLuongTon - ? "
-                     + "WHERE maSP = ? AND soLuongTon >= ?";
-       		try (PreparedStatement stmCT = con.prepareStatement(sqlCT);
-            PreparedStatement stmTon = con.prepareStatement(sqlTon)) {
-       		for (ChiTietHoaDon ct : dsCT) {
-               stmCT.setString(1, hd.getMaHD());
+                         + "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            String sqlTon = "UPDATE SanPham SET soLuongTon = soLuongTon - ? WHERE maSP = ? AND soLuongTon >= ?";
+            try (PreparedStatement stmCT = con.prepareStatement(sqlCT);
+                 PreparedStatement stmTon = con.prepareStatement(sqlTon)) {
+                for (ChiTietHoaDon ct : dsCT) {
+                    stmCT.setString(1, hd.getMaHD());
+                    if (ct.getSanPham() != null) stmCT.setString(2, ct.getSanPham().getMaSP());
+                    else stmCT.setNull(2, Types.VARCHAR);
+                    if (ct.getDichVu() != null) stmCT.setString(3, ct.getDichVu().getMaDV());
+                    else stmCT.setNull(3, Types.VARCHAR);
+                    if (ct.getThuCung() != null) stmCT.setString(4, ct.getThuCung().getMaThuCung());
+                    else stmCT.setNull(4, Types.VARCHAR);
+                    stmCT.setInt(5, ct.getSoLuong());
+                    stmCT.setDouble(6, ct.getDonGia());
+                    stmCT.setDouble(7, ct.getThanhTien());
+                    stmCT.executeUpdate();
 
-               if (ct.getSanPham() != null) stmCT.setString(2, ct.getSanPham().getMaSP());
-               else stmCT.setNull(2, Types.VARCHAR);
+                    if (ct.getSanPham() != null) {
+                        stmTon.setInt(1, ct.getSoLuong());
+                        stmTon.setString(2, ct.getSanPham().getMaSP());
+                        stmTon.setInt(3, ct.getSoLuong());
+                        if (stmTon.executeUpdate() == 0) {
+                            throw new SQLException("Sản phẩm " + ct.getSanPham().getMaSP() + " không đủ tồn kho!");
+                        }
+                    }
+                }
+            }
 
-               if (ct.getDichVu() != null) stmCT.setString(3, ct.getDichVu().getMaDV());
-               else stmCT.setNull(3, Types.VARCHAR);
-
-               if (ct.getThuCung() != null) stmCT.setString(4, ct.getThuCung().getMaThuCung());
-               else stmCT.setNull(4, Types.VARCHAR);
-
-               stmCT.setInt(5, ct.getSoLuong());
-               stmCT.setDouble(6, ct.getDonGia());
-               stmCT.setDouble(7, ct.getThanhTien());
-               stmCT.executeUpdate();
-
-               // Chỉ sản phẩm mới trừ tồn kho (dịch vụ thì không)
-               if (ct.getSanPham() != null) {
-                   stmTon.setInt(1, ct.getSoLuong());
-                   stmTon.setString(2, ct.getSanPham().getMaSP());
-                   stmTon.setInt(3, ct.getSoLuong());
-                   if (stmTon.executeUpdate() == 0) {
-                       throw new SQLException("Sản phẩm " + ct.getSanPham().getMaSP() + " không đủ tồn kho!");
-                   }
-               }
-           }
-       }
-            // 4. Trừ điểm tích lũy của khách (nếu có dùng)
-            if (diemDung > 0 && hd.getKhachHang() != null) {
-                String sqlDiem = "UPDATE KhachHang SET diemTichLuy = diemTichLuy - ? "
-                               + "WHERE maKH = ? AND diemTichLuy >= ?";
+            // 3. Trừ điểm
+            if (diemDung > 0) {
+                String sqlDiem = "UPDATE KhachHang SET diemTichLuy = diemTichLuy - ? WHERE maKH = ? AND diemTichLuy >= ?";
                 try (PreparedStatement stm = con.prepareStatement(sqlDiem)) {
                     stm.setLong(1, diemDung);
                     stm.setString(2, hd.getKhachHang().getMaKH());
                     stm.setLong(3, diemDung);
-                    if (stm.executeUpdate() == 0) {
-                        throw new SQLException("Điểm tích lũy của khách không đủ!");
-                    }
+                    if (stm.executeUpdate() == 0) throw new SQLException("Điểm tích lũy của khách không đủ!");
                 }
+            }
+
+            // 4. Hóa đơn dịch vụ: chuyển lịch hẹn sang đã tiếp nhận
+            if (maLH != null) {
+                String sqlLH = "UPDATE LichHen SET trangThaiHen = ? WHERE maLH = ? AND trangThaiHen = ?";
+                try (PreparedStatement stm = con.prepareStatement(sqlLH)) {
+                    stm.setString(1, TrangThai.DA_TIEP_NHAN.name());
+                    stm.setString(2, maLH);
+                    stm.setString(3, TrangThai.CHO_DEN_HEN.name());
+                    if (stm.executeUpdate() == 0) throw new SQLException("Lịch hẹn không còn ở trạng thái chờ đến hẹn!");
+                }
+            }
+         // Thú cưng của lịch hẹn này -> đang chăm sóc
+            String sqlTC = "UPDATE ThuCung SET trangThaiThuCung = ? "
+                         + "WHERE maThuCung IN (SELECT maThuCung FROM ChiTietLichHen WHERE maLH = ?)";
+            try (PreparedStatement stm = con.prepareStatement(sqlTC)) {
+                stm.setString(1, TrangThai.DANG_CHAM_SOC.name());
+                stm.setString(2, maLH);
+                stm.executeUpdate();
             }
 
             con.commit();
         } catch (SQLException e) {
             con.rollback();
-            throw e;   // GUI hiển thị e.getMessage()
+            throw e;
         } finally {
             con.setAutoCommit(autoCu);
         }

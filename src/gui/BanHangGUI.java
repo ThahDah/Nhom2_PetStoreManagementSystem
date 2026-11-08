@@ -9,10 +9,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.awt.event.MouseAdapter;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
+import java.util.Map;
+import java.util.Set;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -27,6 +32,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
@@ -38,6 +44,9 @@ import javax.swing.event.TableModelListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumnModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+
 
 import com.formdev.flatlaf.icons.FlatSearchIcon;
 
@@ -49,9 +58,14 @@ import dao.SanPhamDAO;
 import entity.ChiTietHoaDon;
 import entity.HoaDon;
 import entity.KhachHang;
+import entity.Loai;
 import entity.NhanVien;
 import entity.SanPham;
 import entity.TrangThai;
+import dao.LichHenDAO;
+import entity.ChiTietLichHen;
+import entity.DichVu;
+import entity.ThuCung;
 
 public class BanHangGUI extends JPanel implements ChangeListener {
 		private static final Color DARK_TEXT    = new Color(0x111827);
@@ -117,6 +131,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			private static final long POINT_VALUE = 1;// giá trị của diểm tích lũy
 			private KhachHang khachHienTai = null;   // khách đang chọn
 			private HoaDonDAO hd_dao = new HoaDonDAO();
+			private JButton btnSaveProductInvoice;
 	    	  public ProductPanel() {
 	    		 setLayout(new BorderLayout());
 	    		 
@@ -442,12 +457,27 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		    btnConfirm.putClientProperty("FlatLaf.style", "arc: 16; borderWidth: 0");
 	    		    btnConfirm.setPreferredSize(new Dimension(100, 52));
 	    		    
+	    		    ImageIcon save = new ImageIcon("img/icon/icon_save.png");
+	    		    btnSaveProductInvoice = new JButton("Lưu hóa đơn");
+	    		    btnSaveProductInvoice.setIcon(IU.setImg(save, 30, 30));
+	    		    btnSaveProductInvoice.setFont(new Font("Segoe UI", Font.BOLD, 16));
+	    		    btnSaveProductInvoice.setForeground(Color.WHITE);
+	    		    btnSaveProductInvoice.setBackground(Color.BLUE);
+	    		    btnSaveProductInvoice.setAlignmentX(CENTER_ALIGNMENT);
+	    		    btnSaveProductInvoice.putClientProperty("FlatLaf.style", "arc: 16; borderWidth: 0");
+	    		    btnSaveProductInvoice.setPreferredSize(new Dimension(100,52));
+	    	
+	    		    
+	    		    Box boxButtonProduct = Box.createVerticalBox();
+	    		    boxButtonProduct.add(btnConfirm);
+	    		    boxButtonProduct.add(Box.createVerticalStrut(3));
+	    		    boxButtonProduct.add(btnSaveProductInvoice);
 	    		    
 	    		    pnlBottom.add(boxReceived);
 	    		    pnlBottom.add(Box.createVerticalStrut(16));
 	    		    pnlBottom.add(boxChange);
 	    		    pnlBottom.add(Box.createVerticalStrut(16));
-	    		    pnlBottom.add(btnConfirm);
+	    		    pnlBottom.add(boxButtonProduct);
 	    		    
 	    		
 	    		pnlPaymentDetail.add(pnlHeader);
@@ -456,6 +486,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		pnlPaymentDetail.add(pnlBottom);
 	    		
 	    		 // === KHU VỰC BẮT SỰ KIỆN MÀN PRODUCT ===
+	    		btnSaveProductInvoice.addActionListener(this);
 	    		txtPhone.addActionListener(this);
 	    		txtProduct.addActionListener(this);
 	    		model.addTableModelListener(this);
@@ -470,19 +501,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    	  
 	    	 
 	    	  
-	    	 
-			  @Override
-			  public void mouseClicked(MouseEvent e) {
-				  int row = tblProductList.rowAtPoint(e.getPoint());
-			        int col = tblProductList.columnAtPoint(e.getPoint());
-			        if (row >= 0 && col == 6) {
-			        	int ok = JOptionPane.showConfirmDialog(null,
-			        	            "Xóa sản phẩm này khỏi hóa đơn?", "Xác nhận", JOptionPane.YES_NO_OPTION);
-			        	if (ok != JOptionPane.YES_OPTION) return;
-			            if (tblProductList.isEditing()) tblProductList.getCellEditor().stopCellEditing();
-			            model.removeRow(row);
-			        }
-			  }
+	    	
 			  @Override
 			  public void actionPerformed(ActionEvent e) {
 				Object o = e.getSource();
@@ -499,9 +518,72 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 				else if (o == btnConfirm) {
 				    taoHoaDon();
 				}
+				else if (o == btnSaveProductInvoice) {
+					luuHoaDonSanPham();
+				}
 			  }
 			 
 			  
+			  private void luuHoaDonSanPham() {
+				  if (khachHienTai == null) {
+					    JOptionPane.showMessageDialog(null,
+					            "Vui lòng tìm và chọn khách hàng trước khi tạo hóa đơn!",
+					            "Lỗi", JOptionPane.ERROR_MESSAGE);
+					    txtPhone.requestFocusInWindow();
+					    return;
+					}
+			      if (tblProductList.isEditing()) tblProductList.getCellEditor().stopCellEditing();
+
+			      if (model.getRowCount() == 0) {
+			          JOptionPane.showMessageDialog(null, "Hóa đơn chưa có sản phẩm!",
+			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
+			          return;
+			      }
+
+			      long tamTinh = tinhTamTinh();
+			      long giamGia = tinhGiamGia(tamTinh);
+			      long phaiTra = tamTinh - giamGia;
+
+			      if (parseReceived() < phaiTra) {
+			          JOptionPane.showMessageDialog(null, "Tiền nhận chưa đủ!",
+			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
+			          txtReceived.requestFocusInWindow();
+			          return;
+			      }
+
+			      int ok = JOptionPane.showConfirmDialog(null,
+			              "Tạo hóa đơn với tổng thanh toán " + DinhDang.TIEN.format(phaiTra) + "?",
+			              "Xác nhận", JOptionPane.YES_NO_OPTION);
+			      if (ok != JOptionPane.YES_OPTION) return;
+
+			      List<ChiTietHoaDon> dsCT = new ArrayList<>();
+			      for (int i = 0; i < model.getRowCount(); i++) {
+			          SanPham sp = new SanPham();
+			          sp.setMaSP(model.getValueAt(i, 0).toString());
+			          int soLuong = Integer.parseInt(model.getValueAt(i, 3).toString());
+			          double donGia = Double.parseDouble(model.getValueAt(i, 4).toString());
+			          dsCT.add(new ChiTietHoaDon(null, null, sp, soLuong, donGia));
+			      }
+
+			      HoaDon hd = new HoaDon(null, LocalDate.now(), tamTinh, giamGia,
+			    	        TrangThai.CHUA_THANH_TOAN,   
+			    	        null, khachHienTai, nhanVienDangNhap);
+			     
+			      try {
+			    	  hd_dao.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE, "BH", null);
+			          JOptionPane.showMessageDialog(null, "Tạo hóa đơn " + hd.getMaHD() + " thành công!");
+			          resetInvoice();
+			      } catch (SQLException ex) {
+			          ex.printStackTrace();
+			          JOptionPane.showMessageDialog(null, "Tạo hóa đơn thất bại: " + ex.getMessage(),
+			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
+			      }
+				
+			}
+
+
+
+
 			  private void addProductByCode() {
 				    String ma = txtProduct.getText().trim().toUpperCase();
 				    if (ma.isEmpty()) return;
@@ -552,7 +634,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 				 KhachHang kh = sdt.isEmpty() ? null : kh_dao.timKiemKhachHangTheoSDT(sdt);
 
 				    if (kh == null) {
-				        JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng!",
+				        JOptionPane.showMessageDialog(null, "Không tìm thấy khách hàng!",
 				                "Lỗi", JOptionPane.ERROR_MESSAGE);
 				        resetCustomer();
 				        return;
@@ -579,30 +661,23 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 				    recalcTotals();
 				
 			}
-
+			  
 			  @Override
-			  public void mousePressed(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
+			  public void mouseClicked(MouseEvent e) {
+				  int row = tblProductList.rowAtPoint(e.getPoint());
+			        int col = tblProductList.columnAtPoint(e.getPoint());
+			        if (row >= 0 && col == 6) {
+			        	int ok = JOptionPane.showConfirmDialog(null,
+			        	            "Xóa sản phẩm này khỏi hóa đơn?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+			        	if (ok != JOptionPane.YES_OPTION) return;
+			            if (tblProductList.isEditing()) tblProductList.getCellEditor().stopCellEditing();
+			            model.removeRow(row);
+			        }
 			  }
-
-			  @Override
-			  public void mouseReleased(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
-			  }
-
-			  @Override
-			  public void mouseEntered(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
-			  }
-
-			  @Override
-			  public void mouseExited(MouseEvent e) {
-				// TODO Auto-generated method stub
-				
-			  }
+			  @Override public void mousePressed(MouseEvent e) {}
+			  @Override public void mouseReleased(MouseEvent e) {}
+			  @Override public void mouseEntered(MouseEvent e) {}
+			  @Override public void mouseExited(MouseEvent e) {}
 
 			  @Override
 			  public void tableChanged(TableModelEvent e) {
@@ -698,7 +773,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			      if (tblProductList.isEditing()) tblProductList.getCellEditor().stopCellEditing();
 
 			      if (model.getRowCount() == 0) {
-			          JOptionPane.showMessageDialog(this, "Hóa đơn chưa có sản phẩm!",
+			          JOptionPane.showMessageDialog(null, "Hóa đơn chưa có sản phẩm!",
 			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
 			          return;
 			      }
@@ -708,13 +783,13 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			      long phaiTra = tamTinh - giamGia;
 
 			      if (parseReceived() < phaiTra) {
-			          JOptionPane.showMessageDialog(this, "Tiền nhận chưa đủ!",
+			          JOptionPane.showMessageDialog(null, "Tiền nhận chưa đủ!",
 			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
 			          txtReceived.requestFocusInWindow();
 			          return;
 			      }
 
-			      int ok = JOptionPane.showConfirmDialog(this,
+			      int ok = JOptionPane.showConfirmDialog(null,
 			              "Tạo hóa đơn với tổng thanh toán " + DinhDang.TIEN.format(phaiTra) + "?",
 			              "Xác nhận", JOptionPane.YES_NO_OPTION);
 			      if (ok != JOptionPane.YES_OPTION) return;
@@ -733,7 +808,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			    	        null, khachHienTai, nhanVienDangNhap);
 			     
 			      try {
-			          hd_dao.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE);
+			    	  hd_dao.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE, "BH", null);
 			          JOptionPane.showMessageDialog(this, "Tạo hóa đơn " + hd.getMaHD() + " thành công!");
 			          resetInvoice();
 			      } catch (SQLException ex) {
@@ -758,7 +833,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
       }
       
       // ========== TAB HÓA ĐƠN DỊCH VỤ ==========
-      private final class ServicePanel extends JPanel  {
+      private final class ServicePanel extends JPanel implements ActionListener, ListSelectionListener  {
     	  private JTextField txtPhoneService;
     	  private JLabel lblNameService, lblPointsService;
 
@@ -782,6 +857,20 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	  private JTextField txtReceivedService;
     	  private JTextField txtChangeService;
     	  private JButton btnConfirmService;    
+    	  
+    	  private static final long POINT_VALUE_SERVICE = 1;      // 1 điểm = 1 đ
+    	  private final LichHenDAO lh_dao = new LichHenDAO();
+    	  private KhachHang khachHienTaiService = null;
+    	  private long customerPointsService = 0;
+    	  private long discountService = 0;
+    	  // maLH -> các dòng chi tiết của lịch hẹn đó
+    	  private final Map<String, List<ChiTietLichHen>> dsTheoLichHen = new LinkedHashMap<>();
+    	  // dịch vụ đang hiện ở bảng dưới (xóa dòng chỉ xóa khỏi hóa đơn, không đụng CSDL)
+    	  private List<ChiTietLichHen> dsChiTietHienTai = new ArrayList<>();
+    	  
+    	  private String maLHDangChon = null;   // lịch hẹn đang được thanh toán
+    	  private final HoaDonDAO hd_daoService = new HoaDonDAO();
+		  private JButton btnSaveServiceInvoice;
     	  public ServicePanel() {
     		    setLayout(new BorderLayout());
 
@@ -854,12 +943,19 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    headAppointmentService.add(Box.createVerticalStrut(4));
     		    headAppointmentService.add(lblAppointmentSubService);
 
-    		    String[] colsAppointmentService = {"Mã lịch hẹn", "Giờ hẹn", "Thú cưng", "Giống / cân nặng", "Dịch vụ"};
+    		    String[] colsAppointmentService = {"Mã lịch hẹn", "Ngày hẹn", "Thú cưng", "Giống / cân nặng", "Dịch vụ"};
     		    modelAppointmentService = new DefaultTableModel(colsAppointmentService, 0) {
     		        @Override public boolean isCellEditable(int r, int c) { return false; }
     		    };
-    		    tblAppointmentService = createStyledTable(modelAppointmentService);
-    		    tblAppointmentService.setSelectionMode(javax.swing.ListSelectionModel.SINGLE_SELECTION);
+    		    tblAppointmentService = new JTable(modelAppointmentService);
+    		    tblAppointmentService.setRowHeight(44);
+    		    tblAppointmentService.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+    		    tblAppointmentService.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+    		    tblAppointmentService.getTableHeader().setReorderingAllowed(false);
+    		    tblAppointmentService.setShowVerticalLines(false);
+    		    tblAppointmentService.setGridColor(BORDER_COLOR);
+    		    tblAppointmentService.setBackground(Color.WHITE);
+    		    tblAppointmentService.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     		    tblAppointmentService.setRowSelectionAllowed(true);
     		    tblAppointmentService.setFocusable(true);
     		    tblAppointmentService.setSelectionBackground(new Color(0xFFEDE5));
@@ -877,12 +973,71 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 
     		    pnlAppointmentService.add(headAppointmentService, BorderLayout.NORTH);
     		    pnlAppointmentService.add(scrollAppointmentService, BorderLayout.CENTER);
+    		    
+    		 // ==================== DỊCH VỤ CỦA LỊCH HẸN ====================
+    		    JPanel pnlServiceList = new JPanel(new BorderLayout(0, 8));
+    		    pnlServiceList.setOpaque(false);
 
-    		    // ==================== GHÉP BÊN TRÁI ====================
+    		    lblServiceTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
+    		    lblServiceTitle.setForeground(DARK_TEXT);
+    		    lblServiceSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+    		    lblServiceSub.setForeground(GRAY_TEXT);
+
+    		    JPanel titleBoxService = new JPanel();
+    		    titleBoxService.setOpaque(false);
+    		    titleBoxService.setLayout(new BoxLayout(titleBoxService, BoxLayout.Y_AXIS));
+    		    titleBoxService.add(lblServiceTitle);
+    		    titleBoxService.add(Box.createVerticalStrut(4));
+    		    titleBoxService.add(lblServiceSub);
+
+    		    String[] colsService = {"Mã dịch vụ", "Tên dịch vụ", "Thú cưng", "Đơn giá", ""};
+    		    modelService = new DefaultTableModel(colsService, 0) {
+    		        @Override public boolean isCellEditable(int r, int c) { return false; }
+    		    };
+    		    tblService = new JTable(modelService);
+    		    tblService.setRowHeight(44);
+    		    tblService.setFont(new Font("Segoe UI", Font.PLAIN, 14));
+    		    tblService.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
+    		    tblService.getTableHeader().setReorderingAllowed(false);
+    		    tblService.setShowVerticalLines(false);
+    		    tblService.setGridColor(BORDER_COLOR);
+    		    tblService.setBackground(Color.WHITE);
+    		    tblService.setFocusable(false);
+    		    tblService.setRowSelectionAllowed(false);
+
+    		    DefaultTableCellRenderer rightService = new DefaultTableCellRenderer() {
+    		        @Override protected void setValue(Object v) {
+    		            setText(v instanceof Number ? DinhDang.TIEN.format(((Number) v).longValue()) : "");
+    		        }
+    		    };
+    		    rightService.setHorizontalAlignment(SwingConstants.RIGHT);
+
+    		    ImageIcon deleteIconService = IUService.setImg(new ImageIcon("img/icon/icon_delete.png"), 20, 20);
+    		    DefaultTableCellRenderer trashService = new DefaultTableCellRenderer();
+    		    trashService.setHorizontalAlignment(SwingConstants.CENTER);
+    		    trashService.setIcon(deleteIconService);
+    		    trashService.setText("");
+
+    		    TableColumnModel cmService = tblService.getColumnModel();
+    		    cmService.getColumn(3).setCellRenderer(rightService);
+    		    cmService.getColumn(4).setCellRenderer(trashService);
+    		    cmService.getColumn(0).setPreferredWidth(100);
+    		    cmService.getColumn(1).setPreferredWidth(240);
+    		    cmService.getColumn(2).setPreferredWidth(130);
+    		    cmService.getColumn(3).setPreferredWidth(120);
+    		    cmService.getColumn(4).setPreferredWidth(50);
+    		    cmService.getColumn(4).setMaxWidth(50);
+
+    		    JScrollPane scrollService = new JScrollPane(tblService);
+    		    scrollService.getViewport().setBackground(Color.WHITE);
+
+    		    pnlServiceList.add(titleBoxService, BorderLayout.NORTH);
+    		    pnlServiceList.add(scrollService, BorderLayout.CENTER);
+    		    
     		    JPanel pnlCenterService = new JPanel(new GridLayout(2, 1, 0, 12));
     		    pnlCenterService.setOpaque(false);
     		    pnlCenterService.add(pnlAppointmentService);
-    		    pnlCenterService.add(buildServiceSection());
+    		    pnlCenterService.add(pnlServiceList);
 
     		    pnlMainService.add(pnlCustomerService, BorderLayout.NORTH);
     		    pnlMainService.add(pnlCenterService, BorderLayout.CENTER);
@@ -1033,95 +1188,323 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    btnConfirmService.setAlignmentX(CENTER_ALIGNMENT);
     		    btnConfirmService.putClientProperty("FlatLaf.style", "arc: 16; borderWidth: 0");
     		    btnConfirmService.setPreferredSize(new Dimension(100, 52));
-
+    		    
+    		   
+    		    ImageIcon saveService = new ImageIcon("img/icon/icon_save.png");
+    		    btnSaveServiceInvoice = new JButton("Lưu hóa đơn");
+    		    btnSaveServiceInvoice.setIcon(IUService.setImg(saveService, 30, 30));
+    		    btnSaveServiceInvoice.setFont(new Font("Segoe UI", Font.BOLD, 16));
+    		    btnSaveServiceInvoice.setForeground(Color.WHITE);
+    		    btnSaveServiceInvoice.setBackground(Color.BLUE);
+    		    btnSaveServiceInvoice.setAlignmentX(CENTER_ALIGNMENT);
+    		    btnSaveServiceInvoice.putClientProperty("FlatLaf.style", "arc: 16; borderWidth: 0");
+    		    btnSaveServiceInvoice.setPreferredSize(new Dimension(100,52));
+    		    
+    		    Box boxButtonService = Box.createVerticalBox();
+    		    boxButtonService.add(btnConfirmService);
+    		    boxButtonService.add(Box.createVerticalStrut(3));
+    		    boxButtonService.add(btnSaveServiceInvoice);
+    		    
     		    pnlBottomService.add(boxReceivedService);
     		    pnlBottomService.add(Box.createVerticalStrut(16));
     		    pnlBottomService.add(boxChangeService);
     		    pnlBottomService.add(Box.createVerticalStrut(16));
-    		    pnlBottomService.add(btnConfirmService);
+    		    pnlBottomService.add(boxButtonService);
 
     		    pnlPaymentDetailService.add(pnlHeaderService);
     		    pnlPaymentDetailService.add(pnlSummaryService);
     		    pnlPaymentDetailService.add(boxTotalService);
     		    pnlPaymentDetailService.add(pnlBottomService);
+    		    
+    		 // === KHU VỰC BẮT SỰ KIỆN MÀN DỊCH VỤ ===
+    		    btnConfirmService.addActionListener(this);
+    		    btnSaveServiceInvoice.addActionListener(this);
+    		    txtPhoneService.addActionListener(this);
+    		    chkUsePointsService.addActionListener(this);
+    		    tblAppointmentService.getSelectionModel().addListSelectionListener(this);
+    		    txtReceivedService.getDocument().addDocumentListener(new DocumentListener() {
+    		        @Override public void insertUpdate(DocumentEvent e)  { updateChangeService(); }
+    		        @Override public void removeUpdate(DocumentEvent e)  { updateChangeService(); }
+    		        @Override public void changedUpdate(DocumentEvent e) { updateChangeService(); }
+    		});
+    		    tblService.addMouseListener(new MouseAdapter() {
+    		        @Override
+    		        public void mouseClicked(MouseEvent e) {
+    		            int row = tblService.rowAtPoint(e.getPoint());
+    		            int col = tblService.columnAtPoint(e.getPoint());
+    		            if (row < 0 || col != 4) return;
+    		            int ok = JOptionPane.showConfirmDialog(null,
+    		                    "Bỏ dịch vụ này khỏi hóa đơn?", "Xác nhận", JOptionPane.YES_NO_OPTION);
+    		            if (ok != JOptionPane.YES_OPTION) return;
+    		            dsChiTietHienTai.remove(row);
+    		            fillServiceTable();
+    		        }
+    		    });
+    	 
+    	  }
+    	  @Override
+    	  public void actionPerformed(ActionEvent e) {
+    	      Object o = e.getSource();
+    	      if (o == txtPhoneService) {
+    	          searchCustomerService();
+    	      } else if (o == chkUsePointsService) {
+    	          recalcTotalsService();
+    	      }else if (o == btnConfirmService) {
+    	    	    taoHoaDonService("TT");
+    	      }else if(o == btnSaveServiceInvoice) {
+    	    	   taoHoaDonService("");
+    	      }
+    	  }
+
+    	 
+		  // Chọn dòng lịch hẹn -> nạp dịch vụ của lịch hẹn đó
+    	  @Override
+    	  public void valueChanged(ListSelectionEvent e) {
+    	      if (e.getValueIsAdjusting()) return;
+    	      int row = tblAppointmentService.getSelectedRow();
+    	      if (row < 0) {
+    	    	  maLHDangChon = null;
+    	          dsChiTietHienTai = new ArrayList<>();
+    	          lblServiceTitle.setText("Dịch vụ của lịch hẹn");
+    	          lblServiceSub.setText("Chọn một lịch hẹn ở trên để xem dịch vụ");
+    	          fillServiceTable();
+    	          return;
+    	      }
+    	      String maLH = modelAppointmentService.getValueAt(row, 0).toString();
+    	      maLHDangChon = maLH;
+    	      List<ChiTietLichHen> ds = dsTheoLichHen.get(maLH);
+    	      dsChiTietHienTai = ds == null ? new ArrayList<>() : new ArrayList<>(ds);   // bản sao để xóa dòng không ảnh hưởng gốc
+    	      lblServiceTitle.setText("Dịch vụ của lịch hẹn " + maLH);
+    	      lblServiceSub.setText("Thú cưng: " + tenThuCungCuaLich(dsChiTietHienTai));
+    	      fillServiceTable();
+    	  }
+
+    	  private void searchCustomerService() {
+    	      String sdt = txtPhoneService.getText().trim();
+    	      KhachHang kh = sdt.isEmpty() ? null : kh_dao.timKiemKhachHangTheoSDT(sdt);
+    	      if (kh == null) {
+    	          JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng!",
+    	                  "Lỗi", JOptionPane.ERROR_MESSAGE);
+    	          resetCustomerService();
+    	          return;
+    	      }
+
+    	      resetCustomerService();   // xóa dữ liệu của khách trước
+    	      khachHienTaiService = kh;
+    	      customerPointsService = (long) kh.getDiemTichLuy();
+    	      lblNameService.setText(kh.getTenKH());
+    	      lblPointsService.setText(String.valueOf(kh.getDiemTichLuy()));
+    	      lblPointsAvailService.setText("Hiện có " + kh.getDiemTichLuy() + " điểm");
+    	      chkUsePointsService.setEnabled(customerPointsService > 0);
+
+    	      // Nạp lịch hẹn từ CSDL
+    	      try {
+    	          for (ChiTietLichHen ct : lh_dao.layChiTietChoTheoKhachHang(kh.getMaKH())) {
+    	        	  String maLH = ct.getLichHen().getMaLH();
+
+    	        	  if (!dsTheoLichHen.containsKey(maLH)) {
+    	        	      dsTheoLichHen.put(maLH, new ArrayList<>());
+    	        	  }
+
+    	        	  dsTheoLichHen.get(maLH).add(ct);
+    	          }
+    	      } catch (SQLException ex) {
+    	          ex.printStackTrace();
+    	          JOptionPane.showMessageDialog(null, "Lỗi tải lịch hẹn: " + ex.getMessage(),
+    	                  "Lỗi", JOptionPane.ERROR_MESSAGE);
+    	          return;
+    	      }
+    	      fillAppointmentTable();
+
+    	      if (dsTheoLichHen.isEmpty()) {
+    	          JOptionPane.showMessageDialog(null, "Khách hàng này chưa có lịch hẹn đang chờ.");
+    	      } else {
+    	          tblAppointmentService.setRowSelectionInterval(0, 0);   // tự chọn lịch hẹn đầu tiên
+    	      }
+    	  }
+
+    	  private void fillAppointmentTable() {
+    	      modelAppointmentService.setRowCount(0);
+    	      for (Map.Entry<String, List<ChiTietLichHen>> en : dsTheoLichHen.entrySet()) {
+    	          List<ChiTietLichHen> ds = en.getValue();
+    	          ChiTietLichHen dau = ds.get(0);
+
+    	          // Giống / cân nặng của từng thú cưng (không lặp)
+    	          StringBuilder giong = new StringBuilder();
+    	          Set<String> daCo = new LinkedHashSet<>();
+    	          for (ChiTietLichHen ct : ds) {
+    	              if (daCo.add(ct.getThuCung().getMaThuCung())) {
+    	                  if (giong.length() > 0) giong.append("; ");
+    	                  giong.append(ct.getThuCung().getLoai() == Loai.CHO ? "Chó" : "Mèo")
+    	                       .append(" · ").append(ct.getThuCung().getCanNang()).append("kg");
+    	              }
+    	          }
+    	          // Tên dịch vụ
+    	          StringBuilder dichVu = new StringBuilder();
+    	          for (ChiTietLichHen ct : ds) {
+    	              if (dichVu.length() > 0) dichVu.append(", ");
+    	              dichVu.append(ct.getDichVu().getTenDV());
+    	          }
+
+    	          modelAppointmentService.addRow(new Object[]{
+    	                  en.getKey(),
+    	                  DinhDang.NGAY.format(dau.getLichHen().getThoiGianHen()),
+    	                  tenThuCungCuaLich(ds),
+    	                  giong.toString(),
+    	                  dichVu.toString()
+    	          });
+    	      }
+    	  }
+
+    	  private String tenThuCungCuaLich(List<ChiTietLichHen> ds) {
+    	      Set<String> ten = new LinkedHashSet<>();
+    	      for (ChiTietLichHen ct : ds) ten.add(ct.getThuCung().getTenThuCung());
+    	      return String.join(", ", ten);
+    	  }
+
+    	  private void fillServiceTable() {
+    	      modelService.setRowCount(0);
+    	      for (ChiTietLichHen ct : dsChiTietHienTai) {
+    	          modelService.addRow(new Object[]{
+    	                  ct.getDichVu().getMaDV(),
+    	                  ct.getDichVu().getTenDV(),
+    	                  ct.getThuCung().getTenThuCung(),
+    	                  Math.round(ct.getDonGia()),
+    	                  ""
+    	          });
+    	      }
+    	      recalcTotalsService();
+    	  }
+
+    	  // Xóa toàn bộ dữ liệu liên quan tới khách đang chọn
+    	  private void resetCustomerService() {
+    	      khachHienTaiService = null;
+    	      customerPointsService = 0;
+    	      lblNameService.setText("-");
+    	      lblPointsService.setText("-");
+    	      lblPointsAvailService.setText("Hiện có 0 điểm");
+    	      chkUsePointsService.setSelected(false);
+    	      chkUsePointsService.setEnabled(false);
+    	      dsTheoLichHen.clear();
+    	      modelAppointmentService.setRowCount(0);   // kích hoạt valueChanged -> xóa bảng dịch vụ
+    	      dsChiTietHienTai = new ArrayList<>();
+    	      fillServiceTable();
+    	  }
+
+    	  // ===== TÍNH TIỀN =====
+    	  private long tinhTamTinhService() {
+    	      long s = 0;
+    	      for (ChiTietLichHen ct : dsChiTietHienTai) s += Math.round(ct.getDonGia());
+    	      return s;
+    	  }
+
+    	  private long tinhGiamGiaService(long tamTinh) {
+    	      if (chkUsePointsService.isSelected() && customerPointsService > 0) {
+    	          return Math.min(customerPointsService * POINT_VALUE_SERVICE, tamTinh);
+    	      }
+    	      return 0;
+    	  }
+
+    	  private long parseReceivedService() {
+    	      try {
+    	          return Long.parseLong(txtReceivedService.getText().trim().replace(".", "").replace(",", ""));
+    	      } catch (NumberFormatException ex) {
+    	          return 0;
+    	      }
+    	  }
+
+    	  private void recalcTotalsService() {
+    	      long tamTinh = tinhTamTinhService();
+    	      discountService = tinhGiamGiaService(tamTinh);
+
+    	      lblTotalService.setText(String.valueOf(dsChiTietHienTai.size()));
+    	      lblSubtotalService.setText(DinhDang.TIEN.format(tamTinh));
+    	      lblDiscountService.setText(discountService > 0 ? "- " + DinhDang.TIEN.format(discountService)
+    	                                                     : DinhDang.TIEN.format(0));
+    	      lblGrandTotalService.setText(DinhDang.TIEN.format(tamTinh - discountService));
+    	      updateChangeService();
+    	  }
+
+    	  private void updateChangeService() {
+    	      if (txtReceivedService.getText().trim().isEmpty()) {
+    	          txtChangeService.setText("");
+    	          return;
+    	      }
+    	      long tamTinh = tinhTamTinhService();
+    	      long change = parseReceivedService() - (tamTinh - tinhGiamGiaService(tamTinh));
+    	      txtChangeService.setText(change >= 0 ? DinhDang.TIEN.format(change)
+    	                                           : "Thiếu " + DinhDang.TIEN.format(-change));
+    	  }
+    	  private void taoHoaDonService(String kieu) {
+    		    if (khachHienTaiService == null) {
+    		        JOptionPane.showMessageDialog(this, "Vui lòng tìm và chọn khách hàng!",
+    		                "Lỗi", JOptionPane.ERROR_MESSAGE);
+    		        txtPhoneService.requestFocusInWindow();
+    		        return;
+    		    }
+    		    if (maLHDangChon == null || dsChiTietHienTai.isEmpty()) {
+    		        JOptionPane.showMessageDialog(this, "Vui lòng chọn lịch hẹn có dịch vụ cần thanh toán!",
+    		                "Lỗi", JOptionPane.ERROR_MESSAGE);
+    		        return;
+    		    }
+
+    		    long tamTinh = tinhTamTinhService();
+    		    long giamGia = tinhGiamGiaService(tamTinh);
+    		    long phaiTra = tamTinh - giamGia;
+
+    		    if (parseReceivedService() < phaiTra) {
+    		        JOptionPane.showMessageDialog(this, "Tiền nhận chưa đủ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+    		        txtReceivedService.requestFocusInWindow();
+    		        return;
+    		    }
+
+    		    int ok = JOptionPane.showConfirmDialog(this,
+    		            "Tạo hóa đơn dịch vụ với tổng thanh toán " + DinhDang.TIEN.format(phaiTra) + "?",
+    		            "Xác nhận", JOptionPane.YES_NO_OPTION);
+    		    if (ok != JOptionPane.YES_OPTION) return;
+
+    		    // Mỗi dịch vụ là một dòng chi tiết: số lượng 1, đơn giá đã gồm phụ phí
+    		    List<ChiTietHoaDon> dsCT = new ArrayList<>();
+    		    for (ChiTietLichHen ct : dsChiTietHienTai) {
+    		        DichVu dv = new DichVu();
+    		        dv.setMaDV(ct.getDichVu().getMaDV());
+    		        ThuCung tc = new ThuCung();
+    		        tc.setMaThuCung(ct.getThuCung().getMaThuCung());
+
+    		        ChiTietHoaDon cthd = new ChiTietHoaDon(null, dv, null, 1, ct.getDonGia());
+    		        cthd.setThuCung(tc);
+    		        dsCT.add(cthd);
+    		    }
+    		    HoaDon hd;
+    		    if(kieu == "TT") {
+    		    	hd = new HoaDon(null, LocalDate.now(), tamTinh, giamGia,
+        		            TrangThai.DA_THANH_TOAN, null, khachHienTaiService, nhanVienDangNhap);
+    		    }else {
+    		    	hd = new HoaDon(null, LocalDate.now(), tamTinh, giamGia,
+        		            TrangThai.CHUA_THANH_TOAN, null, khachHienTaiService, nhanVienDangNhap);
+    		    }
+    		    
+    		    try {
+    		        hd_daoService.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE_SERVICE, "DV", maLHDangChon);
+    		        JOptionPane.showMessageDialog(this, "Tạo hóa đơn " + hd.getMaHD() + " thành công!");
+    		        resetInvoiceService();
+    		    } catch (SQLException ex) {
+    		        ex.printStackTrace();
+    		        JOptionPane.showMessageDialog(this, "Tạo hóa đơn thất bại: " + ex.getMessage(),
+    		                "Lỗi", JOptionPane.ERROR_MESSAGE);
+    		    }
     		}
     	 
-    	  private JPanel buildServiceSection() {
-    		    JPanel pnlServiceList = new JPanel(new BorderLayout(0, 8));
-    		    pnlServiceList.setOpaque(false);
 
-    		    lblServiceTitle.setFont(new Font("Segoe UI", Font.BOLD, 20));
-    		    lblServiceTitle.setForeground(DARK_TEXT);
-    		    lblServiceSub.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-    		    lblServiceSub.setForeground(GRAY_TEXT);
-
-    		    JPanel titleBoxService = new JPanel();
-    		    titleBoxService.setOpaque(false);
-    		    titleBoxService.setLayout(new BoxLayout(titleBoxService, BoxLayout.Y_AXIS));
-    		    titleBoxService.add(lblServiceTitle);
-    		    titleBoxService.add(Box.createVerticalStrut(4));
-    		    titleBoxService.add(lblServiceSub);
-    		  
-
-    		    JPanel headService = new JPanel(new BorderLayout());
-    		    headService.setOpaque(false);
-    		    headService.add(titleBoxService, BorderLayout.CENTER);
-    		  
-    		    String[] colsService = {"Mã dịch vụ", "Tên dịch vụ", "Thời gian", "Nhân viên thực hiện", "Đơn giá", ""};
-    		    modelService = new DefaultTableModel(colsService, 0) {
-    		        @Override public boolean isCellEditable(int r, int c) { return false; }
-    		    };
-    		    tblService = createStyledTable(modelService);
-
-    		    DefaultTableCellRenderer centerService = new DefaultTableCellRenderer();
-    		    centerService.setHorizontalAlignment(SwingConstants.CENTER);
-    		    DefaultTableCellRenderer rightService = new DefaultTableCellRenderer() {
-    		        @Override protected void setValue(Object v) {
-    		            setText(v instanceof Number ? DinhDang.TIEN.format(((Number) v).longValue()) : "");
-    		        }
-    		    };
-    		    rightService.setHorizontalAlignment(SwingConstants.RIGHT);
-
-    		    ImageUtils iuService = new ImageUtils();
-    		    ImageIcon deleteIconService = iuService.setImg(new ImageIcon("img/icon/icon_delete.png"), 20, 20);
-    		    DefaultTableCellRenderer trashService = new DefaultTableCellRenderer();
-    		    trashService.setHorizontalAlignment(SwingConstants.CENTER);
-    		    trashService.setIcon(deleteIconService);
-    		    trashService.setText("");
-
-    		    TableColumnModel cmService = tblService.getColumnModel();
-    		    cmService.getColumn(2).setCellRenderer(centerService);
-    		    cmService.getColumn(4).setCellRenderer(rightService);
-    		    cmService.getColumn(5).setCellRenderer(trashService);
-    		    cmService.getColumn(0).setPreferredWidth(100);
-    		    cmService.getColumn(1).setPreferredWidth(220);
-    		    cmService.getColumn(2).setPreferredWidth(90);
-    		    cmService.getColumn(3).setPreferredWidth(180);
-    		    cmService.getColumn(4).setPreferredWidth(110);
-    		    cmService.getColumn(5).setPreferredWidth(50);
-    		    cmService.getColumn(5).setMaxWidth(50);
-
-    		    JScrollPane scrollService = new JScrollPane(tblService);
-    		    scrollService.getViewport().setBackground(Color.WHITE);
-
-    		    pnlServiceList.add(headService, BorderLayout.NORTH);
-    		    pnlServiceList.add(scrollService, BorderLayout.CENTER);
-    		    return pnlServiceList;
+    		private void resetInvoiceService() {
+    		    txtPhoneService.setText("");
+    		    txtReceivedService.setText("");
+    		    txtChangeService.setText("");
+    		    maLHDangChon = null;
+    		    resetCustomerService();   // xóa khách, lịch hẹn, dịch vụ và tính lại tổng
+    		    txtPhoneService.requestFocusInWindow();
     		}
-    	// Bảng dùng chung kiểu dáng với bảng bên Sản phẩm
-    	    private JTable createStyledTable(DefaultTableModel m) {
-    	        JTable t = new JTable(m);
-    	        t.setRowHeight(44);
-    	        t.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-    	        t.getTableHeader().setFont(new Font("Segoe UI", Font.BOLD, 14));
-    	        t.getTableHeader().setReorderingAllowed(false);
-    	        t.setShowVerticalLines(false);
-    	        t.setGridColor(BORDER_COLOR);
-    	        t.setBackground(Color.WHITE);
-    	        t.setFocusable(false);
-    	        t.setRowSelectionAllowed(false);
-    	        return t;
-    	    }
+    	 
       }
       
       

@@ -226,18 +226,13 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         btnXoa.addActionListener(this);
         tblSanPham.addMouseListener(this);
         txtTimMaSP.addKeyListener(this);
+        btnLamMoi.addActionListener(this);
     }
   
 	@Override
-	public void keyTyped(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void keyTyped(KeyEvent e) {}
 	@Override
-	public void keyPressed(KeyEvent e) {
-		// TODO Auto-generated method stub
-		
-	}
+	public void keyPressed(KeyEvent e) {}
 	@Override
 	public void keyReleased(KeyEvent e) {
 	    if (e.getSource().equals(txtTimMaSP)) {
@@ -272,24 +267,13 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	    }
 	}
 	@Override
-	public void mousePressed(MouseEvent e) {
-	
-		
-	}
+	public void mousePressed(MouseEvent e) {}
 	@Override
-	public void mouseReleased(MouseEvent e) {
-		
-		
-	}
+	public void mouseReleased(MouseEvent e) {}
 	@Override
-	public void mouseEntered(MouseEvent e) {
-		
-	}
+	public void mouseEntered(MouseEvent e) {}
 	@Override
-	public void mouseExited(MouseEvent e) {
-	
-		
-	}
+	public void mouseExited(MouseEvent e) {}
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
