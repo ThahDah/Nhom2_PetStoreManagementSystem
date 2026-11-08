@@ -71,7 +71,7 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
         JPanel pnlChucNang = new JPanel();
         pnlChucNang.setLayout(new BoxLayout(pnlChucNang, BoxLayout.Y_AXIS));
         JPanel pnlTimKiem = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
-        JLabel lblTimKiem = new JLabel("Tìm theo mã hóa đơn:");
+        JLabel lblTimKiem = new JLabel("Tìm theo mã hóa đơn hoặc SĐT:");
         txtTimKiem = new JTextField();
         txtTimKiem.setPreferredSize(new Dimension(500, 36));
         pnlTimKiem.add(lblTimKiem);
@@ -125,6 +125,9 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
         dateTo = new JDateChooser();
         dateFrom.setDateFormatString("dd/MM/yyyy");
         dateTo.setDateFormatString("dd/MM/yyyy");
+        // CChi chi chon ngay , khong cho nhap
+        ((JTextField) dateFrom.getDateEditor().getUiComponent()).setEditable(false);
+        ((JTextField) dateTo.getDateEditor().getUiComponent()).setEditable(false);
         // Dang ky su kien
         table.addMouseListener(this);
         txtTimKiem.addActionListener(this);
@@ -152,11 +155,11 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
 
 private void taiDuLieu() {
     try {
-        String maHD = txtTimKiem.getText().trim();
+        String tuKhoa = txtTimKiem.getText().trim();
 
         List<HoaDon> danhSachHoaDon;
 
-        if (maHD.isEmpty()
+        if (tuKhoa.isEmpty()
                 && trangThaiDangLoc == null
                 && tuNgay == null
                 && denNgay == null) {
@@ -166,7 +169,7 @@ private void taiDuLieu() {
         } else {
 
             danhSachHoaDon = hoaDonDAO.timKiemHoaDon(
-                    maHD, trangThaiDangLoc, tuNgay, denNgay);
+                    tuKhoa, trangThaiDangLoc, tuNgay, denNgay);
         }
 
         model.setRowCount(0);

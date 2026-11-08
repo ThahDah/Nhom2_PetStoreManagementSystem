@@ -69,10 +69,10 @@ public class HoaDonDAO {
                 + "FROM HoaDon hd JOIN KhachHang kh ON kh.maKH = hd.maKH "
                 + "WHERE 1=1");
         String tuKhoa = maHD == null ? "" : maHD.trim();
-        // Loc theo ma hoa don
-        if (!tuKhoa.isEmpty()) {
-            sql.append(" AND hd.maHD LIKE ?");
-        }
+	     //Loc theo ma hd hoac sdt khach hang
+	     if (!tuKhoa.isEmpty()) {
+	         sql.append(" AND (hd.maHD LIKE ? OR kh.soDienThoai LIKE ?)");
+	     }
         // Loc theo trang thai
         if (trangThai != null) {
             sql.append(" AND hd.trangThaiHD = ?");
@@ -92,6 +92,7 @@ public class HoaDonDAO {
                 connection.prepareStatement(sql.toString())) {
             int i = 1;
             if (!tuKhoa.isEmpty()) {
+                statement.setString(i++, "%" + tuKhoa + "%");
                 statement.setString(i++, "%" + tuKhoa + "%");
             }
             if (trangThai != null) {
