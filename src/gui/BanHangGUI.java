@@ -516,72 +516,15 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 				    addProductByCode();
 				}
 				else if (o == btnConfirm) {
-				    taoHoaDon();
+				    taoHoaDonProduct("TT");
 				}
 				else if (o == btnSaveProductInvoice) {
-					luuHoaDonSanPham();
+					taoHoaDonProduct("");
 				}
 			  }
 			 
 			  
-			  private void luuHoaDonSanPham() {
-				  if (khachHienTai == null) {
-					    JOptionPane.showMessageDialog(null,
-					            "Vui lòng tìm và chọn khách hàng trước khi tạo hóa đơn!",
-					            "Lỗi", JOptionPane.ERROR_MESSAGE);
-					    txtPhone.requestFocusInWindow();
-					    return;
-					}
-			      if (tblProductList.isEditing()) tblProductList.getCellEditor().stopCellEditing();
-
-			      if (model.getRowCount() == 0) {
-			          JOptionPane.showMessageDialog(null, "Hóa đơn chưa có sản phẩm!",
-			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
-			          return;
-			      }
-
-			      long tamTinh = tinhTamTinh();
-			      long giamGia = tinhGiamGia(tamTinh);
-			      long phaiTra = tamTinh - giamGia;
-
-			      if (parseReceived() < phaiTra) {
-			          JOptionPane.showMessageDialog(null, "Tiền nhận chưa đủ!",
-			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
-			          txtReceived.requestFocusInWindow();
-			          return;
-			      }
-
-			      int ok = JOptionPane.showConfirmDialog(null,
-			              "Tạo hóa đơn với tổng thanh toán " + DinhDang.TIEN.format(phaiTra) + "?",
-			              "Xác nhận", JOptionPane.YES_NO_OPTION);
-			      if (ok != JOptionPane.YES_OPTION) return;
-
-			      List<ChiTietHoaDon> dsCT = new ArrayList<>();
-			      for (int i = 0; i < model.getRowCount(); i++) {
-			          SanPham sp = new SanPham();
-			          sp.setMaSP(model.getValueAt(i, 0).toString());
-			          int soLuong = Integer.parseInt(model.getValueAt(i, 3).toString());
-			          double donGia = Double.parseDouble(model.getValueAt(i, 4).toString());
-			          dsCT.add(new ChiTietHoaDon(null, null, sp, soLuong, donGia));
-			      }
-
-			      HoaDon hd = new HoaDon(null, LocalDate.now(), tamTinh, giamGia,
-			    	        TrangThai.CHUA_THANH_TOAN,   
-			    	        null, khachHienTai, nhanVienDangNhap);
-			     
-			      try {
-			    	  hd_dao.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE, "BH", null);
-			          JOptionPane.showMessageDialog(null, "Tạo hóa đơn " + hd.getMaHD() + " thành công!");
-			          resetInvoice();
-			      } catch (SQLException ex) {
-			          ex.printStackTrace();
-			          JOptionPane.showMessageDialog(null, "Tạo hóa đơn thất bại: " + ex.getMessage(),
-			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
-			      }
-				
-			}
-
-
+			  
 
 
 			  private void addProductByCode() {
@@ -762,7 +705,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			  }
 
 			  // ===== TẠO HÓA ĐƠN =====
-			  private void taoHoaDon() {
+			  private void taoHoaDonProduct(String kieu) {
 				  if (khachHienTai == null) {
 					    JOptionPane.showMessageDialog(this,
 					            "Vui lòng tìm và chọn khách hàng trước khi tạo hóa đơn!",
@@ -802,10 +745,9 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			          double donGia = Double.parseDouble(model.getValueAt(i, 4).toString());
 			          dsCT.add(new ChiTietHoaDon(null, null, sp, soLuong, donGia));
 			      }
-
-			      HoaDon hd = new HoaDon(null, LocalDate.now(), tamTinh, giamGia,
-			    	        TrangThai.DA_THANH_TOAN,   // đổi theo enum TrangThai của bạn
-			    	        null, khachHienTai, nhanVienDangNhap);
+			      TrangThai trangThai = "TT".equals(kieu) ? TrangThai.DA_THANH_TOAN : TrangThai.CHUA_THANH_TOAN;
+			      HoaDon hd = new HoaDon(null, LocalDate.now(), phaiTra, giamGia,
+			              trangThai, null, khachHienTai, nhanVienDangNhap);
 			     
 			      try {
 			    	  hd_dao.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE, "BH", null);
@@ -1475,14 +1417,9 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		        cthd.setThuCung(tc);
     		        dsCT.add(cthd);
     		    }
-    		    HoaDon hd;
-    		    if(kieu == "TT") {
-    		    	hd = new HoaDon(null, LocalDate.now(), tamTinh, giamGia,
-        		            TrangThai.DA_THANH_TOAN, null, khachHienTaiService, nhanVienDangNhap);
-    		    }else {
-    		    	hd = new HoaDon(null, LocalDate.now(), tamTinh, giamGia,
-        		            TrangThai.CHUA_THANH_TOAN, null, khachHienTaiService, nhanVienDangNhap);
-    		    }
+    		    TrangThai trangThai = "TT".equals(kieu) ? TrangThai.DA_THANH_TOAN : TrangThai.CHUA_THANH_TOAN;
+    		    HoaDon hd = new HoaDon(null, LocalDate.now(), phaiTra, giamGia,
+    		            trangThai, null, khachHienTaiService, nhanVienDangNhap);
     		    
     		    try {
     		        hd_daoService.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE_SERVICE, "DV", maLHDangChon);
