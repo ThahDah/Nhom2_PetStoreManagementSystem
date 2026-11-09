@@ -250,4 +250,21 @@ public class LichHenDAO {
 	    }
 	    return ds;
 	}
+	public void hoanThanhLichHen(String maLH) throws NghiepVuException, SQLException {
+		String sql = "UPDATE LichHen "
+				+ "SET trangThaiHen = ? "
+				+ "WHERE maLH = ? "
+				+ "AND trangThaiHen = ?";
+		Connection con = ConnectDB.getConnection();
+		try (PreparedStatement stm = con.prepareStatement(sql)) {
+			stm.setString(1, TrangThai.HOAN_THANH.name());
+			stm.setString(2, maLH);
+			stm.setString(3, TrangThai.DA_TIEP_NHAN.name());
+			int soDongSua = stm.executeUpdate();
+			if (soDongSua == 0) {
+				throw new NghiepVuException(
+						"Không thể hoàn thành: lịch hẹn không tồn tại hoặc không ở trạng thái 'Đã tiếp nhận'");
+			}
+		}
+	}
 }

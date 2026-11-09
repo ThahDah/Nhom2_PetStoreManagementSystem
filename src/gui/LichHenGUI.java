@@ -263,7 +263,14 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		if (e.getClickCount() == 2) {
 			int row = table.rowAtPoint(e.getPoint());
 			if (row >= 0 && row < dsLichHen.size()) {
-				new ChiTietLichHenGUI(SwingUtilities.getWindowAncestor(this), dsLichHen.get(row)).setVisible(true);
+//				new ChiTietLichHenGUI(SwingUtilities.getWindowAncestor(this), dsLichHen.get(row)).setVisible(true);
+				ChiTietLichHenGUI chiTietLichHenGUI = new ChiTietLichHenGUI(SwingUtilities.getWindowAncestor(this),
+						dsLichHen.get(row));
+				chiTietLichHenGUI.setVisible(true);
+				// da hoan thanh dich vu thi nap lai bang de cap nhat trang thai
+				if (chiTietLichHenGUI.isDaCapNhat()) {
+					docDuLieuVaoTable();
+				}
 			}
 		}
 	}
