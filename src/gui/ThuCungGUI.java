@@ -142,19 +142,19 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
         b.add(b5);
         b.add(Box.createVerticalStrut(20));
 
-        JLabel lblTrangThai = new JLabel("Trạng thái:");
-        lblTrangThai.setPreferredSize(maTC.getPreferredSize());
-        entity.TrangThai[] trangThaiThuCung = {
-        	    entity.TrangThai.BINH_THUONG,
-        	    entity.TrangThai.DANG_CHAM_SOC,
-        	    entity.TrangThai.HOAN_THANH
-        	};
+//        JLabel lblTrangThai = new JLabel("Trạng thái:");
+//        lblTrangThai.setPreferredSize(maTC.getPreferredSize());
+//        entity.TrangThai[] trangThaiThuCung = {
+//        	    entity.TrangThai.BINH_THUONG,
+//        	    entity.TrangThai.DANG_CHAM_SOC,
+//        	    entity.TrangThai.HOAN_THANH
+//        	};
 
-        	trangThai = new JComboBox<entity.TrangThai>(trangThaiThuCung);
-        b6.add(lblTrangThai);
-        b6.add(trangThai);
-        b.add(b6);
-        b.add(Box.createVerticalStrut(20));
+//        	trangThai = new JComboBox<entity.TrangThai>(trangThaiThuCung);
+//        b6.add(lblTrangThai);
+//        b6.add(trangThai);
+//        b.add(b6);
+//        b.add(Box.createVerticalStrut(20));
 
         JLabel lblDoHD = new JLabel("Độ hung dữ:");
         lblDoHD.setPreferredSize(maTC.getPreferredSize());
@@ -232,7 +232,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
   		
   		JPanel dsKH=new JPanel();
   		dsKH.setBorder(BorderFactory.createTitledBorder("Danh sách thú cưng"));
-  		String[] strDSKH= {"Mã TC","Tên TC","Loại","Cân nặng","Ghi chú","Trạng thái","Độ hung dữ","Chủ sở hữu"};
+  		String[] strDSKH= {"Mã TC","Tên TC","Loại","Cân nặng","Ghi chú","Độ hung dữ","Chủ sở hữu"};
   		model = new DefaultTableModel(strDSKH, 0) {
   		    @Override
   		    public Class<?> getColumnClass(int columnIndex) {
@@ -294,7 +294,6 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
  				    tc.getLoai(),
  				    tc.getCanNang(),
  				    tc.getGhiChu(),
- 				    tc.getTrangThaiThuCung(),
  				    tc.getDoHungDu(),
  				    tc.getChuSoHuu().getTenKH()
  				    
@@ -367,7 +366,6 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
 	                    tc.getLoai(),
 	                    tc.getCanNang(),
 	                    tc.getGhiChu(),
-	                    tc.getTrangThaiThuCung(),
 	                    tc.getDoHungDu(),
 	                    tc.getChuSoHuu().getTenKH()
 	                });
@@ -433,7 +431,6 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
             txtGhiChu.setText("");
         
             if (loaiTC.getItemCount() > 0) loaiTC.setSelectedIndex(0);
-            if (trangThai.getItemCount() > 0) trangThai.setSelectedIndex(0);
             if (doHungDu.getItemCount() > 0) doHungDu.setSelectedIndex(0);
             if (chuSoHuu.getItemCount() > 0) chuSoHuu.setSelectedIndex(0);
             
@@ -455,7 +452,6 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
             txtGhiChu.setText("");
         
             if (loaiTC.getItemCount() > 0) loaiTC.setSelectedIndex(0);
-            if (trangThai.getItemCount() > 0) trangThai.setSelectedIndex(0);
             if (doHungDu.getItemCount() > 0) doHungDu.setSelectedIndex(0);
             if (chuSoHuu.getItemCount() > 0) chuSoHuu.setSelectedIndex(0);
             
@@ -479,7 +475,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
                     String ghiChu = txtGhiChu.getText().trim();
 
                     Loai loai = (Loai) loaiTC.getSelectedItem();
-                    TrangThai tt = (TrangThai) trangThai.getSelectedItem();
+//                    TrangThai tt = (TrangThai) trangThai.getSelectedItem();
                     DoHungDu doHD = (DoHungDu) doHungDu.getSelectedItem();
                     KhachHang kh = (KhachHang) chuSoHuu.getSelectedItem(); 
 
@@ -488,7 +484,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
                         return;
                     }
 
-                    ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, tt, doHD, kh);
+                    ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHD, kh);
 
                     if (tc_dao.themThuCung(tc)) {
                         model.addRow(new Object[] {
@@ -497,7 +493,6 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
                             loai, 
                             canNang, 
                             ghiChu, 
-                            tt, 
                             doHD, 
                             kh.getTenKH()
                         });
@@ -527,7 +522,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
                     String ghiChu = txtGhiChu.getText().trim();
 
                     Loai loai = (Loai) loaiTC.getSelectedItem();
-                    TrangThai tt = (TrangThai) trangThai.getSelectedItem();
+//                    TrangThai tt = (TrangThai) trangThai.getSelectedItem();
                     DoHungDu doHD = (DoHungDu) doHungDu.getSelectedItem();
                     KhachHang kh = (KhachHang) chuSoHuu.getSelectedItem();
 
@@ -539,7 +534,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
                         return;
                     }
 
-                    ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, tt, doHD, kh);
+                    ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHD, kh);
 
                     if (tc_dao.suaThuCung(tc)) {
                         // cap nhat tren model
@@ -547,9 +542,8 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
                         model.setValueAt(loai, row, 2);
                         model.setValueAt(canNang, row, 3);
                         model.setValueAt(ghiChu, row, 4);
-                        model.setValueAt(tt, row, 5);
-                        model.setValueAt(doHD, row, 6);
-                        model.setValueAt(kh.getTenKH(), row, 7); 
+                        model.setValueAt(doHD, row, 5);
+                        model.setValueAt(kh.getTenKH(), row, 6); 
 
                         JOptionPane.showMessageDialog(this, "Cập nhật thú cưng thành công!");
                         btnLamMoi.doClick();
@@ -621,26 +615,26 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
                 }
             }
 
-            try {
-                Object objTrangThai = model.getValueAt(row, 5); 
-                if (objTrangThai instanceof entity.TrangThai) {
-                    trangThai.setSelectedItem(objTrangThai);
-                } else if (objTrangThai != null) {
-                    String trangThaiStr = objTrangThai.toString();
-                    for (int i = 0; i < trangThai.getItemCount(); i++) {
-                        entity.TrangThai item = trangThai.getItemAt(i);
-                        if (item.name().equals(trangThaiStr) || item.toString().equals(trangThaiStr)) {
-                            trangThai.setSelectedItem(item);
-                            break;
-                        }
-                    }
-                }
-            } catch (Exception ex) {
-                ex.printStackTrace();
-            }
+//            try {
+//                Object objTrangThai = model.getValueAt(row, 5); 
+//                if (objTrangThai instanceof entity.TrangThai) {
+//                    trangThai.setSelectedItem(objTrangThai);
+//                } else if (objTrangThai != null) {
+//                    String trangThaiStr = objTrangThai.toString();
+//                    for (int i = 0; i < trangThai.getItemCount(); i++) {
+//                        entity.TrangThai item = trangThai.getItemAt(i);
+//                        if (item.name().equals(trangThaiStr) || item.toString().equals(trangThaiStr)) {
+//                            trangThai.setSelectedItem(item);
+//                            break;
+//                        }
+//                    }
+//                }
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
 
-            if (model.getValueAt(row, 6) != null) {
-                String hdStr = model.getValueAt(row, 6).toString();
+            if (model.getValueAt(row, 5) != null) {
+                String hdStr = model.getValueAt(row, 5).toString();
                 for (DoHungDu hd : DoHungDu.values()) {
                     if (hd.toString().equals(hdStr) || hd.name().equals(hdStr)) {
                         doHungDu.setSelectedItem(hd);
@@ -649,8 +643,8 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
                 }
             }
 
-            if (model.getValueAt(row, 7) != null) {
-                String tenKH = model.getValueAt(row, 7).toString();
+            if (model.getValueAt(row, 6) != null) {
+                String tenKH = model.getValueAt(row, 6).toString();
                 for (int i = 0; i < chuSoHuu.getItemCount(); i++) {
                     KhachHang kh = chuSoHuu.getItemAt(i);
                     if (kh != null && kh.getTenKH().equals(tenKH)) {

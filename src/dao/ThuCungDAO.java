@@ -19,7 +19,7 @@ public class ThuCungDAO {
 
 	public List<ThuCung> timTheoChuSoHuu(KhachHang khachHang) throws SQLException {
 		List<ThuCung> dsThuCung = new ArrayList<>();
-		String sql = "SELECT maThuCung, tenThuCung, loai, canNang, ghiChu, trangThaiThuCung, doHungDu "
+		String sql = "SELECT maThuCung, tenThuCung, loai, canNang, ghiChu, doHungDu "
 				+ "FROM ThuCung WHERE maKH = ? ORDER BY tenThuCung";
 		Connection con = ConnectDB.getConnection();
 		try (PreparedStatement stm = con.prepareStatement(sql)) {
@@ -47,9 +47,12 @@ public class ThuCungDAO {
 	
 	/* doc ResultSet de chuyen ThuCung thanh doi tuong */
 	static ThuCung taoThuCung(ResultSet rs, KhachHang chuSoHuu) throws SQLException {
-		return new ThuCung(rs.getString("maThuCung"), rs.getString("tenThuCung"),
-				Loai.valueOf(rs.getString("loai")), rs.getDouble("canNang"), rs.getString("ghiChu"),
-				TrangThai.valueOf(rs.getString("trangThaiThuCung")), DoHungDu.valueOf(rs.getString("doHungDu")),
+		return new ThuCung(rs.getString("maThuCung"), 
+				rs.getString("tenThuCung"),
+				Loai.valueOf(rs.getString("loai")), 
+				rs.getDouble("canNang"), 
+				rs.getString("ghiChu"),
+				DoHungDu.valueOf(rs.getString("doHungDu")),
 				chuSoHuu);
 	}
 	
@@ -79,8 +82,8 @@ public class ThuCungDAO {
 	            double canNang = rs.getDouble("canNang");
 	            String ghiChu = rs.getString("ghiChu");
 	            
-	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
-	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
+//	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
+//	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
 	            
 	            String doHungDuStr = rs.getString("doHungDu");
 	            DoHungDu doHungDu = DoHungDu.valueOf(doHungDuStr.trim());
@@ -90,7 +93,7 @@ public class ThuCungDAO {
 	            
 	            // Khởi tạo đối tượng KhachHang và ThuCung giống như hàm getTableThuCung()
 	            KhachHang khachHang = new KhachHang(maKH, tenKH);
-	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
+	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHungDu, khachHang);
 	            
 	            dsTC.add(tc);
 	        }
@@ -122,8 +125,8 @@ public class ThuCungDAO {
 	            double canNang = rs.getDouble("canNang");
 	            String ghiChu = rs.getString("ghiChu");
 	            
-	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
-	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
+//	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
+//	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
 	            
 	            String doHungDuStr = rs.getString("doHungDu");
 	            DoHungDu doHungDu = DoHungDu.valueOf(doHungDuStr.trim());
@@ -133,7 +136,7 @@ public class ThuCungDAO {
 	            
 	            KhachHang khachHang = new KhachHang(maKH, tenKH);
 
-	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
+	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHungDu, khachHang);
 	            
 				dsTC.add(tc);
 			}
@@ -149,17 +152,16 @@ public class ThuCungDAO {
 	    PreparedStatement stmt = null;
 	    int n = 0;
 	    try {
-	        String sql = "INSERT INTO ThuCung VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
+	        String sql = "INSERT INTO ThuCung VALUES(?, ?, ?, ?, ?, ?, ?)";
 	        stmt = con.prepareStatement(sql);
 	        
 	        stmt.setString(1, tc.getMaThuCung());
 	        stmt.setString(2, tc.getTenThuCung());
 	        stmt.setString(3, tc.getLoai().name());
 	        stmt.setDouble(4, tc.getCanNang()); // double
-	        stmt.setString(5, tc.getGhiChu());  
-	        stmt.setString(6, tc.getTrangThaiThuCung().name()); // Luu Enum
-	        stmt.setString(7, tc.getDoHungDu().name());
-	        stmt.setString(8, tc.getChuSoHuu().getMaKH());
+	        stmt.setString(5, tc.getGhiChu());
+	        stmt.setString(6, tc.getDoHungDu().name());
+	        stmt.setString(7, tc.getChuSoHuu().getMaKH());
 	        
 	        n = stmt.executeUpdate();
 	    } catch (SQLException e) {
@@ -204,6 +206,7 @@ public class ThuCungDAO {
 		               "JOIN KhachHang kh ON tc.maKH = kh.maKH " +
 		               "WHERE tc.maThuCung = ?";
 			stmt = con.prepareStatement(query);
+			stmt.setString(1, maTC);
 			ResultSet rs = stmt.executeQuery();
 			while(rs.next()) {
 				String ma = rs.getString("maThuCung");
@@ -215,8 +218,8 @@ public class ThuCungDAO {
 	            double canNang = rs.getDouble("canNang");
 	            String ghiChu = rs.getString("ghiChu");
 	            
-	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
-	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
+//	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
+//	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
 	            
 	            String doHungDuStr = rs.getString("doHungDu");
 	            DoHungDu doHungDu = DoHungDu.valueOf(doHungDuStr.trim());
@@ -226,7 +229,7 @@ public class ThuCungDAO {
 	            
 	            KhachHang khachHang = new KhachHang(maKH, tenKH);
 
-	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
+	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHungDu, khachHang);
 	            return tc;
 				
 			}
@@ -242,7 +245,7 @@ public class ThuCungDAO {
 	    Connection con = connectDB.ConnectDB.getConnection();
 	    PreparedStatement stmt = null;
 	    int n = 0;
-	    String sql = "UPDATE ThuCung SET tenThuCung = ?, loai = ?, canNang = ?, ghiChu = ?, trangThaiThuCung = ?, doHungDu = ?, maKH = ? WHERE maThuCung = ?";
+	    String sql = "UPDATE ThuCung SET tenThuCung = ?, loai = ?, canNang = ?, ghiChu = ?, doHungDu = ?, maKH = ? WHERE maThuCung = ?";
 	    stmt = con.prepareStatement(sql);
 	    stmt.setNString(1, tc.getTenThuCung());
 	    stmt.setString(2, tc.getLoai() != null ? tc.getLoai().name() : null);
@@ -250,12 +253,11 @@ public class ThuCungDAO {
 	    stmt.setDouble(3, tc.getCanNang());
 	    stmt.setNString(4, tc.getGhiChu());
 	    
-	    stmt.setString(5, tc.getTrangThaiThuCung() != null ? tc.getTrangThaiThuCung().name() : null);
-	    stmt.setString(6, tc.getDoHungDu() != null ? tc.getDoHungDu().name() : null);
+	    stmt.setString(5, tc.getDoHungDu() != null ? tc.getDoHungDu().name() : null);
 	    
-	    stmt.setString(7, tc.getChuSoHuu() != null ? tc.getChuSoHuu().getMaKH() : null);
+	    stmt.setString(6, tc.getChuSoHuu() != null ? tc.getChuSoHuu().getMaKH() : null);
 	    
-	    stmt.setString(8, tc.getMaThuCung());
+	    stmt.setString(7, tc.getMaThuCung());
 	    
 	    n = stmt.executeUpdate();
 	    
