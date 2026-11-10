@@ -102,12 +102,10 @@ public class ChiTietHoaDonDAO {
 
     }
 
-    // Tim thong tin hoa don va khach hang theo ma hoa don
-    public HoaDon timHoaDonTheoMa(String maHD)
-            throws SQLException {
+    public HoaDon timHoaDonTheoMa(String maHD) throws SQLException {
 
-        String sql = "SELECT hd.maHD, hd.ngayLap, hd.tongTien, "
-                + "hd.giamGia, hd.trangThaiHD, hd.phuongThucTT, "
+        String sql = "SELECT hd.maHD, hd.ngayLap, hd.giamGia, "
+                + "hd.trangThaiHD, hd.phuongThucTT, "
                 + "kh.maKH, kh.tenKH, kh.soDienThoai, "
                 + "kh.email, kh.diemTichLuy "
                 + "FROM HoaDon hd "
@@ -115,45 +113,39 @@ public class ChiTietHoaDonDAO {
                 + "WHERE hd.maHD = ?";
 
         Connection con = ConnectDB.getConnection();
+        HoaDon hoaDon = null;
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
-
             ps.setString(1, maHD);
 
             try (ResultSet rs = ps.executeQuery()) {
-
                 if (rs.next()) {
-
                     KhachHang kh = new KhachHang(
                             rs.getString("maKH"),
                             rs.getString("tenKH"),
                             rs.getString("soDienThoai"),
                             rs.getString("email"),
-                            rs.getInt("diemTichLuy")
-                    );
+                            rs.getInt("diemTichLuy"));
 
                     String phuongThuc = rs.getString("phuongThucTT");
 
-                    HoaDon hoaDon = new HoaDon(
+                    hoaDon = new HoaDon(
                             rs.getString("maHD"),
                             rs.getTimestamp("ngayLap").toLocalDateTime().toLocalDate(),
-                            rs.getDouble("tongTien"),
                             rs.getDouble("giamGia"),
                             TrangThai.valueOf(rs.getString("trangThaiHD")),
                             phuongThuc == null ? null : PhuongThucTT.valueOf(phuongThuc),
                             kh,
-                            null
-                    );
-                    return hoaDon;
-
+                            null);
                 }
-
             }
-
         }
 
-        return null;
+        if (hoaDon == null) return null;
 
+        // Nạp chi tiết sau khi đã đóng ResultSet ở trên
+        hoaDon.setDsChiTiet(layDanhSachChiTietHoaDon(maHD));
+        return hoaDon;
     }
 
 }

@@ -84,7 +84,6 @@ public class HoaDonDAO {
 
                         resultSet.getTimestamp("ngayLap").toLocalDateTime().toLocalDate(),
 
-                        resultSet.getDouble("tongTien"),
 
                         resultSet.getDouble("giamGia"),
 
@@ -97,6 +96,9 @@ public class HoaDonDAO {
                         null         
 
                 );
+
+                hd.setTongTien(resultSet.getDouble("tongTien"));
+
 
                 danhSach.add(hd);
 
@@ -231,8 +233,6 @@ public class HoaDonDAO {
 
                             resultSet.getTimestamp("ngayLap").toLocalDateTime().toLocalDate(),
 
-                            resultSet.getDouble("tongTien"),
-
                             resultSet.getDouble("giamGia"),
 
                             TrangThai.valueOf(resultSet.getString("trangThaiHD")),
@@ -244,6 +244,8 @@ public class HoaDonDAO {
                             null         
 
                     );
+                    hd.setTongTien(resultSet.getDouble("tongTien"));
+
 
                     danhSach.add(hd);
 
@@ -264,7 +266,19 @@ public class HoaDonDAO {
         if (hd.getKhachHang() == null) throw new SQLException("Hóa đơn phải có khách hàng!");
 
         if (hd.getNhanVien() == null) throw new SQLException("Hóa đơn phải có nhân viên lập!");
-
+        if (dsCT == null || dsCT.isEmpty()) throw new SQLException("Hóa đơn phải có ít nhất một chi tiết!");
+        hd.setDsChiTiet(new ArrayList<>(dsCT));  
+    
+        for (ChiTietHoaDon ct : dsCT) {
+            if (ct.getSoLuong() <= 0) throw new SQLException("Số lượng phải lớn hơn 0!");
+            if (ct.getDonGia() < 0)   throw new SQLException("Đơn giá không hợp lệ!");
+        }
+        if (hd.getGiamGia() < 0 || hd.getGiamGia() > hd.getTongTienHang()) {
+            throw new SQLException("Giảm giá không hợp lệ!");
+        }
+        double tongTien = hd.tinhTongTien(); 
+        hd.setTongTien(tongTien);
+        boolean daThanhToan = hd.getTrangThaiHD() == TrangThai.DA_THANH_TOAN;
         Connection con = ConnectDB.getConnection();
 
         boolean autoCu = con.getAutoCommit();
@@ -290,8 +304,7 @@ public class HoaDonDAO {
                 stm.setString(3, hd.getNhanVien().getMaNV());
 
                 stm.setTimestamp(4, Timestamp.valueOf(hd.getNgayLap().atTime(LocalTime.now())));
-
-                stm.setDouble(5, hd.getTongTien());
+                stm.setDouble(5, tongTien);
 
                 stm.setDouble(6, hd.getGiamGia());
 
@@ -304,7 +317,8 @@ public class HoaDonDAO {
                 stm.executeUpdate();
 
             }
-
+            
+            
             // 2. Chi tiết (+ trừ tồn kho nếu là sản phẩm)
 
             String sqlCT = "INSERT INTO ChiTietHoaDon (maHD, maSP, maDV, maThuCung, soLuong, donGia, thanhTien) "
@@ -341,7 +355,7 @@ public class HoaDonDAO {
 
                     stmCT.executeUpdate();
 
-                    if (ct.getSanPham() != null) {
+                    if (daThanhToan && ct.getSanPham() != null) {
 
                         stmTon.setInt(1, ct.getSoLuong());
 
@@ -362,8 +376,7 @@ public class HoaDonDAO {
             }
 
             // 3. Trừ điểm
-
-            if (diemDung > 0) {
+            if (daThanhToan &&  diemDung > 0) {
 
                 String sqlDiem = "UPDATE KhachHang SET diemTichLuy = diemTichLuy - ? WHERE maKH = ? AND diemTichLuy >= ?";
 
@@ -383,7 +396,8 @@ public class HoaDonDAO {
 
             // 4. Hóa đơn dịch vụ: chuyển lịch hẹn sang đã tiếp nhận
 
-            if (maLH != null) {
+            if (daThanhToan && maLH != null) {
+
 
                 String sqlLH = "UPDATE LichHen SET trangThaiHen = ? WHERE maLH = ? AND trangThaiHen = ?";
 
@@ -399,23 +413,21 @@ public class HoaDonDAO {
 
                 }
 
+                // Thú cưng của lịch hẹn này -> đang chăm sóc
+                String sqlTC = "UPDATE ThuCung SET trangThaiThuCung = ? "
+                             + "WHERE maThuCung IN (SELECT maThuCung FROM ChiTietLichHen WHERE maLH = ?)";
+                try (PreparedStatement stm = con.prepareStatement(sqlTC)) {
+                    stm.setString(1, TrangThai.DANG_CHAM_SOC.name());
+                    stm.setString(2, maLH);
+                    stm.executeUpdate();
+                }
             }
+        
 
-         // Thú cưng của lịch hẹn này -> đang chăm sóc
 
-            String sqlTC = "UPDATE ThuCung SET trangThaiThuCung = ? "
+    
 
-                         + "WHERE maThuCung IN (SELECT maThuCung FROM ChiTietLichHen WHERE maLH = ?)";
-
-            try (PreparedStatement stm = con.prepareStatement(sqlTC)) {
-
-                stm.setString(1, TrangThai.DANG_CHAM_SOC.name());
-
-                stm.setString(2, maLH);
-
-                stm.executeUpdate();
-
-            }
+          
 
             con.commit();
 
