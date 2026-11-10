@@ -173,7 +173,7 @@ public class LichHenDAO {
 		if (thuCung.getCanNang() <= 0) {
 			throw new NghiepVuException("Cân nặng phải lớn hơn 0");
 		}
-		if (ngayHen.isBefore(LocalDate.now().plusDays(1))) {
+		if (!LocalDate.now().isBefore(ngayHen)) {
 			throw new NghiepVuException("Phải đặt lịch trước ngày hẹn ít nhất 1 ngày");
 		}
 		String sql = "SELECT COUNT(*) "
@@ -264,6 +264,44 @@ public class LichHenDAO {
 			if (soDongSua == 0) {
 				throw new NghiepVuException(
 						"Không thể hoàn thành: lịch hẹn không tồn tại hoặc không ở trạng thái 'Đã tiếp nhận'");
+			}
+		}
+	}
+	
+	public void huyLichHen(String maLH) throws NghiepVuException, SQLException {
+		Connection con = ConnectDB.getConnection();
+		String sqlKiemTra = "SELECT thoiGianHen, trangThaiHen "
+				+ "FROM LichHen "
+				+ "WHERE maLH = ?";
+		try (PreparedStatement stm = con.prepareStatement(sqlKiemTra)) {
+			stm.setString(1, maLH);
+			try (ResultSet rs = stm.executeQuery()) {
+				if (!rs.next()) {
+					throw new NghiepVuException("Không tìm thấy lịch hẹn cần hủy");
+				}
+				TrangThai trangThai = TrangThai.valueOf(rs.getString("trangThaiHen").trim());
+				LocalDate ngayHen = rs.getDate("thoiGianHen").toLocalDate();
+				if (trangThai == TrangThai.DA_HUY) {
+					throw new NghiepVuException("Lịch hẹn này đã được hủy trước đó");
+				}
+				if (trangThai != TrangThai.CHO_DEN_HEN) {
+					throw new NghiepVuException("Chỉ hủy được lịch hẹn đang chờ đến hẹn");
+				}
+				if (ngayHen.isBefore(LocalDate.now().plusDays(1))) {
+					throw new NghiepVuException("Phải hủy lịch hẹn trước ngày hẹn ít nhất 1 ngày");
+				}
+			}
+		}
+
+		String sqlHuy = "UPDATE LichHen "
+				+ "SET trangThaiHen = ? "
+				+ "WHERE maLH = ? AND trangThaiHen = ?";
+		try (PreparedStatement stm = con.prepareStatement(sqlHuy)) {
+			stm.setString(1, TrangThai.DA_HUY.name());
+			stm.setString(2, maLH);
+			stm.setString(3, TrangThai.CHO_DEN_HEN.name());
+			if (stm.executeUpdate() == 0) {
+				throw new NghiepVuException("Không thể hủy, lịch hẹn vừa bị thay đổi. Hãy làm mới và thử lại");
 			}
 		}
 	}

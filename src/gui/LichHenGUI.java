@@ -30,6 +30,7 @@ import javax.swing.table.DefaultTableModel;
 import common.DinhDang;
 import dao.ChiTietLichHenDAO;
 import dao.LichHenDAO;
+import dao.NghiepVuException;
 import entity.ChiTietLichHen;
 import entity.KhachHang;
 import entity.LichHen;
@@ -48,6 +49,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 	private JTextField txtTimMaLichHen;
 	private JButton btnTim;
 	private JButton btnLamMoi;
+	private JButton btnHuyLichHen;
 
 	public LichHenGUI(NhanVien nhanVienDangNhap) {
 		this.nhanVienDangNhap = nhanVienDangNhap;
@@ -72,11 +74,14 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		// nut tao lich hen
 		JPanel pnlHeaderRight = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 		btnTaoLichHen = new JButton("Tạo lịch hẹn");
+		btnHuyLichHen = new JButton("Hủy lịch hẹn");
+		pnlHeaderRight.add(btnHuyLichHen);
 		pnlHeaderRight.add(btnTaoLichHen);
 		pnlHeader.add(pnlHeaderRight, BorderLayout.EAST);
 
 		JPanel pnlHeaderLeft = new JPanel();
-		pnlHeaderLeft.setPreferredSize(btnTaoLichHen.getPreferredSize());
+//		pnlHeaderLeft.setPreferredSize(btnTaoLichHen.getPreferredSize());
+		pnlHeaderLeft.setPreferredSize(pnlHeaderRight.getPreferredSize());
 		pnlHeader.add(pnlHeaderLeft, BorderLayout.WEST);
 
 		JPanel pnlTimKiem = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
@@ -94,8 +99,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		pnlTimKiem.add(btnTim);
 		pnlTimKiem.add(btnLamMoi);
 		pnlTimKiem.setMaximumSize(new Dimension(Integer.MAX_VALUE, pnlTimKiem.getPreferredSize().height));
-		
-		
+
 		pnlTopHalf.add(pnlHeader);
 		pnlTopHalf.add(pnlTimKiem);
 		add(pnlTopHalf, BorderLayout.NORTH);
@@ -105,7 +109,8 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		pnlTable.setLayout(new BorderLayout());
 		pnlTable.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
 //		String col[] = { "Mã lịch hẹn", "Khách hàng", "Thú cưng", "Dịch vụ", "Ngày hẹn", "Trạng thái" };
-		String col[] = { "Mã lịch hẹn", "Khách hàng", "Số điện thoại", "Thú cưng", "Dịch vụ", "Ngày hẹn", "Trạng thái" };
+		String col[] = { "Mã lịch hẹn", "Khách hàng", "Số điện thoại", "Thú cưng", "Dịch vụ", "Ngày hẹn",
+				"Trạng thái" };
 		model = new DefaultTableModel(col, 0) {
 			@Override
 			public boolean isCellEditable(int row, int column) {
@@ -124,13 +129,13 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 
 		table.addMouseListener(this);
 		btnTaoLichHen.addActionListener(this);
-		
+
 		btnTim.addActionListener(this);
 		btnLamMoi.addActionListener(this);
 		txtTimKiem.addActionListener(this);
 		txtTimMaLichHen.addActionListener(this);
+		btnHuyLichHen.addActionListener(this);
 	}
-
 
 	// ham doc du lieu vao bang
 	public void docDuLieuVaoTable() {
@@ -147,16 +152,16 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 						chiTietLichHenDAO.timTheoLichHen(lichHen));
 				KhachHang khachHang = dsChiTiet.isEmpty() ? null : dsChiTiet.get(0).getThuCung().getChuSoHuu();
 				if (!tuKhoa.isEmpty()) {
-				    if (khachHang == null) {
-				        continue;
-				    }
-				    if (!chuanHoa(khachHang.getMaKH()).contains(tuKhoa)
-				            && !chuanHoa(khachHang.getTenKH()).contains(tuKhoa) && !chuanHoa(khachHang.getSoDienThoai()).contains(tuKhoa)) {
-				        continue;
-				    }
+					if (khachHang == null) {
+						continue;
+					}
+					if (!chuanHoa(khachHang.getMaKH()).contains(tuKhoa)
+							&& !chuanHoa(khachHang.getTenKH()).contains(tuKhoa)
+							&& !chuanHoa(khachHang.getSoDienThoai()).contains(tuKhoa)) {
+						continue;
+					}
 				}
-				
-				
+
 //				StringBuilder tenThuCung = new StringBuilder();
 //				StringBuilder tenDichVu = new StringBuilder();
 //				for (ChiTietLichHen chiTiet : dsChiTiet) {
@@ -174,61 +179,60 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 					dsTenThuCung.add(chiTiet.getThuCung().getTenThuCung());
 					dsTenDichVu.add(chiTiet.getDichVu().getTenDV());
 				}
-				
-				String tenKhachHang = dsChiTiet.isEmpty() ? ""
-						: dsChiTiet.get(0).getThuCung().getChuSoHuu().getTenKH();
+
+				String tenKhachHang = dsChiTiet.isEmpty() ? "" : dsChiTiet.get(0).getThuCung().getChuSoHuu().getTenKH();
 //				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, tenThuCung.toString(),
 //						tenDichVu.toString(), lichHen.getThoiGianHen().format(DinhDang.NGAY),
 //						lichHen.getTrangThaiHen() });
-				
+
 //				dsLichHen.add(lichHen);
 //				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, String.join(", ", dsTenThuCung),
 //						String.join(", ", dsTenDichVu), lichHen.getThoiGianHen().format(DinhDang.NGAY),
 //						lichHen.getTrangThaiHen() });
 				String soDienThoai = khachHang == null ? "" : khachHang.getSoDienThoai();
 				dsLichHen.add(lichHen);
-				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, soDienThoai, String.join(", ", dsTenThuCung),
-						String.join(", ", dsTenDichVu), lichHen.getThoiGianHen().format(DinhDang.NGAY),
-						lichHen.getTrangThaiHen() });
+				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, soDienThoai,
+						String.join(", ", dsTenThuCung), String.join(", ", dsTenDichVu),
+						lichHen.getThoiGianHen().format(DinhDang.NGAY), lichHen.getTrangThaiHen() });
 			}
 		} catch (SQLException ex) {
 			JOptionPane.showMessageDialog(this, "Lỗi truy cập CSDL: " + ex.getMessage(), "Lỗi",
 					JOptionPane.ERROR_MESSAGE);
 		}
 	}
-	
+
 	// Hàm AI tạo
-	//Viết hàm Java tên chuanHoa(String s) dùng để chuẩn hóa chuỗi tiếng Việt thành chữ thường không dấu, đã xử lý khoảng trắng thừa và trường hợp null
+	// Viết hàm Java tên chuanHoa(String s) dùng để chuẩn hóa chuỗi tiếng Việt thành
+	// chữ thường không dấu, đã xử lý khoảng trắng thừa và trường hợp null
 	public static String chuanHoa(String s) {
-        // 1. Kiểm tra trường hợp null
-        if (s == null) {
-            return ""; // Hoặc trả về null tùy logic nghiệp vụ của bạn
-        }
+		// 1. Kiểm tra trường hợp null
+		if (s == null) {
+			return ""; // Hoặc trả về null tùy logic nghiệp vụ của bạn
+		}
 
-        // 2. Chuyển thành chữ thường và loại bỏ khoảng trắng thừa đầu/cuối
-        String result = s.toLowerCase().trim();
+		// 2. Chuyển thành chữ thường và loại bỏ khoảng trắng thừa đầu/cuối
+		String result = s.toLowerCase().trim();
 
-        // 3. Thay thế các khoảng trắng liên tiếp ở giữa thành một khoảng trắng duy nhất
-        result = result.replaceAll("\\s+", " ");
+		// 3. Thay thế các khoảng trắng liên tiếp ở giữa thành một khoảng trắng duy nhất
+		result = result.replaceAll("\\s+", " ");
 
-        // 4. Xử lý riêng ký tự 'đ' và 'Đ' (vì Normalizer không tự chuyển 'đ' thành 'd')
-        result = result.replace('đ', 'd');
+		// 4. Xử lý riêng ký tự 'đ' và 'Đ' (vì Normalizer không tự chuyển 'đ' thành 'd')
+		result = result.replace('đ', 'd');
 
-        // 5. Loại bỏ dấu tiếng Việt sử dụng Normalizer
-        String temp = Normalizer.normalize(result, Normalizer.Form.NFD);
-        Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-        result = pattern.matcher(temp).replaceAll("");
+		// 5. Loại bỏ dấu tiếng Việt sử dụng Normalizer
+		String temp = Normalizer.normalize(result, Normalizer.Form.NFD);
+		Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+		result = pattern.matcher(temp).replaceAll("");
 
-        return result;
-    }
+		return result;
+	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
 
 		if (o.equals(btnTaoLichHen)) {
-			TaoLichHenGUI taoLichHenGUI = new TaoLichHenGUI(SwingUtilities.getWindowAncestor(this),
-					nhanVienDangNhap);
+			TaoLichHenGUI taoLichHenGUI = new TaoLichHenGUI(SwingUtilities.getWindowAncestor(this), nhanVienDangNhap);
 			taoLichHenGUI.setVisible(true);
 			if (taoLichHenGUI.isDaTao()) {
 				docDuLieuVaoTable();
@@ -243,17 +247,42 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 //		    txtTimKiem.setText("");
 //		    docDuLieuVaoTable();
 //		}
-		}else if (o.equals(btnTim) || o.equals(txtTimKiem) || o.equals(txtTimMaLichHen)) {
-		    docDuLieuVaoTable();
-		    if (model.getRowCount() == 0 && (!txtTimKiem.getText().trim().isEmpty()
-		            || !txtTimMaLichHen.getText().trim().isEmpty())) {
-		        JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn phù hợp",
-		                "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-		    }
+		} else if (o.equals(btnTim) || o.equals(txtTimKiem) || o.equals(txtTimMaLichHen)) {
+			docDuLieuVaoTable();
+			if (model.getRowCount() == 0
+					&& (!txtTimKiem.getText().trim().isEmpty() || !txtTimMaLichHen.getText().trim().isEmpty())) {
+				JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn phù hợp", "Thông báo",
+						JOptionPane.INFORMATION_MESSAGE);
+			}
 		} else if (o.equals(btnLamMoi)) {
-		    txtTimKiem.setText("");
-		    txtTimMaLichHen.setText("");
-		    docDuLieuVaoTable();
+			txtTimKiem.setText("");
+			txtTimMaLichHen.setText("");
+			docDuLieuVaoTable();
+		} else if (o.equals(btnHuyLichHen)) {
+			int row = table.getSelectedRow();
+			if (row < 0 || row >= dsLichHen.size()) {
+				JOptionPane.showMessageDialog(this, "Vui lòng chọn lịch hẹn cần hủy trên bảng!");
+				return;
+			}
+			LichHen lichHen = dsLichHen.get(row);
+			int confirm = JOptionPane.showConfirmDialog(this,
+					"Bạn có chắc chắn muốn hủy lịch hẹn " + lichHen.getMaLH() + " không?", "Xác nhận hủy",
+					JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+			if (confirm != JOptionPane.YES_OPTION) {
+				return;
+			}
+			try {
+				lichHenDAO.huyLichHen(lichHen.getMaLH());
+			} catch (NghiepVuException ex) {
+				JOptionPane.showMessageDialog(this, ex.getMessage(), "Thông báo", JOptionPane.WARNING_MESSAGE);
+				return;
+			} catch (SQLException ex) {
+				JOptionPane.showMessageDialog(this, "Lỗi truy cập CSDL: " + ex.getMessage(), "Lỗi",
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			JOptionPane.showMessageDialog(this, "Đã hủy lịch hẹn thành công!");
+			docDuLieuVaoTable();
 		}
 	}
 

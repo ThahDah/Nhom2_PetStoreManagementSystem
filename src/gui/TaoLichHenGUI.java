@@ -55,7 +55,7 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 	private JComboBox<DichVu> cbDichVu;
 	private JComboBox<Loai> cbLoai;
 	private JTextField txtCanNang;
-	private JTextField txtTrangThaiThuCung;
+//	private JTextField txtTrangThaiThuCung;
 	private JComboBox<DoHungDu> cbDoHungDu;
 	private JTextField txtNgayHen;
 	private JTextField txtGhiChu;
@@ -195,8 +195,8 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 		cbTenThuCung.setEnabled(false);
 		cbTenThuCung.setRenderer(new DefaultListCellRenderer() {
 			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-					boolean isSelected, boolean cellHasFocus) {
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+					boolean cellHasFocus) {
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 				if (value instanceof ThuCung) {
 					setText(((ThuCung) value).getTenThuCung());
@@ -220,8 +220,8 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 		cbDichVu.setMaximumSize(new Dimension(Integer.MAX_VALUE, lableHeight));
 		cbDichVu.setRenderer(new DefaultListCellRenderer() {
 			@Override
-			public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-					boolean isSelected, boolean cellHasFocus) {
+			public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected,
+					boolean cellHasFocus) {
 				super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
 				if (value instanceof DichVu) {
 					DichVu dichVu = (DichVu) value;
@@ -248,6 +248,7 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 		lblLoai.setMaximumSize(kichThuocNhan);
 		cbLoai = new JComboBox<Loai>(Loai.values());
 		cbLoai.setMaximumSize(new Dimension(Integer.MAX_VALUE, lableHeight));
+		cbLoai.setSelectedIndex(-1); //chua chon thi de trong
 		cbLoai.setEnabled(false);
 		pnlLoai.add(lblLoai);
 		pnlLoai.add(cbLoai);
@@ -263,27 +264,30 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 		lblCanNang.setMaximumSize(kichThuocNhan);
 		txtCanNang = new JTextField();
 		txtCanNang.setMaximumSize(new Dimension(Integer.MAX_VALUE, lableHeight));
+		txtCanNang.setEditable(false);
+		txtCanNang.setBackground(mauChiDoc);
+		txtCanNang.setForeground(chuChiDoc);
 		pnlCanNang.add(lblCanNang);
 		pnlCanNang.add(txtCanNang);
 		pnlCol2.add(pnlCanNang);
 		pnlCol2.add(Box.createVerticalStrut(10));
 
-		// trang thai thu cung
-		JPanel pnlTrangThai = new JPanel();
-		pnlTrangThai.setLayout(new BoxLayout(pnlTrangThai, BoxLayout.X_AXIS));
-		JLabel lblTrangThai = new JLabel("Trạng thái:");
-		lblTrangThai.setPreferredSize(kichThuocNhan);
-		lblTrangThai.setMinimumSize(kichThuocNhan);
-		lblTrangThai.setMaximumSize(kichThuocNhan);
-		txtTrangThaiThuCung = new JTextField();
-		txtTrangThaiThuCung.setMaximumSize(new Dimension(Integer.MAX_VALUE, lableHeight));
-		txtTrangThaiThuCung.setEditable(false);
-		txtTrangThaiThuCung.setBackground(mauChiDoc);
-		txtTrangThaiThuCung.setForeground(chuChiDoc);
-		pnlTrangThai.add(lblTrangThai);
-		pnlTrangThai.add(txtTrangThaiThuCung);
-		pnlCol2.add(pnlTrangThai);
-		pnlCol2.add(Box.createVerticalStrut(10));
+//		// trang thai thu cung
+//		JPanel pnlTrangThai = new JPanel();
+//		pnlTrangThai.setLayout(new BoxLayout(pnlTrangThai, BoxLayout.X_AXIS));
+//		JLabel lblTrangThai = new JLabel("Trạng thái:");
+//		lblTrangThai.setPreferredSize(kichThuocNhan);
+//		lblTrangThai.setMinimumSize(kichThuocNhan);
+//		lblTrangThai.setMaximumSize(kichThuocNhan);
+//		txtTrangThaiThuCung = new JTextField();
+//		txtTrangThaiThuCung.setMaximumSize(new Dimension(Integer.MAX_VALUE, lableHeight));
+//		txtTrangThaiThuCung.setEditable(false);
+//		txtTrangThaiThuCung.setBackground(mauChiDoc);
+//		txtTrangThaiThuCung.setForeground(chuChiDoc);
+//		pnlTrangThai.add(lblTrangThai);
+//		pnlTrangThai.add(txtTrangThaiThuCung);
+//		pnlCol2.add(pnlTrangThai);
+//		pnlCol2.add(Box.createVerticalStrut(10));
 
 		// do hung du
 		JPanel pnlDoHungDu = new JPanel();
@@ -294,6 +298,8 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 		lblDoHungDu.setMaximumSize(kichThuocNhan);
 		cbDoHungDu = new JComboBox<DoHungDu>(DoHungDu.values());
 		cbDoHungDu.setMaximumSize(new Dimension(Integer.MAX_VALUE, lableHeight));
+		cbDoHungDu.setSelectedIndex(-1);
+		cbDoHungDu.setEnabled(false);
 		pnlDoHungDu.add(lblDoHungDu);
 		pnlDoHungDu.add(cbDoHungDu);
 		pnlCol2.add(pnlDoHungDu);
@@ -438,11 +444,12 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 		} catch (DateTimeParseException ex) {
 			JOptionPane.showMessageDialog(this, "Ngày hẹn không hợp lệ. Định dạng: dd/MM/yyyy");
 			return null;
-			
+
 		}
 	}
 
-	// tinh lai gia cho ca danh sach, phu phi chi tinh mot lan cho moi thu cung roi do lai bang
+	// tinh lai gia cho ca danh sach, phu phi chi tinh mot lan cho moi thu cung roi
+	// do lai bang
 	private void napLaiBang() {
 		lichHenDAO.tinhGiaChiTiet(dsChiTietTam);
 		model.setRowCount(0);
@@ -484,8 +491,7 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 					return;
 				}
 				txtTenKhachHang.setText(khachHangHienTai.getTenKH());
-				ArrayList<ThuCung> dsThuCung = new ArrayList<ThuCung>(
-						thuCungDAO.timTheoChuSoHuu(khachHangHienTai));
+				ArrayList<ThuCung> dsThuCung = new ArrayList<ThuCung>(thuCungDAO.timTheoChuSoHuu(khachHangHienTai));
 				for (ThuCung thuCung : dsThuCung) {
 					cbTenThuCung.addItem(thuCung);
 				}
@@ -501,12 +507,14 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 			ThuCung thuCung = (ThuCung) cbTenThuCung.getSelectedItem();
 			if (thuCung == null) {
 				txtCanNang.setText("");
-				txtTrangThaiThuCung.setText("");
+				cbLoai.setSelectedIndex(-1);
+				cbDoHungDu.setSelectedIndex(-1);
+//				txtTrangThaiThuCung.setText("");
 				return;
 			}
 			cbLoai.setSelectedItem(thuCung.getLoai());
 			txtCanNang.setText(String.valueOf(thuCung.getCanNang()));
-			txtTrangThaiThuCung.setText(String.valueOf(thuCung.getTrangThaiThuCung()));
+//			txtTrangThaiThuCung.setText(String.valueOf(thuCung.getTrangThaiThuCung()));
 			cbDoHungDu.setSelectedItem(thuCung.getDoHungDu());
 		} else if (o.equals(btnThem)) {
 			ThuCung thuCung = (ThuCung) cbTenThuCung.getSelectedItem();
@@ -519,15 +527,15 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 				JOptionPane.showMessageDialog(this, "Vui lòng chọn dịch vụ");
 				return;
 			}
-			double canNang;
-			try {
-				canNang = Double.parseDouble(txtCanNang.getText().trim());
-			} catch (NumberFormatException ex) {
-				JOptionPane.showMessageDialog(this, "Cân nặng phải là số");
-				txtCanNang.requestFocus();
-				txtCanNang.selectAll();
-				return;
-			}
+//			double canNang;
+//			try {
+//				canNang = Double.parseDouble(txtCanNang.getText().trim());
+//			} catch (NumberFormatException ex) {
+//				JOptionPane.showMessageDialog(this, "Cân nặng phải là số");
+//				txtCanNang.requestFocus();
+//				txtCanNang.selectAll();
+//				return;
+//			}
 			LocalDate ngayHen = docNgayHen();
 			if (ngayHen == null) {
 				txtNgayHen.requestFocus();
@@ -542,9 +550,10 @@ public class TaoLichHenGUI extends JDialog implements ActionListener {
 				}
 			}
 
-			// gan thong tin nhan vien vua nhap, du lieu chi duoc luu khi xac nhan tao lich hen
-			thuCung.setCanNang(canNang);
-			thuCung.setDoHungDu((DoHungDu) cbDoHungDu.getSelectedItem());
+			// gan thong tin nhan vien vua nhap, du lieu chi duoc luu khi xac nhan tao lich
+			// hen
+//			thuCung.setCanNang(canNang);
+//			thuCung.setDoHungDu((DoHungDu) cbDoHungDu.getSelectedItem());
 
 			try {
 				lichHenDAO.kiemTraDatLich(thuCung, dichVu, ngayHen);

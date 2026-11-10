@@ -8,7 +8,7 @@ public class ThuCung {
 	private Loai loai;
 	private double canNang;
 	private String ghiChu;
-	private TrangThai trangThaiThuCung;
+//	private TrangThai trangThaiThuCung;
 	private DoHungDu doHungDu ;
 	private KhachHang chuSoHuu;
 	
@@ -18,14 +18,14 @@ public class ThuCung {
 
 
 	public ThuCung(String maThuCung, String tenThuCung, Loai loai, double canNang, String ghiChu,
-			TrangThai trangThaiThuCung, DoHungDu doHungDu, KhachHang chuSoHuu) {
+			 DoHungDu doHungDu, KhachHang chuSoHuu) {
 		super();
 		this.maThuCung = maThuCung;
 		this.tenThuCung = tenThuCung;
 		this.loai = loai;
 		this.canNang = canNang;
 		this.ghiChu = ghiChu;
-		this.trangThaiThuCung = trangThaiThuCung;
+//		this.trangThaiThuCung = trangThaiThuCung;
 		this.doHungDu = doHungDu;
 		this.chuSoHuu = chuSoHuu;
 	}
@@ -90,20 +90,7 @@ public class ThuCung {
 		this.ghiChu = ghiChu;
 	}
 
-
-
-	public TrangThai getTrangThaiThuCung() {
-		return trangThaiThuCung;
-	}
-
-
-
-	public void setTrangThaiThuCung(TrangThai trangThaiThuCung) {
-		this.trangThaiThuCung = trangThaiThuCung;
-	}
-
-
-
+	
 	public DoHungDu getDoHungDu() {
 		return doHungDu;
 	}
