@@ -516,10 +516,10 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 				    addProductByCode();
 				}
 				else if (o == btnConfirm) {
-				    taoHoaDonProduct("TT");
+				    taoHoaDonProduct();
 				}
 				else if (o == btnSaveProductInvoice) {
-					taoHoaDonProduct("");
+					luuHoaDonProduct();
 				}
 			  }
 			 
@@ -649,7 +649,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 				    }
 				    recalcTotals();
 			  }
-			// ===== CÔNG THỨC DUY NHẤT =====
+			// ===== CÔNG THỨC ĐỂ HIỂN THỊ  =====
 			  private long tinhTamTinh() {
 			      long s = 0;
 			      for (int i = 0; i < model.getRowCount(); i++) {
@@ -704,39 +704,26 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			                                    : "Thiếu " + DinhDang.TIEN.format(-change));
 			  }
 
-			  // ===== TẠO HÓA ĐƠN =====
-			  private void taoHoaDonProduct(String kieu) {
-				  if (khachHienTai == null) {
-					    JOptionPane.showMessageDialog(this,
-					            "Vui lòng tìm và chọn khách hàng trước khi tạo hóa đơn!",
-					            "Lỗi", JOptionPane.ERROR_MESSAGE);
-					    txtPhone.requestFocusInWindow();
-					    return;
-					}
+			// Kiểm tra chung: có khách, có sản phẩm
+			  private boolean kiemTraHopLeProduct() {
+			      if (khachHienTai == null) {
+			          JOptionPane.showMessageDialog(this,
+			                  "Vui lòng tìm và chọn khách hàng trước khi tạo hóa đơn!",
+			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
+			          txtPhone.requestFocusInWindow();
+			          return false;
+			      }
 			      if (tblProductList.isEditing()) tblProductList.getCellEditor().stopCellEditing();
-
 			      if (model.getRowCount() == 0) {
-			          JOptionPane.showMessageDialog(null, "Hóa đơn chưa có sản phẩm!",
+			          JOptionPane.showMessageDialog(this, "Hóa đơn chưa có sản phẩm!",
 			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
-			          return;
+			          return false;
 			      }
+			      return true;
+			  }
 
-			      long tamTinh = tinhTamTinh();
-			      long giamGia = tinhGiamGia(tamTinh);
-			      long phaiTra = tamTinh - giamGia;
-
-			      if (parseReceived() < phaiTra) {
-			          JOptionPane.showMessageDialog(null, "Tiền nhận chưa đủ!",
-			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
-			          txtReceived.requestFocusInWindow();
-			          return;
-			      }
-
-			      int ok = JOptionPane.showConfirmDialog(null,
-			              "Tạo hóa đơn với tổng thanh toán " + DinhDang.TIEN.format(phaiTra) + "?",
-			              "Xác nhận", JOptionPane.YES_NO_OPTION);
-			      if (ok != JOptionPane.YES_OPTION) return;
-
+			  // Dựng danh sách chi tiết từ bảng
+			  private List<ChiTietHoaDon> layDsChiTietProduct() {
 			      List<ChiTietHoaDon> dsCT = new ArrayList<>();
 			      for (int i = 0; i < model.getRowCount(); i++) {
 			          SanPham sp = new SanPham();
@@ -745,21 +732,64 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			          double donGia = Double.parseDouble(model.getValueAt(i, 4).toString());
 			          dsCT.add(new ChiTietHoaDon(null, null, sp, soLuong, donGia));
 			      }
-			      TrangThai trangThai = "TT".equals(kieu) ? TrangThai.DA_THANH_TOAN : TrangThai.CHUA_THANH_TOAN;
-			      HoaDon hd = new HoaDon(null, LocalDate.now(), phaiTra, giamGia,
+			      return dsCT;
+			  }
+
+			  // Ghi vào CSDL (dùng chung cho tạo và lưu)
+			  private void ghiHoaDonProduct(TrangThai trangThai, long giamGia, String tenThaoTac) {
+			      List<ChiTietHoaDon> dsCT = layDsChiTietProduct();
+			      HoaDon hd = new HoaDon(null, LocalDate.now(), giamGia,
 			              trangThai, null, khachHienTai, nhanVienDangNhap);
-			     
+			       hd.setDsChiTiet(dsCT);   
 			      try {
-			    	  hd_dao.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE, "BH", null);
-			          JOptionPane.showMessageDialog(this, "Tạo hóa đơn " + hd.getMaHD() + " thành công!");
+			          hd_dao.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE, "BH", null);
+			          JOptionPane.showMessageDialog(this, tenThaoTac + " hóa đơn " + hd.getMaHD() + " thành công!");
 			          resetInvoice();
 			      } catch (SQLException ex) {
 			          ex.printStackTrace();
-			          JOptionPane.showMessageDialog(this, "Tạo hóa đơn thất bại: " + ex.getMessage(),
+			          JOptionPane.showMessageDialog(this, tenThaoTac + " hóa đơn thất bại: " + ex.getMessage(),
 			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
 			      }
 			  }
 
+			  // ===== THANH TOÁN HÓA ĐƠN =====
+			  private void taoHoaDonProduct() {
+			      if (!kiemTraHopLeProduct()) return;
+
+			      long tamTinh = tinhTamTinh();
+			      long giamGia = tinhGiamGia(tamTinh);
+			      long phaiTra = tamTinh - giamGia;
+
+			      if (parseReceived() < phaiTra) {
+			          JOptionPane.showMessageDialog(this, "Tiền nhận chưa đủ!",
+			                  "Lỗi", JOptionPane.ERROR_MESSAGE);
+			          txtReceived.requestFocusInWindow();
+			          return;
+			      }
+
+			      int ok = JOptionPane.showConfirmDialog(this,
+			              "Tạo hóa đơn với tổng thanh toán " + DinhDang.TIEN.format(phaiTra) + "?",
+			              "Xác nhận", JOptionPane.YES_NO_OPTION);
+			      if (ok != JOptionPane.YES_OPTION) return;
+
+			      ghiHoaDonProduct(TrangThai.DA_THANH_TOAN, giamGia, "Tạo");
+			  }
+
+			  // ===== LƯU HÓA ĐƠN (chưa thanh toán, không cần tiền nhận) =====
+			  private void luuHoaDonProduct() {
+			      if (!kiemTraHopLeProduct()) return;
+
+			      long tamTinh = tinhTamTinh();
+			      long giamGia = tinhGiamGia(tamTinh);
+			      long phaiTra = tamTinh - giamGia;
+
+			      int ok = JOptionPane.showConfirmDialog(this,
+			              "Lưu hóa đơn (chưa thanh toán) với tổng " + DinhDang.TIEN.format(phaiTra) + "?",
+			              "Xác nhận", JOptionPane.YES_NO_OPTION);
+			      if (ok != JOptionPane.YES_OPTION) return;
+
+			      ghiHoaDonProduct(TrangThai.CHUA_THANH_TOAN, giamGia, "Lưu");
+			  }
 			  // Xóa trắng để bán hóa đơn mới
 			  private void resetInvoice() {
 			      model.setRowCount(0);      // tableChanged tự tính lại tổng
@@ -1179,7 +1209,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		                    "Bỏ dịch vụ này khỏi hóa đơn?", "Xác nhận", JOptionPane.YES_NO_OPTION);
     		            if (ok != JOptionPane.YES_OPTION) return;
     		            dsChiTietHienTai.remove(row);
-    		            fillServiceTable();
+    		            napDuLieuVaoBangService();
     		        }
     		    });
     	 
@@ -1192,9 +1222,9 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	      } else if (o == chkUsePointsService) {
     	          recalcTotalsService();
     	      }else if (o == btnConfirmService) {
-    	    	    taoHoaDonService("TT");
+    	    	    taoHoaDonService();
     	      }else if(o == btnSaveServiceInvoice) {
-    	    	   taoHoaDonService("");
+    	    	   luuHoaDonService();
     	      }
     	  }
 
@@ -1209,7 +1239,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	          dsChiTietHienTai = new ArrayList<>();
     	          lblServiceTitle.setText("Dịch vụ của lịch hẹn");
     	          lblServiceSub.setText("Chọn một lịch hẹn ở trên để xem dịch vụ");
-    	          fillServiceTable();
+    	          napDuLieuVaoBangService();
     	          return;
     	      }
     	      String maLH = modelAppointmentService.getValueAt(row, 0).toString();
@@ -1218,7 +1248,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	      dsChiTietHienTai = ds == null ? new ArrayList<>() : new ArrayList<>(ds);   // bản sao để xóa dòng không ảnh hưởng gốc
     	      lblServiceTitle.setText("Dịch vụ của lịch hẹn " + maLH);
     	      lblServiceSub.setText("Thú cưng: " + tenThuCungCuaLich(dsChiTietHienTai));
-    	      fillServiceTable();
+    	      napDuLieuVaoBangService();
     	  }
 
     	  private void searchCustomerService() {
@@ -1256,7 +1286,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	                  "Lỗi", JOptionPane.ERROR_MESSAGE);
     	          return;
     	      }
-    	      fillAppointmentTable();
+    	      napDuLieuVaoBangLichHen();
 
     	      if (dsTheoLichHen.isEmpty()) {
     	          JOptionPane.showMessageDialog(null, "Khách hàng này chưa có lịch hẹn đang chờ.");
@@ -1265,7 +1295,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	      }
     	  }
 
-    	  private void fillAppointmentTable() {
+    	  private void napDuLieuVaoBangLichHen() {
     	      modelAppointmentService.setRowCount(0);
     	      for (Map.Entry<String, List<ChiTietLichHen>> en : dsTheoLichHen.entrySet()) {
     	          List<ChiTietLichHen> ds = en.getValue();
@@ -1304,7 +1334,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	      return String.join(", ", ten);
     	  }
 
-    	  private void fillServiceTable() {
+    	  private void napDuLieuVaoBangService() {
     	      modelService.setRowCount(0);
     	      for (ChiTietLichHen ct : dsChiTietHienTai) {
     	          modelService.addRow(new Object[]{
@@ -1330,7 +1360,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	      dsTheoLichHen.clear();
     	      modelAppointmentService.setRowCount(0);   // kích hoạt valueChanged -> xóa bảng dịch vụ
     	      dsChiTietHienTai = new ArrayList<>();
-    	      fillServiceTable();
+    	      napDuLieuVaoBangService();
     	  }
 
     	  // ===== TÍNH TIỀN =====
@@ -1377,18 +1407,56 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	      txtChangeService.setText(change >= 0 ? DinhDang.TIEN.format(change)
     	                                           : "Thiếu " + DinhDang.TIEN.format(-change));
     	  }
-    	  private void taoHoaDonService(String kieu) {
+    	  private boolean kiemTraHopLeService() {
     		    if (khachHienTaiService == null) {
     		        JOptionPane.showMessageDialog(this, "Vui lòng tìm và chọn khách hàng!",
     		                "Lỗi", JOptionPane.ERROR_MESSAGE);
     		        txtPhoneService.requestFocusInWindow();
-    		        return;
+    		        return false;
     		    }
     		    if (maLHDangChon == null || dsChiTietHienTai.isEmpty()) {
     		        JOptionPane.showMessageDialog(this, "Vui lòng chọn lịch hẹn có dịch vụ cần thanh toán!",
     		                "Lỗi", JOptionPane.ERROR_MESSAGE);
-    		        return;
+    		        return false;
     		    }
+    		    return true;
+    		}
+
+    		// Mỗi dịch vụ là một dòng chi tiết: số lượng 1, đơn giá đã gồm phụ phí
+    		private List<ChiTietHoaDon> layDsChiTietService() {
+    		    List<ChiTietHoaDon> dsCT = new ArrayList<>();
+    		    for (ChiTietLichHen ct : dsChiTietHienTai) {
+    		        DichVu dv = new DichVu();
+    		        dv.setMaDV(ct.getDichVu().getMaDV());
+    		        ThuCung tc = new ThuCung();
+    		        tc.setMaThuCung(ct.getThuCung().getMaThuCung());
+
+    		        ChiTietHoaDon cthd = new ChiTietHoaDon(null, dv, null, 1, Math.round(ct.getDonGia()) );
+    		        cthd.setThuCung(tc);
+    		        dsCT.add(cthd);
+    		    }
+    		    return dsCT;
+    		}
+
+    		private void ghiHoaDonService(TrangThai trangThai, long giamGia, String tenThaoTac) {
+    		    List<ChiTietHoaDon> dsCT = layDsChiTietService();
+    		    HoaDon hd = new HoaDon(null, LocalDate.now(), giamGia,
+    		            trangThai, null, khachHienTaiService, nhanVienDangNhap);
+    		    hd.setDsChiTiet(dsCT);   // bắt buộc
+    		    try {
+    		        hd_daoService.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE_SERVICE, "DV", maLHDangChon);
+    		        JOptionPane.showMessageDialog(this, tenThaoTac + " hóa đơn " + hd.getMaHD() + " thành công!");
+    		        resetInvoiceService();
+    		    } catch (SQLException ex) {
+    		        ex.printStackTrace();
+    		        JOptionPane.showMessageDialog(this, tenThaoTac + " hóa đơn thất bại: " + ex.getMessage(),
+    		                "Lỗi", JOptionPane.ERROR_MESSAGE);
+    		    }
+    		}
+
+    		// ===== THANH TOÁN HÓA ĐƠN =====
+    		private void taoHoaDonService() {
+    		    if (!kiemTraHopLeService()) return;
 
     		    long tamTinh = tinhTamTinhService();
     		    long giamGia = tinhGiamGiaService(tamTinh);
@@ -1405,31 +1473,23 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		            "Xác nhận", JOptionPane.YES_NO_OPTION);
     		    if (ok != JOptionPane.YES_OPTION) return;
 
-    		    // Mỗi dịch vụ là một dòng chi tiết: số lượng 1, đơn giá đã gồm phụ phí
-    		    List<ChiTietHoaDon> dsCT = new ArrayList<>();
-    		    for (ChiTietLichHen ct : dsChiTietHienTai) {
-    		        DichVu dv = new DichVu();
-    		        dv.setMaDV(ct.getDichVu().getMaDV());
-    		        ThuCung tc = new ThuCung();
-    		        tc.setMaThuCung(ct.getThuCung().getMaThuCung());
+    		    ghiHoaDonService(TrangThai.DA_THANH_TOAN, giamGia, "Tạo");
+    		}
 
-    		        ChiTietHoaDon cthd = new ChiTietHoaDon(null, dv, null, 1, ct.getDonGia());
-    		        cthd.setThuCung(tc);
-    		        dsCT.add(cthd);
-    		    }
-    		    TrangThai trangThai = "TT".equals(kieu) ? TrangThai.DA_THANH_TOAN : TrangThai.CHUA_THANH_TOAN;
-    		    HoaDon hd = new HoaDon(null, LocalDate.now(), phaiTra, giamGia,
-    		            trangThai, null, khachHienTaiService, nhanVienDangNhap);
-    		    
-    		    try {
-    		        hd_daoService.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE_SERVICE, "DV", maLHDangChon);
-    		        JOptionPane.showMessageDialog(this, "Tạo hóa đơn " + hd.getMaHD() + " thành công!");
-    		        resetInvoiceService();
-    		    } catch (SQLException ex) {
-    		        ex.printStackTrace();
-    		        JOptionPane.showMessageDialog(this, "Tạo hóa đơn thất bại: " + ex.getMessage(),
-    		                "Lỗi", JOptionPane.ERROR_MESSAGE);
-    		    }
+    		// ===== LƯU HÓA ĐƠN =====
+    		private void luuHoaDonService() {
+    		    if (!kiemTraHopLeService()) return;
+
+    		    long tamTinh = tinhTamTinhService();
+    		    long giamGia = tinhGiamGiaService(tamTinh);
+    		    long phaiTra = tamTinh - giamGia;
+
+    		    int ok = JOptionPane.showConfirmDialog(this,
+    		            "Lưu hóa đơn dịch vụ (chưa thanh toán) với tổng " + DinhDang.TIEN.format(phaiTra) + "?",
+    		            "Xác nhận", JOptionPane.YES_NO_OPTION);
+    		    if (ok != JOptionPane.YES_OPTION) return;
+
+    		    ghiHoaDonService(TrangThai.CHUA_THANH_TOAN, giamGia, "Lưu");
     		}
     	 
 

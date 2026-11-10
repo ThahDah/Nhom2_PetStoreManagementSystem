@@ -1,36 +1,66 @@
 package entity;
 
+
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
 
 public class HoaDon {
 	private String maHD;
 	private LocalDate ngayLap;
-	private double tongTien;
 	private double giamGia;
 	private TrangThai trangThaiHD;
 	private PhuongThucTT phuongThucTT;
 	private KhachHang khachHang;
 	private NhanVien nhanVien;
+	private List<ChiTietHoaDon> dsChiTiet = new ArrayList<>();
+	private double tongTien;
 	public HoaDon() {
 		// TODO Auto-generated constructor stub
 	}
 
-	
-	public HoaDon(String maHD, LocalDate ngayLap, double tongTien, double giamGia, TrangThai trangThaiHD,
-			PhuongThucTT phuongThucTT, KhachHang khachHang, NhanVien nhanVien) {
+	  public HoaDon(String maHD, LocalDate ngayLap, double giamGia, TrangThai trangThaiHD, PhuongThucTT phuongThucTT,
+			KhachHang khachHang, NhanVien nhanVien) {
 		super();
 		this.maHD = maHD;
 		this.ngayLap = ngayLap;
-		this.tongTien = tongTien;
 		this.giamGia = giamGia;
 		this.trangThaiHD = trangThaiHD;
 		this.phuongThucTT = phuongThucTT;
 		this.khachHang = khachHang;
 		this.nhanVien = nhanVien;
 	}
-	
 
+
+	  public double getTongTienHang() {
+	        return dsChiTiet.stream().mapToDouble(ChiTietHoaDon::getThanhTien).sum();
+	 }
+	  
+	  public double tinhTongTien() {
+		    return Math.max(0, getTongTienHang() - giamGia);
+	}
+
+	    public double getTongTien() {
+	    	return dsChiTiet.isEmpty() ? tongTien : tinhTongTien();
+	 }
+	    
+	    public void setTongTien(double tongTien) {
+	        this.tongTien = tongTien;
+	 }
+
+	    public List<ChiTietHoaDon> getDsChiTiet() { 
+	    	return dsChiTiet; 
+	 }
+	    
+	    public void setDsChiTiet(List<ChiTietHoaDon> ds) {
+	        this.dsChiTiet = (ds == null) ? new ArrayList<>() : ds;
+	 }
+	    
+	    public void themChiTiet(ChiTietHoaDon ct) { 
+	    	dsChiTiet.add(ct); 
+	 }
+	
 	public String getMaHD() {
 		return maHD;
 	}
@@ -49,17 +79,6 @@ public class HoaDon {
 	public void setNgayLap(LocalDate ngayLap) {
 		this.ngayLap = ngayLap;
 	}
-
-
-	public double getTongTien() {
-		return tongTien;
-	}
-
-
-	public void setTongTien(double tongTien) {
-		this.tongTien = tongTien;
-	}
-
 
 	public double getGiamGia() {
 		return giamGia;
