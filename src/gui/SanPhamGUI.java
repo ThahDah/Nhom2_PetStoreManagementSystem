@@ -33,11 +33,14 @@ import common.DinhDang;
 import connectDB.ConnectDB;
 import dao.SanPhamDAO;
 import entity.DonViTinh;
+import entity.Loai;
 import entity.SanPham;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.ArrayList;
+import java.util.regex.Pattern;
 
 import javax.swing.JOptionPane;
 
@@ -54,6 +57,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 
     private JTable tblSanPham;
     private DefaultTableModel model;
+	private JComboBox<Loai> cboLoaiTC;
 
     public SanPhamGUI() {
     	try {
@@ -91,7 +95,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         pnlForm.setBackground(Color.WHITE);
         pnlForm.setBorder(BorderFactory.createLineBorder(Color.GRAY));
 
-        JPanel pnlThongTin = new JPanel(new GridLayout(3, 4, 15, 15));
+        JPanel pnlThongTin = new JPanel(new GridLayout(4, 4, 15, 15));
         pnlThongTin.setBackground(Color.WHITE);
         pnlThongTin.setBorder(BorderFactory.createEmptyBorder(15, 10, 10, 10));
 
@@ -105,6 +109,8 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         cboDonViTinh = new JComboBox<>(new String[] {
                 "Cái", "Hộp", "Gói", "Chai", "Túi"
         });
+        
+        cboLoaiTC = new JComboBox<Loai>(Loai.values());
 
         pnlThongTin.add(new JLabel("Mã sản phẩm:"));
         pnlThongTin.add(txtMaSP);
@@ -120,6 +126,8 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         pnlThongTin.add(cboDonViTinh);
         pnlThongTin.add(new JLabel("Giá bán:"));
         pnlThongTin.add(txtGiaBan);
+        pnlThongTin.add(new JLabel("Loại thú cưng:"));
+        pnlThongTin.add(cboLoaiTC);
 
         JPanel pnlButton = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 5));
         pnlButton.setBackground(Color.WHITE);
@@ -129,7 +137,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         btnSua = new JButton("Sửa");
         btnXoa = new JButton("Xóa");
         btnLamMoi = new JButton("Làm mới");
-
+        
         pnlButton.add(btnTaoMa);
         pnlButton.add(btnLuu);
         pnlButton.add(btnSua);
@@ -152,9 +160,9 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 
         pnlSearch.add(new JLabel("Mã sản phẩm:"));
         pnlSearch.add(txtTimMaSP);
-
-        pnlSearch.add(new JLabel("Tên sản phẩm:"));
-        pnlSearch.add(txtTimTenSP);
+        
+        pnlSearch.add(new JLabel("Tên sản phẩm:"));   
+        pnlSearch.add(txtTimTenSP);   
 
         pnlSearch.add(new JLabel("Giá bán:"));
         pnlSearch.add(new JLabel("Từ:"));
@@ -226,7 +234,10 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         btnXoa.addActionListener(this);
         tblSanPham.addMouseListener(this);
         txtTimMaSP.addKeyListener(this);
+        txtTimTenSP.addKeyListener(this);
         btnLamMoi.addActionListener(this);
+        txtGiaTu.addActionListener(this);
+        txtGiaDen.addActionListener(this);
     }
   
 	@Override
@@ -235,16 +246,31 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	public void keyPressed(KeyEvent e) {}
 	@Override
 	public void keyReleased(KeyEvent e) {
-	    if (e.getSource().equals(txtTimMaSP)) {
-	        String key = txtTimMaSP.getText().trim().toLowerCase();
+		Object o = e.getSource();
+	    if (o.equals(txtTimMaSP)) {
+	            txtTimTenSP.setText("");
+	            txtGiaTu.setText("");
+	            txtGiaDen.setText("");
+	        String key = chuanHoa(txtTimMaSP.getText());
 	        model.setRowCount(0);
 	        for (SanPham sp : sp_dao.getAllSanPham()) {
-	            if (sp.getMaSP().toLowerCase().contains(key)) {
+	            if (chuanHoa(sp.getMaSP()).contains(key)) {
+	                themDongVaoBang(sp);
+	            }
+	        }
+	    }  else if (o.equals(txtTimTenSP)) {
+	        txtTimMaSP.setText("");
+	        txtGiaTu.setText("");
+	        txtGiaDen.setText("");
+	        String key = chuanHoa(txtTimTenSP.getText());
+	        model.setRowCount(0);
+	        for (SanPham sp : sp_dao.getAllSanPham()) {
+	            if (chuanHoa(sp.getTenSP()).contains(key)) {
 	                themDongVaoBang(sp);
 	            }
 	        }
 	    }
-	}
+	   }
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		if (e.getSource().equals(tblSanPham)) {
@@ -261,6 +287,10 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	            txtSoLuongTon.setText(String.valueOf(sp.getSoLuongTon()));
 	            txtGiaNhap.setText(String.valueOf((long) sp.getGiaNhap()));
 	            txtGiaBan.setText(String.valueOf((long) sp.getGiaBan()));
+	            cboLoaiTC.setSelectedItem(sp.getMaSP().startsWith("SPCC") ? Loai.CHO : Loai.MEO);
+	            btnTaoMa.setEnabled(false); 
+	            cboLoaiTC.setEnabled(false);
+	            btnLuu.setEnabled(false);
 	        } catch (SQLException ex) {
 	            ex.printStackTrace();
 	        }
@@ -278,10 +308,36 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
 		if (o.equals(btnTaoMa)) {
-            String maMoi = sp_dao.phatSinhMaSanPhamMoi();
-            txtMaSP.setText(maMoi);
-            txtMaSP.setEditable(false);
+			try {
+		        Loai loai = (Loai) cboLoaiTC.getSelectedItem();
+		        txtMaSP.setText(sp_dao.phatSinhMaSanPhamMoi(loai));
+		    } catch (SQLException ex) {
+		        ex.printStackTrace();
+		        JOptionPane.showMessageDialog(this, "Không thể tạo mã: " + ex.getMessage(),
+		                "Lỗi", JOptionPane.ERROR_MESSAGE);
+		    }
         }
+		else if (o.equals(txtGiaTu) || o.equals(txtGiaDen)){
+			 String tu = txtGiaTu.getText().trim(), den = txtGiaDen.getText().trim();
+			    if (tu.isEmpty() && den.isEmpty()) { loadTableData(); return; }
+
+			    double giaTu = 0, giaDen = Double.MAX_VALUE;
+			    try {
+			        if (!tu.isEmpty())  giaTu  = Double.parseDouble(tu);
+			        if (!den.isEmpty()) giaDen = Double.parseDouble(den);
+			    } catch (NumberFormatException ex) {
+			        canhBao("Giá phải là số hợp lệ (không dùng dấu chấm/phẩy ngăn cách)!", null);
+			        return;
+			    }
+			    if (giaTu > giaDen) { canhBao("Giá \"Từ\" không được lớn hơn giá \"Đến\"!", txtGiaTu); return; }
+
+			    txtTimMaSP.setText(""); txtTimTenSP.setText("");
+			    model.setRowCount(0);
+			    for (SanPham sp : sp_dao.getAllSanPham())
+			        if (sp.getGiaBan() >= giaTu && sp.getGiaBan() <= giaDen) themDongVaoBang(sp);
+		
+		    	
+		 }
 		else if (o.equals(btnLuu)) {
 		    try {
 		        String maSP = txtMaSP.getText().trim();
@@ -356,12 +412,25 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
             int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa sản phẩm có mã: " + maSP + "?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
             
             if (confirm == JOptionPane.YES_OPTION) {
-                if (sp_dao.xoaSanPham(maSP)) {
-                    JOptionPane.showMessageDialog(this, "Xóa sản phẩm thành công!");
-                    loadTableData();
-                    xoaTrangForm();
-                } else {
-                    JOptionPane.showMessageDialog(this, "Xóa thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                try {
+                    if (sp_dao.xoaSanPham(maSP)) {
+                        JOptionPane.showMessageDialog(this, "Xóa sản phẩm thành công!");
+                        loadTableData();
+                        xoaTrangForm();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Không tìm thấy sản phẩm để xóa!",
+                                "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
+                } catch (SQLException ex) {
+                    if (ex.getErrorCode() == 547) {
+                        JOptionPane.showMessageDialog(this,
+                                "Sản phẩm " + maSP + " đã có trong hóa đơn nên không thể xóa!",
+                                "Không thể xóa", JOptionPane.WARNING_MESSAGE);
+                    } else {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(this, "Lỗi CSDL: " + ex.getMessage(),
+                                "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    }
                 }
             }
         }
@@ -371,6 +440,50 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
             xoaTrangForm();
             loadTableData();
             txtTimMaSP.setText("");
+            txtGiaTu.setText(""); 
+            txtTimTenSP.setText("");    
+            txtGiaDen.setText("");
+        }
+        else if (o.equals(btnSua)) {
+            int row = tblSanPham.getSelectedRow();
+            if (row < 0) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn sản phẩm cần sửa trên bảng!");
+                return;
+            }
+            String maSP = tblSanPham.getValueAt(row, 1).toString();   // mã lấy từ bảng
+            String tenSP = txtTenSP.getText().trim();
+            if (tenSP.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "Tên sản phẩm không được để trống!");
+                txtTenSP.requestFocus();
+                return;
+            }
+
+            int soLuongTon;
+            double giaNhap, giaBan;
+            try {
+                soLuongTon = Integer.parseInt(txtSoLuongTon.getText().trim());
+                giaNhap = Double.parseDouble(txtGiaNhap.getText().trim());
+                giaBan = Double.parseDouble(txtGiaBan.getText().trim());
+            } catch (NumberFormatException ex) {
+                JOptionPane.showMessageDialog(this, "Số lượng tồn, giá nhập và giá bán phải là số (ví dụ: 120000)");
+                return;
+            }
+            if (soLuongTon < 0 || giaNhap <= 0 || giaBan <= 0 || giaBan < giaNhap) {
+                JOptionPane.showMessageDialog(this,
+                        "Số lượng tồn phải >= 0, giá nhập và giá bán phải > 0, giá bán không nhỏ hơn giá nhập!");
+                return;
+            }
+
+            DonViTinh dvt = textToDonViTinh(cboDonViTinh.getSelectedItem());
+            SanPham sp = new SanPham(maSP, tenSP, giaNhap, giaBan, soLuongTon, dvt);
+
+            if (sp_dao.suaSanPham(sp)) {
+                JOptionPane.showMessageDialog(this, "Cập nhật sản phẩm thành công!");
+                loadTableData();
+                xoaTrangForm();
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            }
         }
 	}
 	private void xoaTrangForm() {
@@ -381,6 +494,10 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 		  txtGiaBan.setText("");
 		  cboDonViTinh.setSelectedIndex(0);
 		  tblSanPham.clearSelection();
+		  cboLoaiTC.setSelectedIndex(0);
+		  btnTaoMa.setEnabled(true); 
+		  cboLoaiTC.setEnabled(true);
+		  btnLuu.setEnabled(true);
     }
 
 	private void loadTableData() {
@@ -400,7 +517,10 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	        sp.getGiaBan()
 	    });
 	}
-
+	private void canhBao(String text, JTextField focus) {
+	    JOptionPane.showMessageDialog(this, text, "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+	    if (focus != null) focus.requestFocus();
+	}
 	// Enum -> chữ hiển thị (khớp với combo box)
 	private String donViTinhToText(DonViTinh dv) {
 	    if (dv == null) return "Cái";
@@ -423,5 +543,28 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	        case "Túi":  return DonViTinh.TUI;
 	        default:     return DonViTinh.CAI;
 	    }
+	}
+	
+	public static String chuanHoa(String s) {
+		// 1. Kiểm tra trường hợp null
+		if (s == null) {
+			return ""; // Hoặc trả về null tùy logic nghiệp vụ của bạn
+		}
+
+		// 2. Chuyển thành chữ thường và loại bỏ khoảng trắng thừa đầu/cuối
+		String result = s.toLowerCase().trim();
+
+		// 3. Thay thế các khoảng trắng liên tiếp ở giữa thành một khoảng trắng duy nhất
+		result = result.replaceAll("\\s+", " ");
+
+		// 4. Xử lý riêng ký tự 'đ' và 'Đ' (vì Normalizer không tự chuyển 'đ' thành 'd')
+		result = result.replace('đ', 'd');
+
+		// 5. Loại bỏ dấu tiếng Việt sử dụng Normalizer
+		String temp = Normalizer.normalize(result, Normalizer.Form.NFD);
+		Pattern pattern = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
+		result = pattern.matcher(temp).replaceAll("");
+
+		return result;
 	}
 }

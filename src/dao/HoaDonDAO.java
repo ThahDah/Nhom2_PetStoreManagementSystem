@@ -79,16 +79,10 @@ public class HoaDonDAO {
                 String phuongThuc = resultSet.getString("phuongThucTT");
 
                 HoaDon hd = new HoaDon(
-
                         resultSet.getString("maHD"),
-
                         resultSet.getTimestamp("ngayLap").toLocalDateTime().toLocalDate(),
-
-
                         resultSet.getDouble("giamGia"),
-
                         TrangThai.valueOf(resultSet.getString("trangThaiHD")),
-
                         phuongThuc == null ? null : PhuongThucTT.valueOf(phuongThuc),
 
                         kh,
@@ -478,7 +472,6 @@ public class HoaDonDAO {
      if (stt > 99) {
 
          throw new SQLException("Đã vượt quá 99 hóa đơn trong ngày!");
-
      }
 
      return prefix + String.format("%02d", stt);
