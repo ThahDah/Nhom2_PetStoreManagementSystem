@@ -2,22 +2,31 @@ package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.sql.SQLException;
 import java.text.Normalizer;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
+import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -26,6 +35,8 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 import javax.swing.table.DefaultTableModel;
+
+import com.toedter.calendar.JDateChooser;
 
 import common.DinhDang;
 import dao.ChiTietLichHenDAO;
@@ -37,6 +48,18 @@ import entity.LichHen;
 import entity.NhanVien;
 
 public class LichHenGUI extends JPanel implements ActionListener, MouseListener {
+
+	private static final DateTimeFormatter DINH_DANG_MA = DateTimeFormatter.ofPattern("ddMMyy");
+	private JButton btnKhoangNgay;
+	private JButton btnApDungNgay;
+	private JButton btnHuyNgay;
+	private JComboBox<String> cboLoaiNgay;
+	private JDateChooser dateFrom;
+	private JDateChooser dateTo;
+	private JDialog dialogChonNgay;
+	private LocalDate tuNgay;
+	private LocalDate denNgay;
+	private boolean locTheoNgayTao = false; // false: ngày hẹn, true: ngày tạo
 
 	private JButton btnTaoLichHen;
 	private DefaultTableModel model;
@@ -100,8 +123,15 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		pnlTimKiem.add(btnLamMoi);
 		pnlTimKiem.setMaximumSize(new Dimension(Integer.MAX_VALUE, pnlTimKiem.getPreferredSize().height));
 
+		btnKhoangNgay = new JButton("Chọn khoảng ngày");
+		JPanel pnlLocNgay = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 5));
+		pnlLocNgay.add(new JLabel("Lọc theo ngày:"));
+		pnlLocNgay.add(btnKhoangNgay);
+		pnlLocNgay.setMaximumSize(new Dimension(Integer.MAX_VALUE, pnlLocNgay.getPreferredSize().height));
+
 		pnlTopHalf.add(pnlHeader);
 		pnlTopHalf.add(pnlTimKiem);
+		pnlTopHalf.add(pnlLocNgay);
 		add(pnlTopHalf, BorderLayout.NORTH);
 
 		// table
@@ -125,6 +155,15 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		pnlTable.add(pane);
 		add(pnlTable, BorderLayout.CENTER);
 
+		// chon ngay
+		dateFrom = new JDateChooser();
+		dateTo = new JDateChooser();
+		dateFrom.setDateFormatString("dd/MM/yyyy");
+		dateTo.setDateFormatString("dd/MM/yyyy");
+		// chi cho chon ngay, khong cho go
+		((JTextField) dateFrom.getDateEditor().getUiComponent()).setEditable(false);
+		((JTextField) dateTo.getDateEditor().getUiComponent()).setEditable(false);
+
 		docDuLieuVaoTable();
 
 		table.addMouseListener(this);
@@ -135,6 +174,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		txtTimKiem.addActionListener(this);
 		txtTimMaLichHen.addActionListener(this);
 		btnHuyLichHen.addActionListener(this);
+		btnKhoangNgay.addActionListener(this);
 	}
 
 	// ham doc du lieu vao bang
@@ -147,6 +187,12 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 			for (LichHen lichHen : lichHenDAO.layTatCa()) {
 				if (!chuanHoa(lichHen.getMaLH()).contains(maLichHenTim)) {
 					continue;
+				}
+				if (tuNgay != null && denNgay != null) {
+					LocalDate ngayLoc = locTheoNgayTao ? layNgayTao(lichHen) : lichHen.getThoiGianHen();
+					if (ngayLoc == null || ngayLoc.isBefore(tuNgay) || ngayLoc.isAfter(denNgay)) {
+						continue;
+					}
 				}
 				ArrayList<ChiTietLichHen> dsChiTiet = new ArrayList<ChiTietLichHen>(
 						chiTietLichHenDAO.timTheoLichHen(lichHen));
@@ -227,6 +273,106 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		return result;
 	}
 
+	// ngay tao lay tu ma lich hen: "LH" + ddMMyy + stt
+	private LocalDate layNgayTao(LichHen lichHen) {
+		String ma = lichHen.getMaLH() == null ? "" : lichHen.getMaLH().trim();
+		if (ma.length() < 8) {
+			return null;
+		}
+		try {
+			return LocalDate.parse(ma.substring(2, 8), DINH_DANG_MA);
+		} catch (DateTimeParseException ex) {
+			return null;
+		}
+	}
+
+	// mo hop thoai chon loai ngay va khoang ngay
+	private void moChonKhoangNgay() {
+		Window owner = SwingUtilities.getWindowAncestor(this);
+		dialogChonNgay = new JDialog(owner, "Chọn khoảng ngày", Dialog.ModalityType.APPLICATION_MODAL);
+
+		JPanel pnlNgay = new JPanel();
+		pnlNgay.setLayout(new BoxLayout(pnlNgay, BoxLayout.Y_AXIS));
+		pnlNgay.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+
+		cboLoaiNgay = new JComboBox<String>(new String[] { "Ngày hẹn", "Ngày tạo" });
+		cboLoaiNgay.setSelectedIndex(locTheoNgayTao ? 1 : 0);
+		cboLoaiNgay.setPreferredSize(new Dimension(220, 30));
+		cboLoaiNgay.setMaximumSize(new Dimension(220, 30));
+
+		dateFrom.setDate(tuNgay == null ? null : Date.from(tuNgay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+		dateTo.setDate(denNgay == null ? null : Date.from(denNgay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+		dateFrom.setPreferredSize(new Dimension(220, 30));
+		dateFrom.setMaximumSize(new Dimension(220, 30));
+		dateTo.setPreferredSize(new Dimension(220, 30));
+		dateTo.setMaximumSize(new Dimension(220, 30));
+
+		pnlNgay.add(new JLabel("Lọc theo:"));
+		pnlNgay.add(cboLoaiNgay);
+		pnlNgay.add(new JLabel("Từ ngày:"));
+		pnlNgay.add(dateFrom);
+		pnlNgay.add(new JLabel("Đến ngày:"));
+		pnlNgay.add(dateTo);
+
+		JPanel pnlNut = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+		btnHuyNgay = new JButton("Hủy lọc");
+		btnApDungNgay = new JButton("Áp dụng");
+		btnHuyNgay.addActionListener(this);
+		btnApDungNgay.addActionListener(this);
+		pnlNut.add(btnHuyNgay);
+		pnlNut.add(btnApDungNgay);
+		pnlNgay.add(pnlNut);
+
+		dialogChonNgay.add(pnlNgay);
+		dialogChonNgay.pack();
+		dialogChonNgay.setResizable(false);
+		dialogChonNgay.setLocationRelativeTo(owner);
+		dialogChonNgay.setVisible(true);
+	}
+
+	// ap dung khoang ngay
+	private void apDungKhoangNgay() {
+		Date ngayBatDau = dateFrom.getDate();
+		Date ngayKetThuc = dateTo.getDate();
+		if (ngayBatDau == null || ngayKetThuc == null) {
+			JOptionPane.showMessageDialog(dialogChonNgay, "Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.");
+			return;
+		}
+		LocalDate batDau = ngayBatDau.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		LocalDate ketThuc = ngayKetThuc.toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+		if (batDau.isAfter(ketThuc)) {
+			JOptionPane.showMessageDialog(dialogChonNgay, "Ngày bắt đầu không được sau ngày kết thúc.");
+			return;
+		}
+		tuNgay = batDau;
+		denNgay = ketThuc;
+		locTheoNgayTao = cboLoaiNgay.getSelectedIndex() == 1;
+		btnKhoangNgay.setText((locTheoNgayTao ? "Ngày tạo: " : "Ngày hẹn: ") + DinhDang.NGAY.format(tuNgay) + " - "
+				+ DinhDang.NGAY.format(denNgay));
+		dialogChonNgay.dispose();
+		docDuLieuVaoTable();
+		if (model.getRowCount() == 0) {
+			JOptionPane.showMessageDialog(this, "Không tìm thấy lịch hẹn phù hợp", "Thông báo",
+					JOptionPane.INFORMATION_MESSAGE);
+		}
+	}
+
+	// bo loc ngay (khi dong hop thoai dang mo)
+	private void huyLocNgay() {
+		datLaiLocNgay();
+		dialogChonNgay.dispose();
+		docDuLieuVaoTable();
+	}
+
+	private void datLaiLocNgay() {
+		tuNgay = null;
+		denNgay = null;
+		locTheoNgayTao = false;
+		dateFrom.setDate(null);
+		dateTo.setDate(null);
+		btnKhoangNgay.setText("Chọn khoảng ngày");
+	}
+
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();
@@ -247,6 +393,12 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 //		    txtTimKiem.setText("");
 //		    docDuLieuVaoTable();
 //		}
+		} else if (o.equals(btnKhoangNgay)) {
+			moChonKhoangNgay();
+		} else if (o.equals(btnApDungNgay)) {
+			apDungKhoangNgay();
+		} else if (o.equals(btnHuyNgay)) {
+			huyLocNgay();
 		} else if (o.equals(btnTim) || o.equals(txtTimKiem) || o.equals(txtTimMaLichHen)) {
 			docDuLieuVaoTable();
 			if (model.getRowCount() == 0
@@ -257,6 +409,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		} else if (o.equals(btnLamMoi)) {
 			txtTimKiem.setText("");
 			txtTimMaLichHen.setText("");
+			datLaiLocNgay();
 			docDuLieuVaoTable();
 		} else if (o.equals(btnHuyLichHen)) {
 			int row = table.getSelectedRow();
