@@ -280,16 +280,16 @@ public class LichHenDAO {
 					throw new NghiepVuException("Không tìm thấy lịch hẹn cần hủy");
 				}
 				TrangThai trangThai = TrangThai.valueOf(rs.getString("trangThaiHen").trim());
-				LocalDate ngayHen = rs.getDate("thoiGianHen").toLocalDate();
+//				LocalDate ngayHen = rs.getDate("thoiGianHen").toLocalDate();
 				if (trangThai == TrangThai.DA_HUY) {
 					throw new NghiepVuException("Lịch hẹn này đã được hủy trước đó");
 				}
 				if (trangThai != TrangThai.CHO_DEN_HEN) {
 					throw new NghiepVuException("Chỉ hủy được lịch hẹn đang chờ đến hẹn");
 				}
-				if (ngayHen.isBefore(LocalDate.now().plusDays(1))) {
-					throw new NghiepVuException("Phải hủy lịch hẹn trước ngày hẹn ít nhất 1 ngày");
-				}
+//				if (ngayHen.isBefore(LocalDate.now().plusDays(1))) {
+//					throw new NghiepVuException("Phải hủy lịch hẹn trước ngày hẹn ít nhất 1 ngày");
+//				}
 			}
 		}
 
