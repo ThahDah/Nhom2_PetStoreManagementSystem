@@ -52,12 +52,14 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
     private SanPhamDAO sp_dao;
     private JComboBox<String> cboDonViTinh;
 
-    private JButton btnChonAnh, btnTaoMa;
+    private JButton  btnTaoMa;
     private JButton btnLuu, btnSua, btnXoa, btnLamMoi;
 
     private JTable tblSanPham;
     private DefaultTableModel model;
 	private JComboBox<Loai> cboLoaiTC;
+	
+	private boolean dangNapForm = false;
 
     public SanPhamGUI() {
     	try {
@@ -75,21 +77,6 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         pnlTop.setBackground(Color.WHITE);
         pnlTop.setPreferredSize(new Dimension(0, 190));
 
-        JPanel pnlImage = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 10));
-        pnlImage.setBackground(Color.WHITE);
-        pnlImage.setPreferredSize(new Dimension(145, 190));
-
-        JLabel lblHinhAnh = new JLabel();
-        lblHinhAnh.setOpaque(true);
-        lblHinhAnh.setBackground(new Color(220, 220, 220));
-        lblHinhAnh.setPreferredSize(new Dimension(100, 125));
-
-        btnChonAnh = new JButton("Chọn ảnh");
-
-        pnlImage.add(lblHinhAnh);
-        pnlImage.add(btnChonAnh);
-
-        pnlTop.add(pnlImage, BorderLayout.WEST);
 
         JPanel pnlForm = new JPanel(new BorderLayout());
         pnlForm.setBackground(Color.WHITE);
@@ -172,7 +159,6 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         pnlSearch.add(txtGiaDen);
 
         String[] columns = {
-                "Hình ảnh",
                 "Mã sản phẩm",
                 "Tên sản phẩm",
                 "Đơn vị tính",
@@ -197,13 +183,12 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 
         loadTableData();
 
-        tblSanPham.getColumnModel().getColumn(0).setPreferredWidth(90);
-        tblSanPham.getColumnModel().getColumn(1).setPreferredWidth(120);
-        tblSanPham.getColumnModel().getColumn(2).setPreferredWidth(160);
-        tblSanPham.getColumnModel().getColumn(3).setPreferredWidth(100);
-        tblSanPham.getColumnModel().getColumn(4).setPreferredWidth(120);
-        tblSanPham.getColumnModel().getColumn(5).setPreferredWidth(130);
-        tblSanPham.getColumnModel().getColumn(6).setPreferredWidth(120);
+        tblSanPham.getColumnModel().getColumn(0).setPreferredWidth(120);
+        tblSanPham.getColumnModel().getColumn(1).setPreferredWidth(160);
+        tblSanPham.getColumnModel().getColumn(2).setPreferredWidth(100);
+        tblSanPham.getColumnModel().getColumn(3).setPreferredWidth(120);
+        tblSanPham.getColumnModel().getColumn(4).setPreferredWidth(130);
+        tblSanPham.getColumnModel().getColumn(5).setPreferredWidth(120);
         
         DefaultTableCellRenderer tien = new DefaultTableCellRenderer() {
             @Override
@@ -212,8 +197,9 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
             }
         };
         tien.setHorizontalAlignment(SwingConstants.RIGHT);
+        tblSanPham.getColumnModel().getColumn(4).setCellRenderer(tien);
         tblSanPham.getColumnModel().getColumn(5).setCellRenderer(tien);
-        tblSanPham.getColumnModel().getColumn(6).setCellRenderer(tien);
+        tblSanPham.setRowHeight(28);
         JScrollPane scrollPane = new JScrollPane(tblSanPham);
 
         
@@ -229,7 +215,6 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         
         btnTaoMa.addActionListener(this);
         btnLuu.addActionListener(this);
-        btnChonAnh.addActionListener(this);
         btnSua.addActionListener(this);
         btnXoa.addActionListener(this);
         tblSanPham.addMouseListener(this);
@@ -238,6 +223,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
         btnLamMoi.addActionListener(this);
         txtGiaTu.addActionListener(this);
         txtGiaDen.addActionListener(this);
+        cboLoaiTC.addActionListener(this);
     }
   
 	@Override
@@ -277,7 +263,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	        int row = tblSanPham.getSelectedRow();
 	        if (row == -1) return;
 
-	        String ma = tblSanPham.getValueAt(row, 1).toString();
+	        String ma = tblSanPham.getValueAt(row, 0).toString();
 	        try {
 	            SanPham sp = sp_dao.timTheoMa(ma);
 	            if (sp == null) return;
@@ -287,7 +273,9 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	            txtSoLuongTon.setText(String.valueOf(sp.getSoLuongTon()));
 	            txtGiaNhap.setText(String.valueOf((long) sp.getGiaNhap()));
 	            txtGiaBan.setText(String.valueOf((long) sp.getGiaBan()));
+	            dangNapForm = true;
 	            cboLoaiTC.setSelectedItem(sp.getMaSP().startsWith("SPCC") ? Loai.CHO : Loai.MEO);
+	            dangNapForm = false;
 	            btnTaoMa.setEnabled(false); 
 	            cboLoaiTC.setEnabled(false);
 	            btnLuu.setEnabled(false);
@@ -317,6 +305,17 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 		                "Lỗi", JOptionPane.ERROR_MESSAGE);
 		    }
         }
+		else if(o.equals(cboLoaiTC)) {
+			 if (dangNapForm) return; 
+			try {
+		        Loai loai = (Loai) cboLoaiTC.getSelectedItem();
+		        txtMaSP.setText(sp_dao.phatSinhMaSanPhamMoi(loai));
+		    } catch (SQLException ex) {
+		        ex.printStackTrace();
+		        JOptionPane.showMessageDialog(this, "Không thể tạo mã: " + ex.getMessage(),
+		                "Lỗi", JOptionPane.ERROR_MESSAGE);
+		    }
+		}
 		else if (o.equals(txtGiaTu) || o.equals(txtGiaDen)){
 			 String tu = txtGiaTu.getText().trim(), den = txtGiaDen.getText().trim();
 			    if (tu.isEmpty() && den.isEmpty()) { loadTableData(); return; }
@@ -408,7 +407,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
                 return;
             }
 
-            String maSP = tblSanPham.getValueAt(row, 1).toString();
+            String maSP = tblSanPham.getValueAt(row, 0).toString();
             int confirm = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa sản phẩm có mã: " + maSP + "?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
             
             if (confirm == JOptionPane.YES_OPTION) {
@@ -450,7 +449,7 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn sản phẩm cần sửa trên bảng!");
                 return;
             }
-            String maSP = tblSanPham.getValueAt(row, 1).toString();   // mã lấy từ bảng
+            String maSP = tblSanPham.getValueAt(row, 0).toString();   // mã lấy từ bảng
             String tenSP = txtTenSP.getText().trim();
             if (tenSP.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Tên sản phẩm không được để trống!");
@@ -494,7 +493,9 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 		  txtGiaBan.setText("");
 		  cboDonViTinh.setSelectedIndex(0);
 		  tblSanPham.clearSelection();
+		  dangNapForm = true;
 		  cboLoaiTC.setSelectedIndex(0);
+		  dangNapForm = false;
 		  btnTaoMa.setEnabled(true); 
 		  cboLoaiTC.setEnabled(true);
 		  btnLuu.setEnabled(true);
@@ -508,7 +509,6 @@ public class SanPhamGUI extends JPanel implements ActionListener, MouseListener,
 	}
 	private void themDongVaoBang(SanPham sp) {
 	    model.addRow(new Object[] {
-	        null,
 	        sp.getMaSP(),
 	        sp.getTenSP(),
 	        donViTinhToText(sp.getDonViTinh()),
