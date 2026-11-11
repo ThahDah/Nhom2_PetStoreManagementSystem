@@ -9,6 +9,7 @@ import java.util.ArrayList;
 
 import connectDB.ConnectDB;
 import entity.DonViTinh;
+import entity.Loai;
 import entity.SanPham;
 
 public class SanPhamDAO {
@@ -127,52 +128,53 @@ public class SanPhamDAO {
     }
 
     // Phát sinh mã sản phẩm mới
-    public String phatSinhMaSanPhamMoi() {
+    public String phatSinhMaSanPhamMoi(Loai loai) throws SQLException {
 
-        ConnectDB.getInstance();
-        Connection con = ConnectDB.getConnection();
+    
+    	
+    	 String tienTo = (loai == Loai.CHO) ? "SPCC" : "SPCM";
 
-        String maMoi = "SP001";
+    	    ConnectDB.getInstance();
+    	    Connection con = ConnectDB.getConnection();
 
-        String sql = "SELECT TOP 1 maSP FROM SanPham ORDER BY maSP DESC";
+    	    String sql = "SELECT MAX(maSP) FROM SanPham WHERE maSP LIKE ?";
+    	    int so = 0;
 
-        try (Statement stm = con.createStatement();
-             ResultSet rs = stm.executeQuery(sql)) {
-
-            if (rs.next()) {
-                String maCu = rs.getString("maSP");
-
-                int so = Integer.parseInt(maCu.substring(2));
-                so++;
-
-                maMoi = String.format("SP%03d", so);
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-
-        return maMoi;
+    	    try (PreparedStatement ps = con.prepareStatement(sql)) {
+    	        ps.setString(1, tienTo + "%");
+    	        try (ResultSet rs = ps.executeQuery()) {
+    	            if (rs.next()) {
+    	                String maCu = rs.getString(1);          // null nếu chưa có sản phẩm nào
+    	                if (maCu != null) {
+    	                    so = Integer.parseInt(maCu.substring(4));   // lấy 4 số cuối
+    	                }
+    	            }
+    	        }
+    	    }
+    	    return String.format("%s%04d", tienTo, so + 1);
     }
 
     // Xóa sản phẩm
-    public boolean xoaSanPham(String maSP) {
-
-        ConnectDB.getInstance();
-        Connection con = ConnectDB.getConnection();
-
+    public boolean xoaSanPham(String maSP) throws SQLException {
         String sql = "DELETE FROM SanPham WHERE maSP = ?";
-
-        try (PreparedStatement stm = con.prepareStatement(sql)) {
-
-            stm.setString(1, maSP);
-
-            return stm.executeUpdate() > 0;
-
+        try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement(sql)) {
+            ps.setString(1, maSP);
+            return ps.executeUpdate() > 0;
+        }
+    }
+    public boolean suaSanPham(SanPham sp) {
+        String sql = "UPDATE SanPham SET tenSP=?, giaNhap=?, giaBan=?, soLuongTon=?, donViTinh=? WHERE maSP=?";
+        try (PreparedStatement ps = ConnectDB.getConnection().prepareStatement(sql)) {
+            ps.setNString(1, sp.getTenSP());
+            ps.setDouble(2, sp.getGiaNhap());
+            ps.setDouble(3, sp.getGiaBan());
+            ps.setInt(4, sp.getSoLuongTon());
+            ps.setString(5, sp.getDonViTinh().name());   // đổi cho giống cách themSanPham lưu
+            ps.setString(6, sp.getMaSP());
+            return ps.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
+            return false;
         }
-
-        return false;
     }
 }
