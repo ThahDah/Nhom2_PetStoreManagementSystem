@@ -4,6 +4,8 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -33,6 +35,7 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingConstants;
 import javax.swing.border.EmptyBorder;
 import javax.swing.event.ChangeEvent;
@@ -67,19 +70,24 @@ import entity.ChiTietLichHen;
 import entity.DichVu;
 import entity.ThuCung;
 
-public class BanHangGUI extends JPanel implements ChangeListener {
+public class BanHangGUI extends JPanel implements ChangeListener, ActionListener {
 		private static final Color DARK_TEXT    = new Color(0x111827);
 	  	private static final Color BORDER_COLOR = new Color(0xE5E7EB);
 	    private static final Color GRAY_TEXT    = new Color(0x6B7280);
 	    private static final Color ORANGE       = new Color(0xF26B3A);
 	    private static final Color INFO_BG      = new Color(0xF3F4F6);
 		
-	   private JTabbedPane switchPane;
-	   private ProductPanel pnlProduct;
-	   private ServicePanel pnlService;
-	   private SanPhamDAO sp_dao;
-	   private KhachHangDAO kh_dao;
-	   private NhanVien nhanVienDangNhap;
+	    private JTextField txtPhone;
+	    private JLabel lblName;
+	    private JLabel lblPoints;
+	    private KhachHang khachHienTai = null;
+
+	    private JTabbedPane switchPane;
+	    private ProductPanel pnlProduct;
+	    private ServicePanel pnlService;
+	    private SanPhamDAO sp_dao;
+	    private KhachHangDAO kh_dao;
+	    private NhanVien nhanVienDangNhap;
 
 	   public BanHangGUI(NhanVien nhanVienDangNhap) {
 		   this.nhanVienDangNhap = nhanVienDangNhap;  
@@ -88,14 +96,53 @@ public class BanHangGUI extends JPanel implements ChangeListener {
             sp_dao = new SanPhamDAO();
             kh_dao = new KhachHangDAO();
             
+            // ===== KHÁCH HÀNG DÙNG CHUNG CHO 2 TAB =====
+            JPanel pnlCustomerBar = new JPanel(new BorderLayout(16, 0));
+ 		   pnlCustomerBar.setBorder(BorderFactory.createCompoundBorder(
+ 				   BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
+ 				   new EmptyBorder(6, 16, 6, 16)));
+
+ 		   JLabel lblCustomerTitle = new JLabel("Khách hàng");
+ 		   lblCustomerTitle.setFont(new Font("Segoe UI", Font.BOLD, 18));
+ 		   lblCustomerTitle.setForeground(DARK_TEXT);
+
+ 		   txtPhone = new JTextField(20);
+ 		   txtPhone.setFont(new Font("Segoe UI", Font.PLAIN, 15));
+ 		   txtPhone.setPreferredSize(new Dimension(200, 36));   // chiều cao cố định
+ 		   txtPhone.putClientProperty("JTextField.placeholderText", "Nhập số điện thoại rồi nhấn Enter");
+ 		   txtPhone.putClientProperty("JTextField.leadingIcon", new FlatSearchIcon());
+
+ 		   // bọc txtPhone để không bị kéo cao theo thanh
+ 		   JPanel pnlPhone = new JPanel(new GridBagLayout());
+ 		   pnlPhone.setOpaque(false);
+ 		   GridBagConstraints gbc = new GridBagConstraints();
+ 		   gbc.fill = GridBagConstraints.HORIZONTAL;
+ 		   gbc.weightx = 1;
+ 		   pnlPhone.add(txtPhone, gbc);
+
+ 		   lblName = new JLabel("-");
+ 		   lblPoints = new JLabel("-");
+ 		   JPanel boxCustomer = new JPanel(new GridLayout(1, 2, 30, 0));
+ 		   boxCustomer.setBackground(INFO_BG);
+ 		   boxCustomer.setBorder(new EmptyBorder(4, 20, 4, 20));
+ 		   boxCustomer.setPreferredSize(new Dimension(380, 50));
+ 		   boxCustomer.putClientProperty("FlatLaf.style", "arc: 16");
+ 		   boxCustomer.add(createInfoColumn("Khách hàng", lblName, DARK_TEXT));
+ 		   boxCustomer.add(createInfoColumn("Điểm tích lũy", lblPoints, ORANGE));
+
+ 		   pnlCustomerBar.add(lblCustomerTitle, BorderLayout.WEST);
+ 		   pnlCustomerBar.add(pnlPhone, BorderLayout.CENTER);
+ 		   pnlCustomerBar.add(boxCustomer, BorderLayout.EAST);
+ 		  // ===== 2 TAB =====
             pnlProduct = new ProductPanel();
             pnlService = new ServicePanel();
-           
             switchPane.addTab("Sản phẩm", pnlProduct);
             switchPane.addTab("Dịch vụ", pnlService);
             
+            add(pnlCustomerBar, BorderLayout.NORTH);
             add(switchPane, BorderLayout.CENTER);
             
+            txtPhone.addActionListener(this);
             switchPane.addChangeListener(this);
        }
 
@@ -104,14 +151,40 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 		   switchPane.getTitleAt(switchPane.getSelectedIndex());
 	   }
 	   
+	   private void datLaiKhachHang(boolean xoaSDT) {
+		   khachHienTai = null;
+		   lblName.setText("-");
+		   lblPoints.setText("-");
+		   if (xoaSDT) txtPhone.setText("");
+		   pnlProduct.capNhatKhachHang();
+		   pnlService.capNhatKhachHangService();
+	   }
+	   @Override
+	   public void actionPerformed(ActionEvent e) {
+		   Object o = e.getSource();
+
+		   if (o == txtPhone) {
+			   String sdt = txtPhone.getText().trim();
+			   KhachHang kh = sdt.isEmpty() ? null : kh_dao.timKiemKhachHangTheoSDT(sdt);
+
+			   if (kh == null) {
+				   JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng!",
+						   "Lỗi", JOptionPane.ERROR_MESSAGE);
+				   datLaiKhachHang(false);
+				   return;
+			   }
+
+			   khachHienTai = kh;
+			   lblName.setText(kh.getTenKH());
+			   lblPoints.setText(String.valueOf(kh.getDiemTichLuy()));
+			   pnlProduct.capNhatKhachHang();
+			   pnlService.capNhatKhachHangService();
+		   }
+	   }
 	   
 	   
 	  // ========== TAB HÓA ĐƠN SẢN PHẨM ========== 
       private final class ProductPanel extends JPanel implements MouseListener, ActionListener, TableModelListener  {
-    	  	
-			private JTextField txtPhone;
-			private JLabel lblName;
-			private JLabel lblPoints;
 		
 			private JLabel lblCountProduct = new JLabel("0 mặt hàng đã chọn");
 			private JTextField txtProduct = new JTextField();
@@ -129,7 +202,6 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			private long customerPoints = 0;
 			private long discount = 0; 
 			private static final long POINT_VALUE = 1;// giá trị của diểm tích lũy
-			private KhachHang khachHienTai = null;   // khách đang chọn
 			private HoaDonDAO hd_dao = new HoaDonDAO();
 			private JButton btnSaveProductInvoice;
 	    	  public ProductPanel() {
@@ -141,7 +213,12 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		            new EmptyBorder(12, 16, 12, 16)));
 	    		 JPanel pnlPaymentDetail = new JPanel();
 	    		 add(pnlMain);
-	    		 add(pnlPaymentDetail, BorderLayout.EAST);
+	    		 JScrollPane scrollPayment = new JScrollPane(pnlPaymentDetail,
+	    					ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+	    					ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+	    			scrollPayment.setBorder(null);
+	    			scrollPayment.setPreferredSize(new Dimension(320, 0));   // 300 + chỗ cho thanh cuộn
+	    			add(scrollPayment, BorderLayout.EAST);
 	    		 
 	    		 // ====== PHẦN DANH SÁCH SẢN PHẨM (pnlMain) ======
 	    		
@@ -164,40 +241,6 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    	        cell.setOpaque(false);
 	    	        cell.setAlignmentX(LEFT_ALIGNMENT);
 	    	        cell.setMaximumSize(new Dimension(Integer.MAX_VALUE, 56));
-	    	        txtPhone = new JTextField(20);
-	    	        txtPhone.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-	    	        txtPhone.putClientProperty("JTextField.placeholderText", "Nhập số điện thoại");
-	    	        txtPhone.putClientProperty("JTextField.leadingIcon", new FlatSearchIcon());
-	    	        cell.add(txtPhone, BorderLayout.CENTER);
-	    	     
-	    	        
-	    	    // === KHUNG THÔNG TIN KHÁCH HÀNG ===    
-	    	        
-	    	        // --- Khung ---
-	    	        JPanel box = new JPanel(new GridLayout(1, 3, 40, 0));
-	    	        box.setBackground(INFO_BG);
-	    	        box.setBorder(new EmptyBorder(18, 24, 18, 24));
-	    	        box.setAlignmentX(LEFT_ALIGNMENT);
-	    	        box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-	    	        box.putClientProperty("FlatLaf.style", "arc: 16");
-	    	        
-	    	        //--- Các cột thông tin ---
-	    	        lblName = new JLabel("-");
-	    	       
-	    	        lblPoints = new JLabel("-");
-	    	        box.add(createInfoColumn("Khách hàng", lblName, DARK_TEXT));
-	    	       
-	    	        box.add(createInfoColumn("Điểm tích lũy", lblPoints, ORANGE));
-	    	        
-	    	        pnlCustomerInfo.add(lblCustomerTitle);
-	    	        pnlCustomerInfo.add(Box.createVerticalStrut(4));
-	    	        pnlCustomerInfo.add(subtitle);
-	    	        pnlCustomerInfo.add(Box.createVerticalStrut(16));
-	    	        pnlCustomerInfo.add(cell);
-	    	        pnlCustomerInfo.add(Box.createVerticalStrut(10));
-	    	        pnlCustomerInfo.add(box);
-	    	        pnlMain.add(pnlCustomerInfo, BorderLayout.NORTH);
-	    	        
 	    	     // ---- KHU VỰC THÔNG TIN SẢN PHẨN ----
 	    	     JPanel pnlProductList = new JPanel();
 	    	     pnlProductList.setLayout(new BoxLayout(pnlProductList, BoxLayout.Y_AXIS));
@@ -305,7 +348,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    			};
 	    		    pnlHeader.setBorder(BorderFactory.createCompoundBorder(
 	    		            BorderFactory.createMatteBorder(1, 0, 1, 0, BORDER_COLOR),
-	    		            new EmptyBorder(20, 24, 16, 24)));
+	    		            new EmptyBorder(10, 24, 8, 24)));
 	    		    pnlHeader.setLayout(new BorderLayout());
 
 	    		    JLabel lblTitle = new JLabel("Chi tiết thanh toán");
@@ -333,7 +376,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    			};
 	    		    pnlSummary.setBorder(BorderFactory.createCompoundBorder(
 	    		            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
-	    		            new EmptyBorder(20, 10, 16, 10)));
+	    		            new EmptyBorder(10, 10, 10, 10)));
 	    		    pnlSummary.setLayout(new BoxLayout(pnlSummary, BoxLayout.Y_AXIS));
 	    		
 	    		    lblTotalQty = new JLabel("0");
@@ -347,11 +390,11 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		    lblDiscount.setForeground(Color.GREEN);
 
 	    		    pnlSummary.add(createSummaryRow("Tổng số lượng", lblTotalQty));
-	    		    pnlSummary.add(Box.createVerticalStrut(14));
+	    		    pnlSummary.add(Box.createVerticalStrut(8));
 	    		    pnlSummary.add(createSummaryRow("Tạm tính", lblSubtotal));
-	    		    pnlSummary.add(Box.createVerticalStrut(14));
+	    		    pnlSummary.add(Box.createVerticalStrut(8));
 	    		    pnlSummary.add(createSummaryRow("Giảm giá", lblDiscount));
-	    		    pnlSummary.add(Box.createVerticalStrut(16));
+	    		    pnlSummary.add(Box.createVerticalStrut(8));
 	    		    
 	    		    JPanel pnlPoint = new JPanel(new BorderLayout()) {
 	    		        @Override
@@ -360,7 +403,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		        }
 	    		    };
 	    		    pnlPoint.setBackground(INFO_BG);
-	    		    pnlPoint.setBorder(new EmptyBorder(14, 0, 14, 0));
+	    		    pnlPoint.setBorder(new EmptyBorder(8, 0, 8, 0));
 	    		    pnlPoint.putClientProperty("FlatLaf.style", "arc: 16");
 	    		  
 
@@ -391,7 +434,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		    JPanel boxTotal = new JPanel();
 	    		    boxTotal.setBorder(BorderFactory.createCompoundBorder(
 	    		            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
-	    		            new EmptyBorder(20, 10, 20, 10)));
+	    		            new EmptyBorder(10, 10, 10, 10)));
 	    		    boxTotal.setLayout(new BoxLayout(boxTotal, BoxLayout.X_AXIS));
 	    		    JLabel lblTotalCaption = new JLabel("Tổng thanh toán");
 	    		    lblTotalCaption.setFont(new Font("Segoe UI", Font.BOLD, 17));
@@ -407,7 +450,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		    JPanel pnlBottom = new JPanel();
 	    		    pnlBottom.setBorder(BorderFactory.createCompoundBorder(
 	    		            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
-	    		            new EmptyBorder(20, 10, 16, 10)));
+	    		            new EmptyBorder(10, 10, 10, 10)));
 	    		    pnlBottom.setLayout(new BoxLayout(pnlBottom, BoxLayout.Y_AXIS));
 	    		    
 	    		    Box boxReceived = Box.createHorizontalBox();
@@ -420,8 +463,8 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		    txtReceived .setFont(new Font("Segoe UI", Font.BOLD, 18));
 	    		    txtReceived.setHorizontalAlignment(SwingConstants.RIGHT);
 	    		    txtReceived.putClientProperty("JComponent.roundRect", true);
-	    		    txtReceived.setPreferredSize(new Dimension(200, 50));
-	    		    txtReceived.setMaximumSize(new Dimension(200, 50));
+	    		    txtReceived.setPreferredSize(new Dimension(200, 40));
+	    		    txtReceived.setMaximumSize(new Dimension(200, 40));
 	    		    
 	    		    boxReceived.add(lblReceived);
 	    		    boxReceived.add(Box.createHorizontalGlue());
@@ -455,7 +498,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		    btnConfirm.setBackground(ORANGE);
 	    		    btnConfirm.setAlignmentX(CENTER_ALIGNMENT);
 	    		    btnConfirm.putClientProperty("FlatLaf.style", "arc: 16; borderWidth: 0");
-	    		    btnConfirm.setPreferredSize(new Dimension(100, 52));
+	    		    btnConfirm.setPreferredSize(new Dimension(100, 46));
 	    		    
 	    		    ImageIcon save = new ImageIcon("img/icon/icon_save.png");
 	    		    btnSaveProductInvoice = new JButton("Lưu hóa đơn");
@@ -465,7 +508,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		    btnSaveProductInvoice.setBackground(Color.BLUE);
 	    		    btnSaveProductInvoice.setAlignmentX(CENTER_ALIGNMENT);
 	    		    btnSaveProductInvoice.putClientProperty("FlatLaf.style", "arc: 16; borderWidth: 0");
-	    		    btnSaveProductInvoice.setPreferredSize(new Dimension(100,52));
+	    		    btnSaveProductInvoice.setPreferredSize(new Dimension(100,46));
 	    	
 	    		    
 	    		    Box boxButtonProduct = Box.createVerticalBox();
@@ -474,9 +517,9 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		    boxButtonProduct.add(btnSaveProductInvoice);
 	    		    
 	    		    pnlBottom.add(boxReceived);
-	    		    pnlBottom.add(Box.createVerticalStrut(16));
+	    		    pnlBottom.add(Box.createVerticalStrut(8));
 	    		    pnlBottom.add(boxChange);
-	    		    pnlBottom.add(Box.createVerticalStrut(16));
+	    		    pnlBottom.add(Box.createVerticalStrut(8));
 	    		    pnlBottom.add(boxButtonProduct);
 	    		    
 	    		
@@ -487,7 +530,6 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 	    		
 	    		 // === KHU VỰC BẮT SỰ KIỆN MÀN PRODUCT ===
 	    		btnSaveProductInvoice.addActionListener(this);
-	    		txtPhone.addActionListener(this);
 	    		txtProduct.addActionListener(this);
 	    		model.addTableModelListener(this);
 	    		chkUsePoints.addActionListener(this);
@@ -506,10 +548,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			  public void actionPerformed(ActionEvent e) {
 				Object o = e.getSource();
 				
-				if(o == txtPhone) {
-					searchCustomer();
-				}
-				else if (o == chkUsePoints) {
+				if(o == chkUsePoints) {
 					recalcTotals();
 				}
 				else if (o == txtProduct) {
@@ -572,38 +611,14 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 				    txtProduct.requestFocusInWindow();
 				}
 
-			  private void searchCustomer() {
-				String sdt = txtPhone.getText();
-				 KhachHang kh = sdt.isEmpty() ? null : kh_dao.timKiemKhachHangTheoSDT(sdt);
+			  void capNhatKhachHang() {
+					customerPoints = (khachHienTai == null) ? 0 : (long) khachHienTai.getDiemTichLuy();
+					lblPointsAvail.setText("Hiện có " + customerPoints + " điểm");
+					chkUsePoints.setSelected(false);
+					chkUsePoints.setEnabled(customerPoints > 0);
+					recalcTotals();
+				}
 
-				    if (kh == null) {
-				        JOptionPane.showMessageDialog(null, "Không tìm thấy khách hàng!",
-				                "Lỗi", JOptionPane.ERROR_MESSAGE);
-				        resetCustomer();
-				        return;
-				    }
-				   
-				khachHienTai = kh;
-				customerPoints = (long) kh.getDiemTichLuy();
-				lblName.setText(kh.getTenKH());
-				lblPoints.setText(String.valueOf(kh.getDiemTichLuy()));
-				lblPointsAvail.setText("Hiện có " + kh.getDiemTichLuy()+" điểm");
-				chkUsePoints.setEnabled(customerPoints > 0);   
-				chkUsePoints.setSelected(false);               
-				recalcTotals();              
-			  }
-
-			  private void resetCustomer() {
-				  	khachHienTai = null;
-				  	customerPoints = 0;
-				    lblName.setText("-");
-				    lblPoints.setText("-");
-				    lblPointsAvail.setText("Hiện có 0 điểm");
-				    chkUsePoints.setSelected(false);
-				    chkUsePoints.setEnabled(false);
-				    recalcTotals();
-				
-			}
 			  
 			  @Override
 			  public void mouseClicked(MouseEvent e) {
@@ -792,23 +807,19 @@ public class BanHangGUI extends JPanel implements ChangeListener {
 			  }
 			  // Xóa trắng để bán hóa đơn mới
 			  private void resetInvoice() {
-			      model.setRowCount(0);      // tableChanged tự tính lại tổng
-			      resetCustomer();
-			      txtPhone.setText("");
-			      txtProduct.setText("");
-			      txtReceived.setText("");
-			      txtChange.setText("");
-			      txtProduct.requestFocusInWindow();
-			  }
-			
+					model.setRowCount(0);         
+					txtProduct.setText("");
+					txtReceived.setText("");
+					txtChange.setText("");
+					datLaiKhachHang(true);       
+					txtProduct.requestFocusInWindow();
+				}
 
       }
       
       // ========== TAB HÓA ĐƠN DỊCH VỤ ==========
       private final class ServicePanel extends JPanel implements ActionListener, ListSelectionListener  {
-    	  private JTextField txtPhoneService;
-    	  private JLabel lblNameService, lblPointsService;
-
+    	
     	  // Lịch hẹn
     	  private DefaultTableModel modelAppointmentService;
     	  private JTable tblAppointmentService;
@@ -832,7 +843,6 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	  
     	  private static final long POINT_VALUE_SERVICE = 1;      // 1 điểm = 1 đ
     	  private final LichHenDAO lh_dao = new LichHenDAO();
-    	  private KhachHang khachHienTaiService = null;
     	  private long customerPointsService = 0;
     	  private long discountService = 0;
     	  // maLH -> các dòng chi tiết của lịch hẹn đó
@@ -852,51 +862,14 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		            new EmptyBorder(12, 16, 12, 16)));
     		    JPanel pnlPaymentDetailService = new JPanel();
     		    add(pnlMainService);
-    		    add(pnlPaymentDetailService, BorderLayout.EAST);
+    		    JScrollPane scrollPaymentService = new JScrollPane(pnlPaymentDetailService,
+    		    		ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+    		    		ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    		    scrollPaymentService.setBorder(null);
+    		    scrollPaymentService.setPreferredSize(new Dimension(320, 0));
+    		    add(scrollPaymentService, BorderLayout.EAST);
 
     		    ImageUtils IUService = new ImageUtils();
-
-    		    // ==================== KHÁCH HÀNG ====================
-    		    JPanel pnlCustomerService = new JPanel();
-    		    pnlCustomerService.setLayout(new BoxLayout(pnlCustomerService, BoxLayout.Y_AXIS));
-    		    pnlCustomerService.setOpaque(false);
-
-    		    JLabel lblCustomerTitleService = new JLabel("Thông tin khách hàng");
-    		    lblCustomerTitleService.setFont(new Font("Segoe UI", Font.BOLD, 20));
-    		    lblCustomerTitleService.setForeground(DARK_TEXT);
-    		    lblCustomerTitleService.setAlignmentX(LEFT_ALIGNMENT);
-
-    		    JLabel lblCustomerSubService = new JLabel("Tìm khách hàng theo số điện thoại để xem lịch hẹn và điểm tích lũy");
-    		    lblCustomerSubService.setFont(new Font("Segoe UI", Font.PLAIN, 14));
-    		    lblCustomerSubService.setForeground(GRAY_TEXT);
-    		    lblCustomerSubService.setAlignmentX(LEFT_ALIGNMENT);
-
-    		    txtPhoneService = new JTextField(20);
-    		    txtPhoneService.setFont(new Font("Segoe UI", Font.PLAIN, 16));
-    		    txtPhoneService.putClientProperty("JTextField.placeholderText", "Nhập số điện thoại");
-    		    txtPhoneService.putClientProperty("JTextField.leadingIcon", new FlatSearchIcon());
-    		    txtPhoneService.setAlignmentX(LEFT_ALIGNMENT);
-    		    txtPhoneService.setMaximumSize(new Dimension(Integer.MAX_VALUE, 48));
-
-    		    JPanel boxCustomerService = new JPanel(new GridLayout(1, 3, 40, 0));
-    		    boxCustomerService.setBackground(INFO_BG);
-    		    boxCustomerService.setBorder(new EmptyBorder(18, 24, 18, 24));
-    		    boxCustomerService.setAlignmentX(LEFT_ALIGNMENT);
-    		    boxCustomerService.setMaximumSize(new Dimension(Integer.MAX_VALUE, 90));
-    		    boxCustomerService.putClientProperty("FlatLaf.style", "arc: 16");
-
-    		    lblNameService = new JLabel("-");
-    		    lblPointsService = new JLabel("-");
-    		    boxCustomerService.add(createInfoColumn("Khách hàng", lblNameService, DARK_TEXT));
-    		    boxCustomerService.add(createInfoColumn("Điểm tích lũy", lblPointsService, ORANGE));
-
-    		    pnlCustomerService.add(lblCustomerTitleService);
-    		    pnlCustomerService.add(Box.createVerticalStrut(4));
-    		    pnlCustomerService.add(lblCustomerSubService);
-    		    pnlCustomerService.add(Box.createVerticalStrut(12));
-    		    pnlCustomerService.add(txtPhoneService);
-    		    pnlCustomerService.add(Box.createVerticalStrut(10));
-    		    pnlCustomerService.add(boxCustomerService);
 
     		    // ==================== CHỌN LỊCH HẸN ====================
     		    JPanel pnlAppointmentService = new JPanel(new BorderLayout(0, 8));
@@ -1011,7 +984,6 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    pnlCenterService.add(pnlAppointmentService);
     		    pnlCenterService.add(pnlServiceList);
 
-    		    pnlMainService.add(pnlCustomerService, BorderLayout.NORTH);
     		    pnlMainService.add(pnlCenterService, BorderLayout.CENTER);
 
     		    // ==================== CHI TIẾT THANH TOÁN ====================
@@ -1026,7 +998,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    };
     		    pnlHeaderService.setBorder(BorderFactory.createCompoundBorder(
     		            BorderFactory.createMatteBorder(1, 0, 1, 0, BORDER_COLOR),
-    		            new EmptyBorder(20, 24, 16, 24)));
+    		            new EmptyBorder(10, 24, 8, 24)));
     		    JLabel lblTitleService = new JLabel("Chi tiết thanh toán");
     		    lblTitleService.setFont(new Font("Segoe UI", Font.BOLD, 20));
     		    lblTitleService.setForeground(DARK_TEXT);
@@ -1049,7 +1021,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    };
     		    pnlSummaryService.setBorder(BorderFactory.createCompoundBorder(
     		            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
-    		            new EmptyBorder(20, 10, 16, 10)));
+    		            new EmptyBorder(10, 10, 10, 10)));
     		    pnlSummaryService.setLayout(new BoxLayout(pnlSummaryService, BoxLayout.Y_AXIS));
 
     		    for (JLabel l : new JLabel[]{lblTotalService, lblSubtotalService, lblDiscountService}) {
@@ -1059,11 +1031,11 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    lblDiscountService.setForeground(new Color(0x16A34A));
 
     		    pnlSummaryService.add(createSummaryRow("Số dịch vụ", lblTotalService));
-    		    pnlSummaryService.add(Box.createVerticalStrut(14));
+    		    pnlSummaryService.add(Box.createVerticalStrut(8));
     		    pnlSummaryService.add(createSummaryRow("Tạm tính", lblSubtotalService));
-    		    pnlSummaryService.add(Box.createVerticalStrut(14));
+    		    pnlSummaryService.add(Box.createVerticalStrut(8));
     		    pnlSummaryService.add(createSummaryRow("Giảm giá", lblDiscountService));
-    		    pnlSummaryService.add(Box.createVerticalStrut(16));
+    		    pnlSummaryService.add(Box.createVerticalStrut(8));
 
     		    JPanel pnlPointService = new JPanel(new BorderLayout()) {
     		        @Override public Dimension getMaximumSize() {
@@ -1071,7 +1043,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		        }
     		    };
     		    pnlPointService.setBackground(INFO_BG);
-    		    pnlPointService.setBorder(new EmptyBorder(14, 12, 14, 12));
+    		    pnlPointService.setBorder(new EmptyBorder(8, 0, 8, 0));
     		    pnlPointService.putClientProperty("FlatLaf.style", "arc: 16");
 
     		    JLabel lblPointTitleService = new JLabel("Dùng điểm tích lũy");
@@ -1102,7 +1074,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    };
     		    boxTotalService.setBorder(BorderFactory.createCompoundBorder(
     		            BorderFactory.createMatteBorder(0, 0, 1, 0, BORDER_COLOR),
-    		            new EmptyBorder(20, 10, 20, 10)));
+    		            new EmptyBorder(10, 10, 10, 10)));
     		    boxTotalService.setLayout(new BoxLayout(boxTotalService, BoxLayout.X_AXIS));
     		    JLabel lblTotalCaptionService = new JLabel("Tổng thanh toán");
     		    lblTotalCaptionService.setFont(new Font("Segoe UI", Font.BOLD, 17));
@@ -1119,7 +1091,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		            return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
     		        }
     		    };
-    		    pnlBottomService.setBorder(new EmptyBorder(20, 10, 16, 10));
+    		    pnlBottomService.setBorder(new EmptyBorder(10, 10, 10, 10));
     		    pnlBottomService.setLayout(new BoxLayout(pnlBottomService, BoxLayout.Y_AXIS));
 
     		    Box boxReceivedService = Box.createHorizontalBox();
@@ -1130,8 +1102,8 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    txtReceivedService.setFont(new Font("Segoe UI", Font.BOLD, 18));
     		    txtReceivedService.setHorizontalAlignment(SwingConstants.RIGHT);
     		    txtReceivedService.putClientProperty("JComponent.roundRect", true);
-    		    txtReceivedService.setPreferredSize(new Dimension(180, 50));
-    		    txtReceivedService.setMaximumSize(new Dimension(180, 50));
+    		    txtReceivedService.setPreferredSize(new Dimension(180, 40));
+    		    txtReceivedService.setMaximumSize(new Dimension(180, 40));
     		    boxReceivedService.add(lblReceivedService);
     		    boxReceivedService.add(Box.createHorizontalGlue());
     		    boxReceivedService.add(txtReceivedService);
@@ -1144,8 +1116,8 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    txtChangeService.setFont(new Font("Segoe UI", Font.BOLD, 18));
     		    txtChangeService.setHorizontalAlignment(SwingConstants.RIGHT);
     		    txtChangeService.putClientProperty("JComponent.roundRect", true);
-    		    txtChangeService.setPreferredSize(new Dimension(180, 50));
-    		    txtChangeService.setMaximumSize(new Dimension(180, 50));
+    		    txtChangeService.setPreferredSize(new Dimension(180, 40));
+    		    txtChangeService.setMaximumSize(new Dimension(180, 40));
     		    txtChangeService.setEditable(false);
     		    boxChangeService.add(lblChangeService);
     		    boxChangeService.add(Box.createHorizontalGlue());
@@ -1159,7 +1131,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    btnConfirmService.setBackground(ORANGE);
     		    btnConfirmService.setAlignmentX(CENTER_ALIGNMENT);
     		    btnConfirmService.putClientProperty("FlatLaf.style", "arc: 16; borderWidth: 0");
-    		    btnConfirmService.setPreferredSize(new Dimension(100, 52));
+    		    btnConfirmService.setPreferredSize(new Dimension(100, 46));
     		    
     		   
     		    ImageIcon saveService = new ImageIcon("img/icon/icon_save.png");
@@ -1170,7 +1142,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    btnSaveServiceInvoice.setBackground(Color.BLUE);
     		    btnSaveServiceInvoice.setAlignmentX(CENTER_ALIGNMENT);
     		    btnSaveServiceInvoice.putClientProperty("FlatLaf.style", "arc: 16; borderWidth: 0");
-    		    btnSaveServiceInvoice.setPreferredSize(new Dimension(100,52));
+    		    btnSaveServiceInvoice.setPreferredSize(new Dimension(100,46));
     		    
     		    Box boxButtonService = Box.createVerticalBox();
     		    boxButtonService.add(btnConfirmService);
@@ -1178,9 +1150,9 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		    boxButtonService.add(btnSaveServiceInvoice);
     		    
     		    pnlBottomService.add(boxReceivedService);
-    		    pnlBottomService.add(Box.createVerticalStrut(16));
+    		    pnlBottomService.add(Box.createVerticalStrut(8));
     		    pnlBottomService.add(boxChangeService);
-    		    pnlBottomService.add(Box.createVerticalStrut(16));
+    		    pnlBottomService.add(Box.createVerticalStrut(8));
     		    pnlBottomService.add(boxButtonService);
 
     		    pnlPaymentDetailService.add(pnlHeaderService);
@@ -1191,7 +1163,6 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		 // === KHU VỰC BẮT SỰ KIỆN MÀN DỊCH VỤ ===
     		    btnConfirmService.addActionListener(this);
     		    btnSaveServiceInvoice.addActionListener(this);
-    		    txtPhoneService.addActionListener(this);
     		    chkUsePointsService.addActionListener(this);
     		    tblAppointmentService.getSelectionModel().addListSelectionListener(this);
     		    txtReceivedService.getDocument().addDocumentListener(new DocumentListener() {
@@ -1217,9 +1188,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	  @Override
     	  public void actionPerformed(ActionEvent e) {
     	      Object o = e.getSource();
-    	      if (o == txtPhoneService) {
-    	          searchCustomerService();
-    	      } else if (o == chkUsePointsService) {
+    	      if (o == chkUsePointsService) {
     	          recalcTotalsService();
     	      }else if (o == btnConfirmService) {
     	    	    taoHoaDonService();
@@ -1227,7 +1196,51 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	    	   luuHoaDonService();
     	      }
     	  }
+    	  void capNhatKhachHangService() {
+    			// xóa dữ liệu của khách cũ
+    			dsTheoLichHen.clear();
+    			modelAppointmentService.setRowCount(0);
+    			dsChiTietHienTai = new ArrayList<>();
+    			maLHDangChon = null;
+    			lblServiceTitle.setText("Dịch vụ của lịch hẹn");
+    			lblServiceSub.setText("Chọn một lịch hẹn ở trên để xem dịch vụ");
 
+    			customerPointsService = (khachHienTai == null) ? 0 : (long) khachHienTai.getDiemTichLuy();
+    			lblPointsAvailService.setText("Hiện có " + customerPointsService + " điểm");
+    			chkUsePointsService.setSelected(false);
+    			chkUsePointsService.setEnabled(customerPointsService > 0);
+
+    			if (khachHienTai != null) {
+    				try {
+    					List<ChiTietLichHen> dsChiTiet = lh_dao.layChiTietChoTheoKhachHang(khachHienTai.getMaKH());
+
+    					for (ChiTietLichHen ct : dsChiTiet) {
+    					    String maLH = ct.getLichHen().getMaLH();
+
+    					    // Nếu lịch hẹn này chưa có trong map thì tạo danh sách rỗng cho nó
+    					    if (!dsTheoLichHen.containsKey(maLH)) {
+    					        dsTheoLichHen.put(maLH, new ArrayList<>());
+    					    }
+
+    					    // Thêm dịch vụ này vào danh sách của lịch hẹn
+    					    dsTheoLichHen.get(maLH).add(ct);
+    					}
+    				} catch (SQLException ex) {
+    					ex.printStackTrace();
+    					JOptionPane.showMessageDialog(this, "Lỗi tải lịch hẹn: " + ex.getMessage(),
+    							"Lỗi", JOptionPane.ERROR_MESSAGE);
+    				}
+    				napDuLieuVaoBangLichHen();
+    				if (dsTheoLichHen.isEmpty()) {
+    					// không dùng popup vì khách có thể đang ở tab Sản phẩm
+    					lblServiceSub.setText("Khách hàng này chưa có lịch hẹn đang chờ");
+    				} else {
+    					tblAppointmentService.setRowSelectionInterval(0, 0);   // tự chọn lịch hẹn đầu tiên
+    					return;   // valueChanged đã nạp bảng dịch vụ và tính tiền
+    				}
+    			}
+    			napDuLieuVaoBangService();
+    		}
     	 
 		  // Chọn dòng lịch hẹn -> nạp dịch vụ của lịch hẹn đó
     	  @Override
@@ -1251,49 +1264,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	      napDuLieuVaoBangService();
     	  }
 
-    	  private void searchCustomerService() {
-    	      String sdt = txtPhoneService.getText().trim();
-    	      KhachHang kh = sdt.isEmpty() ? null : kh_dao.timKiemKhachHangTheoSDT(sdt);
-    	      if (kh == null) {
-    	          JOptionPane.showMessageDialog(this, "Không tìm thấy khách hàng!",
-    	                  "Lỗi", JOptionPane.ERROR_MESSAGE);
-    	          resetCustomerService();
-    	          return;
-    	      }
-
-    	      resetCustomerService();   // xóa dữ liệu của khách trước
-    	      khachHienTaiService = kh;
-    	      customerPointsService = (long) kh.getDiemTichLuy();
-    	      lblNameService.setText(kh.getTenKH());
-    	      lblPointsService.setText(String.valueOf(kh.getDiemTichLuy()));
-    	      lblPointsAvailService.setText("Hiện có " + kh.getDiemTichLuy() + " điểm");
-    	      chkUsePointsService.setEnabled(customerPointsService > 0);
-
-    	      // Nạp lịch hẹn từ CSDL
-    	      try {
-    	          for (ChiTietLichHen ct : lh_dao.layChiTietChoTheoKhachHang(kh.getMaKH())) {
-    	        	  String maLH = ct.getLichHen().getMaLH();
-
-    	        	  if (!dsTheoLichHen.containsKey(maLH)) {
-    	        	      dsTheoLichHen.put(maLH, new ArrayList<>());
-    	        	  }
-
-    	        	  dsTheoLichHen.get(maLH).add(ct);
-    	          }
-    	      } catch (SQLException ex) {
-    	          ex.printStackTrace();
-    	          JOptionPane.showMessageDialog(null, "Lỗi tải lịch hẹn: " + ex.getMessage(),
-    	                  "Lỗi", JOptionPane.ERROR_MESSAGE);
-    	          return;
-    	      }
-    	      napDuLieuVaoBangLichHen();
-
-    	      if (dsTheoLichHen.isEmpty()) {
-    	          JOptionPane.showMessageDialog(null, "Khách hàng này chưa có lịch hẹn đang chờ.");
-    	      } else {
-    	          tblAppointmentService.setRowSelectionInterval(0, 0);   // tự chọn lịch hẹn đầu tiên
-    	      }
-    	  }
+    	
 
     	  private void napDuLieuVaoBangLichHen() {
     	      modelAppointmentService.setRowCount(0);
@@ -1348,20 +1319,6 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	      recalcTotalsService();
     	  }
 
-    	  // Xóa toàn bộ dữ liệu liên quan tới khách đang chọn
-    	  private void resetCustomerService() {
-    	      khachHienTaiService = null;
-    	      customerPointsService = 0;
-    	      lblNameService.setText("-");
-    	      lblPointsService.setText("-");
-    	      lblPointsAvailService.setText("Hiện có 0 điểm");
-    	      chkUsePointsService.setSelected(false);
-    	      chkUsePointsService.setEnabled(false);
-    	      dsTheoLichHen.clear();
-    	      modelAppointmentService.setRowCount(0);   // kích hoạt valueChanged -> xóa bảng dịch vụ
-    	      dsChiTietHienTai = new ArrayList<>();
-    	      napDuLieuVaoBangService();
-    	  }
 
     	  // ===== TÍNH TIỀN =====
     	  private long tinhTamTinhService() {
@@ -1408,10 +1365,10 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	                                           : "Thiếu " + DinhDang.TIEN.format(-change));
     	  }
     	  private boolean kiemTraHopLeService() {
-    		    if (khachHienTaiService == null) {
+    		    if (khachHienTai == null) {
     		        JOptionPane.showMessageDialog(this, "Vui lòng tìm và chọn khách hàng!",
     		                "Lỗi", JOptionPane.ERROR_MESSAGE);
-    		        txtPhoneService.requestFocusInWindow();
+    		        txtPhone.requestFocusInWindow();  
     		        return false;
     		    }
     		    if (maLHDangChon == null || dsChiTietHienTai.isEmpty()) {
@@ -1441,7 +1398,7 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     		private void ghiHoaDonService(TrangThai trangThai, long giamGia, String tenThaoTac) {
     		    List<ChiTietHoaDon> dsCT = layDsChiTietService();
     		    HoaDon hd = new HoaDon(null, LocalDate.now(), giamGia,
-    		            trangThai, null, khachHienTaiService, nhanVienDangNhap);
+    		            trangThai, null, khachHienTai, nhanVienDangNhap);
     		    hd.setDsChiTiet(dsCT);   // bắt buộc
     		    try {
     		        hd_daoService.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE_SERVICE, "DV", maLHDangChon);
@@ -1494,14 +1451,11 @@ public class BanHangGUI extends JPanel implements ChangeListener {
     	 
 
     		private void resetInvoiceService() {
-    		    txtPhoneService.setText("");
-    		    txtReceivedService.setText("");
-    		    txtChangeService.setText("");
-    		    maLHDangChon = null;
-    		    resetCustomerService();   // xóa khách, lịch hẹn, dịch vụ và tính lại tổng
-    		    txtPhoneService.requestFocusInWindow();
+    			txtReceivedService.setText("");
+    			txtChangeService.setText("");
+    			datLaiKhachHang(true);          // xóa khách + ô SĐT chung, tự xóa lịch hẹn/dịch vụ
+    			txtPhone.requestFocusInWindow();
     		}
-    	 
       }
       
       

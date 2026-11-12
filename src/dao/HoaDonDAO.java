@@ -408,13 +408,13 @@ public class HoaDonDAO {
                 }
 
                 // Thú cưng của lịch hẹn này -> đang chăm sóc
-                String sqlTC = "UPDATE ThuCung SET trangThaiThuCung = ? "
-                             + "WHERE maThuCung IN (SELECT maThuCung FROM ChiTietLichHen WHERE maLH = ?)";
-                try (PreparedStatement stm = con.prepareStatement(sqlTC)) {
-                    stm.setString(1, TrangThai.DANG_CHAM_SOC.name());
-                    stm.setString(2, maLH);
-                    stm.executeUpdate();
-                }
+//                String sqlTC = "UPDATE ThuCung SET trangThaiThuCung = ? "
+//                             + "WHERE maThuCung IN (SELECT maThuCung FROM ChiTietLichHen WHERE maLH = ?)";
+//                try (PreparedStatement stm = con.prepareStatement(sqlTC)) {
+//                    stm.setString(1, TrangThai.DANG_CHAM_SOC.name());
+//                    stm.setString(2, maLH);
+//                    stm.executeUpdate();
+//                }
             }
         
 
