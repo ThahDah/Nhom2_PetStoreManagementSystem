@@ -48,7 +48,7 @@ import entity.TrangThai;
 
 //import dao.NhanVien_dao;
 
-public class NhanVien_GUI extends JFrame implements ActionListener, MouseListener{
+public class NhanVienGUI extends JPanel implements ActionListener, MouseListener{
 /**
 	 * 
 	 */
@@ -87,7 +87,7 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 
 	private AbstractButton btnPhatSinhMa;
 
-	public NhanVien_GUI() {
+	public NhanVienGUI() {
 		
 		setSize(1450, 800);
 		setLayout(new BorderLayout());
@@ -156,7 +156,12 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 		//Dòng 3
 		JPanel pDong3 = new JPanel(new GridLayout(1, 4, 15, 0));
 		pDong3.add(new JLabel("Trạng thái:"));
-		cbTrangThai = new JComboBox<entity.TrangThai>(entity.TrangThai.values());
+		entity.TrangThai[] trangThaiNhanVien = {
+			    entity.TrangThai.CON_LAM,
+			    entity.TrangThai.DA_NGHI
+			};
+
+		cbTrangThai = new JComboBox<entity.TrangThai>(trangThaiNhanVien);
 		pDong3.add(cbTrangThai);
 		pDong3.add(Box.createHorizontalStrut(50));
 
@@ -266,7 +271,6 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 		});
 
         // sk click, nut bam
-		btnPhatSinhMa.addActionListener(this);
         btnThem.addActionListener(this);
         btnSua.addActionListener(this);
         btnXoa.addActionListener(this);
@@ -286,22 +290,7 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
             JOptionPane.showMessageDialog(this, "Không thể kết nối tới Cơ sở dữ liệu!\n" + e.getMessage());
         }
 }
-	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			
-
-	        UIManager.put("Button.arc", 15);
-	        UIManager.put("Component.arc", 12);
-	        UIManager.put("TextComponent.arc", 10);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		SwingUtilities.invokeLater(() -> {
-			new NhanVien_GUI().setVisible(true);
-		});
-	}
+	
 	
 	private void DocDuLieuVaoTable() {
 	    model.setRowCount(0); 
@@ -404,7 +393,7 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 
 		//btn lam moi
 		if (o.equals(btnLamMoi)) {
-			txtMNV.setText(phatSinhMaNV()); 
+			txtMNV.setText(""); 
 			txtMNV.setEditable(false);
 			txtTenNV.setText("");
 			txtSDTNV.setText("");
@@ -426,6 +415,14 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 		
 		else if (o.equals(btnPhatSinhMa)) {
 		    txtMNV.setText(phatSinhMaNV());
+		    txtTenNV.setText("");
+			txtSDTNV.setText("");
+			txtEmail.setText("");
+			duongDanAnh = null;
+			lblAvatar.setIcon(null);
+			cbTrangThai.setSelectedIndex(0);
+			
+			txtTimMaNV.setText("");
 		}
 		
 		else if (o.equals(btnPickAvatar)) {
@@ -461,7 +458,7 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 		            // lay anh dung
 		            String hinhAnh = duongDanAnh != null ? duongDanAnh : "";
 
-		            NhanVien nv = new NhanVien(ma, ten, ten, email, trangThai, hinhAnh);
+		            NhanVien nv = new NhanVien(ma, ten, sdt, email, trangThai, hinhAnh);
 
 
 		            if (nv_dao.themNhanVien(nv)) {
@@ -538,7 +535,7 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 		                    : (model.getValueAt(row, 0) != null ? model.getValueAt(row, 0).toString() : "");
 
 
-		            NhanVien nv = new NhanVien(ma, ten, ten, email, trangThai, hinhAnh);
+		            NhanVien nv = new NhanVien(ma, ten, sdt, email, trangThai, hinhAnh);
 
 		            if (nv_dao.suaNhanVien(nv)) {
 
@@ -547,14 +544,15 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 		                model.setValueAt(ten, row, 2);
 		                model.setValueAt(sdt, row, 3);
 		                model.setValueAt(email, row, 4);
-		                model.setValueAt(trangThai.name(), row, 5);
+		                model.setValueAt(trangThai, row, 5);
 
 		                JOptionPane.showMessageDialog(this, "Cập nhật thành công!");
 		                btnLamMoi.doClick();
 		            }
 
 		        } catch (Exception ex) {
-		            JOptionPane.showMessageDialog(this, "Lỗi cập nhật!");
+		            ex.printStackTrace();
+		            JOptionPane.showMessageDialog(this, "Lỗi cập nhật: " + ex.getMessage());
 		        }
 		    }
 		}
@@ -630,10 +628,21 @@ public class NhanVien_GUI extends JFrame implements ActionListener, MouseListene
 	        txtSDTNV.setText(model.getValueAt(row, 3).toString());
 	        txtEmail.setText(model.getValueAt(row, 4).toString());
 
-	        // 4. Đổ dữ liệu Enum lên ComboBox (Cột 8, 9)
+	        // 4. Đổ dữ liệu Enum lên ComboBox (Cột 5)
 	        try {
-	            String trangThaiStr=model.getValueAt(row, 5).toString();
-	            if(!trangThaiStr.isEmpty()) cbTrangThai.setSelectedItem(entity.TrangThai.valueOf(trangThaiStr));
+	            Object objTrangThai = model.getValueAt(row, 5);
+	            if (objTrangThai instanceof entity.TrangThai) {
+	                cbTrangThai.setSelectedItem(objTrangThai);
+	            } else if (objTrangThai != null) {
+	                String trangThaiStr = objTrangThai.toString();
+	                for (int i = 0; i < cbTrangThai.getItemCount(); i++) {
+	                    entity.TrangThai item = cbTrangThai.getItemAt(i);
+	                    if (item.name().equals(trangThaiStr) || item.toString().equals(trangThaiStr)) {
+	                        cbTrangThai.setSelectedItem(item);
+	                        break;
+	                    }
+	                }
+	            }
 	        } catch (Exception ex) {
 	            // Tránh crash nếu dữ liệu Enum trong table bị trống
 	        }

@@ -50,7 +50,8 @@ public class KhachHangDAO {
 	        stmt.setString(1, kh.getMaKH());
 	        stmt.setString(2, kh.getTenKH());
 	        stmt.setString(3, kh.getSoDienThoai());
-	        stmt.setInt(4, kh.getDiemTichLuy()); // int
+	        stmt.setString(4, kh.getEmail());
+	        stmt.setInt(5, kh.getDiemTichLuy()); 
 	        
 	        n = stmt.executeUpdate();
 	    } catch (SQLException e) {
@@ -70,7 +71,7 @@ public class KhachHangDAO {
 	    PreparedStatement stmt = null;
 	    int n = 0;
 	    try {
-	    	String sql = "UPDATE KhachHang SET tenKH = ?, soDienThoai = ?, diemTichLuy = ?, diemDaNhan = ?, loaiKH = ? WHERE maKH = ?";
+	    	String sql = "UPDATE KhachHang SET tenKH = ?, soDienThoai = ?, email = ?, diemTichLuy = ? WHERE maKH = ?";
 	    	stmt = con.prepareStatement(sql);
 	        
 	    	stmt.setString(1, kh.getTenKH());

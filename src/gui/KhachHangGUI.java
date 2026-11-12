@@ -38,7 +38,7 @@ import connectDB.ConnectDB;
 import dao.KhachHangDAO;
 
 
-public class KhachHang_GUI extends JFrame implements ActionListener, MouseListener{
+public class KhachHangGUI extends JPanel implements ActionListener, MouseListener{
 		
 	private KhachHangDAO kh_dao = new KhachHangDAO();
 	private TableRowSorter<DefaultTableModel> rowSorter; //bo loc tim kiem
@@ -49,7 +49,6 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	private JTextField txtDiemTLKH;
 	private JTextField txtLoaiKH;
 	private JTextField txtDiemDaNhan;
-//	private JComboBox<LoaiKhachHang> loaiKH;
 	private JButton btnThem;
 	private JButton btnCapNhat;
 	private JButton btnXoa;
@@ -63,7 +62,7 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 	private JButton btnTimKiem;
 	private JButton btnPhatSinhMa;
 
-	public KhachHang_GUI() {
+	public KhachHangGUI() {
 		
 		setSize(1200,800);
 		setLayout(new BorderLayout());
@@ -126,19 +125,12 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		JLabel diemTLKH=new JLabel("Điểm tích lũy:");
 		diemTLKH.setPreferredSize(maKH.getPreferredSize());
 		txtDiemTLKH= new JTextField(10);
+		txtDiemTLKH.setEditable(false);
 		b4.add(diemTLKH); b4.add(txtDiemTLKH);
 		b.add(b4);
 		b.add(Box.createVerticalStrut(40));
 		
-		//them diem da nhan tren ui
-		JLabel diemDN=new JLabel("Điểm đã nhận:");
-		diemDN.setPreferredSize(maKH.getPreferredSize());
-		txtDiemDaNhan= new JTextField(10);
-		b5.add(diemDN); b5.add(txtDiemDaNhan);
-		b.add(b5);
-		b.add(Box.createVerticalStrut(40));
-		
-		JMenuBar menu=new JMenuBar();
+		JPanel menu=new JPanel();
 		btnThem=new JButton("Thêm");
 		btnCapNhat=new JButton("Cập nhật");
 		btnXoa=new JButton("Xóa");
@@ -153,9 +145,10 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		b9.add(menu);
 		b.add(b9);
 		
-		//nut phat sinh ma
-		JMenuBar menu2=new JMenuBar();
 		
+		//nut phat sinh ma
+		JPanel menu2=new JPanel();
+		menu2.add(Box.createHorizontalStrut(5));
 		btnPhatSinhMa=new JButton("Phát sinh mã");
 		
 		menu2.add(Box.createHorizontalStrut(5));
@@ -191,7 +184,7 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		
 		JPanel dsKH=new JPanel();
 		dsKH.setBorder(BorderFactory.createTitledBorder("Danh sách khách hàng"));
-		String[] strDSKH= {"Mã KH","Tên khách hàng","SĐT","Điểm đã nhận","Điểm TL","Loại KH"};
+		String[] strDSKH= {"Mã KH","Tên khách hàng","SĐT","Email","Điểm TL"};
 		model = new DefaultTableModel(strDSKH, 0) {
 		    @Override
 		    public Class<?> getColumnClass(int columnIndex) {
@@ -247,23 +240,6 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		}
 	}
 
-	public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			
-			FlatLightLaf.setup();
-
-	        UIManager.put("Button.arc", 15);
-	        UIManager.put("Component.arc", 12);
-	        UIManager.put("TextComponent.arc", 10);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		SwingUtilities.invokeLater(() -> {
-			new KhachHang_GUI().setVisible(true);
-		});
-	}
 
 	// doc du lieu tu table
 	private void DocDuLieuVaoTable() {
@@ -298,16 +274,15 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 				// Bỏ qua lỗi parse
 			}
 		}
-		return String.format("KH%d", max + 1);
+		return String.format("KH%04d", max + 1);
 	}
 
 	//Bieu thuc chinh quy
 	private boolean validData() {
 		String ten = txtTenKH.getText().trim();
 		String sdt = txtSDT.getText().trim();
-//		String email = txtEmail.getText().trim();
+		String email = txtEmail.getText().trim();
 		String diemTL = txtDiemTLKH.getText().trim();
-		String diemDN = txtDiemDaNhan.getText().trim();
 
 		if (ten.isEmpty()) {
 			JOptionPane.showMessageDialog(this, "Tên khách hàng không được để trống!");
@@ -340,13 +315,6 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 			return false;
 		}
 		
-		if (diemDN.isEmpty() || !diemDN.matches("^\\d+$")) {
-			JOptionPane.showMessageDialog(this, "Điểm đã nhận phải là số nguyên!");
-			txtDiemDaNhan.requestFocus();
-			txtDiemDaNhan.selectAll();
-			return false;
-		}
-
 		return true;
 	}
 
@@ -355,8 +323,6 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		try {
 			ArrayList<RowFilter<Object, Object>> filters = new ArrayList<>();
 			
-			
-
 			String sdtKH = txtTimSDTKH.getText().trim();
 			if (!sdtKH.isEmpty()) {
 				filters.add(RowFilter.regexFilter("(?i)" + sdtKH, 2)); // Cột 2: SĐT
@@ -378,16 +344,13 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		Object o = e.getSource();
 
 		if (o.equals(btnLamMoi)) {
-			txtMKH.setText(phatSinhMaKH()); 
+			txtMKH.setText(""); 
 			txtMKH.setEditable(false);
 			txtTenKH.setText("");
 			txtSDT.setText("");
-//			txtEmail.setText("");
-			txtDiemTLKH.setText("0"); // Mặc định điểm là 0
-			txtDiemDaNhan.setText("0");
+			txtEmail.setText("");
+			txtDiemTLKH.setText("0");
 			
-			txtTimMKH.setText("");
-			txtTimTenKH.setText("");
 			txtTimSDTKH.setText("");
 			if (rowSorter != null) {
 			    rowSorter.setRowFilter(null); //bo bo loc, hien thi tat ca
@@ -487,6 +450,12 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 		
 		else if (o.equals(btnPhatSinhMa)) {
 		    txtMKH.setText(phatSinhMaKH());
+		    txtTenKH.setText("");
+			txtSDT.setText("");
+			txtEmail.setText("");
+			txtDiemTLKH.setText("0");
+			
+			txtTimSDTKH.setText("");
 		}
 	}
 
@@ -499,12 +468,9 @@ public class KhachHang_GUI extends JFrame implements ActionListener, MouseListen
 			txtMKH.setText(model.getValueAt(row, 0) != null ? model.getValueAt(row, 0).toString() : "");
 			txtTenKH.setText(model.getValueAt(row, 1) != null ? model.getValueAt(row, 1).toString() : "");
 			txtSDT.setText(model.getValueAt(row, 2) != null ? model.getValueAt(row, 2).toString() : "");
-//			txtEmail.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 3).toString() : "");
-			txtDiemTLKH.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 4).toString() : "");
-			txtDiemDaNhan.setText(model.getValueAt(row, 4).toString());
-			String loaiStr = model.getValueAt(row, 5).toString();
-			
-			
+			txtEmail.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 3).toString() : "");
+			txtDiemTLKH.setText(model.getValueAt(row, 4) != null ? model.getValueAt(row, 4).toString() : "");
+				
 			txtMKH.setEditable(false); // khong duoc sua ma khi xem
 		}
 	}

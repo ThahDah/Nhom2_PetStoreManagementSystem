@@ -18,7 +18,7 @@ import entity.DichVu;
 import entity.LichHen;
 import entity.ThuCung;
 import entity.TrangThai;
-
+import entity.Loai;
 
 public class LichHenDAO {
 	private static final int GHI_CHU_TOI_DA = 255;
@@ -173,7 +173,7 @@ public class LichHenDAO {
 		if (thuCung.getCanNang() <= 0) {
 			throw new NghiepVuException("Cân nặng phải lớn hơn 0");
 		}
-		if (ngayHen.isBefore(LocalDate.now().plusDays(1))) {
+		if (!LocalDate.now().isBefore(ngayHen)) {
 			throw new NghiepVuException("Phải đặt lịch trước ngày hẹn ít nhất 1 ngày");
 		}
 		String sql = "SELECT COUNT(*) "
@@ -206,6 +206,103 @@ public class LichHenDAO {
 			stm.setString(3, lichHen.getGhiChu());
 			stm.setString(4, lichHen.getTrangThaiHen().name());
 			stm.executeUpdate();
+		}
+	}
+	public List<ChiTietLichHen> layChiTietChoTheoKhachHang(String maKH) throws SQLException {
+	    List<ChiTietLichHen> ds = new ArrayList<>();
+	    String sql = "SELECT lh.maLH, lh.thoiGianHen, lh.ghiChu, lh.trangThaiHen, "
+	            + "tc.maThuCung, tc.tenThuCung, tc.loai, tc.canNang, "
+	            + "dv.maDV, dv.tenDV, dv.giaTieuChuan, ct.donGia "
+	            + "FROM ChiTietLichHen ct "
+	            + "JOIN LichHen lh ON ct.maLH = lh.maLH "
+	            + "JOIN ThuCung tc ON ct.maThuCung = tc.maThuCung "
+	            + "JOIN DichVu dv ON ct.maDV = dv.maDV "
+	            + "WHERE tc.maKH = ? AND lh.trangThaiHen = ? "
+	            + "ORDER BY lh.thoiGianHen, lh.maLH, tc.maThuCung";
+	    Connection con = ConnectDB.getConnection();
+	    try (PreparedStatement stm = con.prepareStatement(sql)) {
+	        stm.setString(1, maKH);
+	        stm.setString(2, TrangThai.CHO_DEN_HEN.name());
+	        try (ResultSet rs = stm.executeQuery()) {
+	            while (rs.next()) {
+	                LichHen lh = new LichHen(rs.getString("maLH"),
+	                        rs.getDate("thoiGianHen").toLocalDate(),
+	                        rs.getString("ghiChu"),
+	                        TrangThai.valueOf(rs.getString("trangThaiHen")));
+
+	                ThuCung tc = new ThuCung();
+	                tc.setMaThuCung(rs.getString("maThuCung"));
+	                tc.setTenThuCung(rs.getString("tenThuCung"));
+	                tc.setLoai(Loai.valueOf(rs.getString("loai")));
+	                tc.setCanNang(rs.getDouble("canNang"));
+
+	                DichVu dv = new DichVu(rs.getString("maDV"), rs.getString("tenDV"),
+	                        rs.getDouble("giaTieuChuan"));
+
+	                ChiTietLichHen ct = new ChiTietLichHen();
+	                ct.setLichHen(lh);
+	                ct.setThuCung(tc);
+	                ct.setDichVu(dv);
+	                ct.setDonGia(rs.getDouble("donGia"));
+	                ds.add(ct);
+	            }
+	        }
+	    }
+	    return ds;
+	}
+	public void hoanThanhLichHen(String maLH) throws NghiepVuException, SQLException {
+		String sql = "UPDATE LichHen "
+				+ "SET trangThaiHen = ? "
+				+ "WHERE maLH = ? "
+				+ "AND trangThaiHen = ?";
+		Connection con = ConnectDB.getConnection();
+		try (PreparedStatement stm = con.prepareStatement(sql)) {
+			stm.setString(1, TrangThai.HOAN_THANH.name());
+			stm.setString(2, maLH);
+			stm.setString(3, TrangThai.DA_TIEP_NHAN.name());
+			int soDongSua = stm.executeUpdate();
+			if (soDongSua == 0) {
+				throw new NghiepVuException(
+						"Không thể hoàn thành: lịch hẹn không tồn tại hoặc không ở trạng thái 'Đã tiếp nhận'");
+			}
+		}
+	}
+	
+	public void huyLichHen(String maLH) throws NghiepVuException, SQLException {
+		Connection con = ConnectDB.getConnection();
+		String sqlKiemTra = "SELECT thoiGianHen, trangThaiHen "
+				+ "FROM LichHen "
+				+ "WHERE maLH = ?";
+		try (PreparedStatement stm = con.prepareStatement(sqlKiemTra)) {
+			stm.setString(1, maLH);
+			try (ResultSet rs = stm.executeQuery()) {
+				if (!rs.next()) {
+					throw new NghiepVuException("Không tìm thấy lịch hẹn cần hủy");
+				}
+				TrangThai trangThai = TrangThai.valueOf(rs.getString("trangThaiHen").trim());
+//				LocalDate ngayHen = rs.getDate("thoiGianHen").toLocalDate();
+				if (trangThai == TrangThai.DA_HUY) {
+					throw new NghiepVuException("Lịch hẹn này đã được hủy trước đó");
+				}
+				if (trangThai != TrangThai.CHO_DEN_HEN) {
+					throw new NghiepVuException("Chỉ hủy được lịch hẹn đang chờ đến hẹn");
+				}
+//				if (ngayHen.isBefore(LocalDate.now().plusDays(1))) {
+//					throw new NghiepVuException("Phải hủy lịch hẹn trước ngày hẹn ít nhất 1 ngày");
+//				}
+			}
+		}
+
+		String sqlHuy = "UPDATE LichHen "
+				+ "SET trangThaiHen = ? "
+				+ "WHERE maLH = ? AND trangThaiHen = ?";
+		try (PreparedStatement stm = con.prepareStatement(sqlHuy)) {
+			stm.setString(1, TrangThai.DA_HUY.name());
+			stm.setString(2, maLH);
+			stm.setString(3, TrangThai.CHO_DEN_HEN.name());
+			if (stm.executeUpdate() == 0) {
+				throw new NghiepVuException("Không thể hủy, lịch hẹn vừa bị thay đổi. Hãy làm mới và thử lại");
+			}
 		}
 	}
 }

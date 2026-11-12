@@ -25,11 +25,14 @@ import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.table.DefaultTableModel;
 
+import common.DinhDang;
 import dao.ChiTietLichHenDAO;
 import dao.LichHenDAO;
+import dao.NghiepVuException;
 import entity.ChiTietLichHen;
 import entity.LichHen;
 import entity.ThuCung;
+import entity.TrangThai;
 
 public class ChiTietLichHenGUI extends JDialog implements ActionListener {
 
@@ -38,9 +41,15 @@ public class ChiTietLichHenGUI extends JDialog implements ActionListener {
 	private JTable table;
 	private ChiTietLichHenDAO chiTietLichHenDAO;
 	private LichHenDAO lichHenDAO;
-
+	private JButton btnHoanThanh;
+	private JLabel lblGiaTriTrangThai;
+	private LichHen lichHen;
+	private boolean daCapNhat;
+	
 	public ChiTietLichHenGUI(Window owner, LichHen lichHen) {
 		super(owner, "Chi tiết lịch hẹn", ModalityType.APPLICATION_MODAL);
+		this.lichHen = lichHen;
+		daCapNhat = false;
 		chiTietLichHenDAO = new ChiTietLichHenDAO();
 		lichHenDAO = new LichHenDAO();
 
@@ -118,7 +127,9 @@ public class ChiTietLichHenGUI extends JDialog implements ActionListener {
 		lblTrangThai.setMinimumSize(kichThuocNhan);
 		lblTrangThai.setMaximumSize(kichThuocNhan);
 		pnlTrangThai.add(lblTrangThai);
-		pnlTrangThai.add(new JLabel(String.valueOf(lichHen.getTrangThaiHen())));
+//		pnlTrangThai.add(new JLabel(String.valueOf(lichHen.getTrangThaiHen())));
+		lblGiaTriTrangThai = new JLabel(String.valueOf(lichHen.getTrangThaiHen()));
+		pnlTrangThai.add(lblGiaTriTrangThai);
 		pnlTrangThai.add(Box.createHorizontalGlue());
 		pnlCol1.add(pnlTrangThai);
 
@@ -224,10 +235,22 @@ public class ChiTietLichHenGUI extends JDialog implements ActionListener {
 		pnlTongTien.add(lblGiaTriTongTien);
 		pnlBottom.add(pnlTongTien, BorderLayout.WEST);
 
+//		btnDong = new JButton("Đóng");
+//		pnlBottom.add(btnDong, BorderLayout.EAST);
+//		add(pnlBottom, BorderLayout.SOUTH);
+//
+		btnHoanThanh = new JButton("Hoàn thành dịch vụ");
 		btnDong = new JButton("Đóng");
-		pnlBottom.add(btnDong, BorderLayout.EAST);
+		JPanel pnlNut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+		pnlNut.add(btnHoanThanh);
+		pnlNut.add(btnDong);
+		pnlBottom.add(pnlNut, BorderLayout.EAST);
 		add(pnlBottom, BorderLayout.SOUTH);
 
+		// chi lich hen dang o trang thai "Da tiep nhan" moi co nut hoan thanh
+		btnHoanThanh.setVisible(lichHen.getTrangThaiHen() == TrangThai.DA_TIEP_NHAN);
+
+		btnHoanThanh.addActionListener(this);
 		btnDong.addActionListener(this);
 
 		setSize(900, 470);
@@ -240,6 +263,40 @@ public class ChiTietLichHenGUI extends JDialog implements ActionListener {
 
 		if (o.equals(btnDong)) {
 			dispose();
+		}if (o.equals(btnDong)) {
+			dispose();
+		} else if (o.equals(btnHoanThanh)) {
+			// mac dinh chon "Huy" de tranh bam nham, dong hop thoai bang dau X cung tinh la huy
+			Object[] tuyChon = { "Xác nhận", "Hủy" };
+			int chon = JOptionPane.showOptionDialog(this,
+					"Bạn có chắc chắn dịch vụ của lịch hẹn " + lichHen.getMaLH() + " đã hoàn thành không?\n"
+							+ "Lịch hẹn sẽ chuyển từ 'Đã tiếp nhận' sang 'Hoàn thành'.",
+					"Xác nhận hoàn thành dịch vụ", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null,
+					tuyChon, tuyChon[1]);
+			if (chon != 0) {
+				return;
+			}
+			try {
+				lichHenDAO.hoanThanhLichHen(lichHen.getMaLH());
+			} catch (NghiepVuException ex) {
+				JOptionPane.showMessageDialog(this, ex.getMessage(), "Thông báo", JOptionPane.WARNING_MESSAGE);
+				return;
+			} catch (SQLException ex) {
+				JOptionPane.showMessageDialog(this, "Lỗi truy cập CSDL: " + ex.getMessage(), "Lỗi",
+						JOptionPane.ERROR_MESSAGE);
+				return;
+			}
+			lichHen.setTrangThaiHen(TrangThai.HOAN_THANH);
+			lblGiaTriTrangThai.setText(String.valueOf(lichHen.getTrangThaiHen()));
+			btnHoanThanh.setVisible(false);
+			daCapNhat = true;
+			JOptionPane.showMessageDialog(this, "Đã chuyển lịch hẹn sang trạng thái 'Hoàn thành'");
 		}
+	}
+	
+	
+	// true neu da doi trang thai lich hen, de man hinh danh sach nap lai bang
+	public boolean isDaCapNhat() {
+		return daCapNhat;
 	}
 }

@@ -7,6 +7,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -22,6 +24,7 @@ import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.RowFilter;
 import javax.swing.SwingUtilities;
@@ -37,13 +40,14 @@ import entity.Loai;
 import entity.TrangThai;
 import dao.ThuCungDAO;
 import entity.ThuCung;
+import dao.KhachHangDAO;
 
-public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener {
+public class ThuCungGUI extends JPanel implements ActionListener, MouseListener {
     private JTextField txtMTC;
     private JTextField txtTenTC;
     private JComboBox<Loai> loaiTC;
     private JTextField txtCanNang;
-    private JTextField txtGhiChu;
+    private JTextArea txtGhiChu;
     private JComboBox<TrangThai> trangThai;
     private JComboBox<DoHungDu> doHungDu;
     private JComboBox<KhachHang> chuSoHuu;
@@ -60,13 +64,14 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
 	private JTextField txtTimMTC;
 	
 	private ThuCungDAO tc_dao=new ThuCungDAO();
+	private JTextField txtTimTCTheoSdtKH;
+	
+    private KhachHangDAO kh_dao = new KhachHangDAO();
 
-    public ThuCung_GUI() {
+    public ThuCungGUI() {
         setSize(1200, 800);
         setLayout(new BorderLayout());
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 
-        setLocationRelativeTo(null); 
-
+    
         // --- NORTH PANEL ---
         JPanel nothTitle = new JPanel();
         JLabel lblNTitile = new JLabel("Quản lý thú cưng");
@@ -127,19 +132,29 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
 
         JLabel ghiChu = new JLabel("Ghi chú:");
         ghiChu.setPreferredSize(maTC.getPreferredSize());
-        txtGhiChu = new JTextField(10);
+        txtGhiChu = new JTextArea(10, 3);
+        txtGhiChu.setLineWrap(true);
+        txtGhiChu.setWrapStyleWord(true);  
+
+        JScrollPane scrollGhiChu = new JScrollPane(txtGhiChu);
         b5.add(ghiChu);
         b5.add(txtGhiChu);
         b.add(b5);
         b.add(Box.createVerticalStrut(20));
 
-        JLabel lblTrangThai = new JLabel("Trạng thái:");
-        lblTrangThai.setPreferredSize(maTC.getPreferredSize());
-        trangThai = new JComboBox<TrangThai>(TrangThai.values());
-        b6.add(lblTrangThai);
-        b6.add(trangThai);
-        b.add(b6);
-        b.add(Box.createVerticalStrut(20));
+//        JLabel lblTrangThai = new JLabel("Trạng thái:");
+//        lblTrangThai.setPreferredSize(maTC.getPreferredSize());
+//        entity.TrangThai[] trangThaiThuCung = {
+//        	    entity.TrangThai.BINH_THUONG,
+//        	    entity.TrangThai.DANG_CHAM_SOC,
+//        	    entity.TrangThai.HOAN_THANH
+//        	};
+
+//        	trangThai = new JComboBox<entity.TrangThai>(trangThaiThuCung);
+//        b6.add(lblTrangThai);
+//        b6.add(trangThai);
+//        b.add(b6);
+//        b.add(Box.createVerticalStrut(20));
 
         JLabel lblDoHD = new JLabel("Độ hung dữ:");
         lblDoHD.setPreferredSize(maTC.getPreferredSize());
@@ -157,7 +172,7 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
         b.add(b8);
         b.add(Box.createVerticalStrut(20));
 
-        JMenuBar menu = new JMenuBar();
+        JPanel menu = new JPanel();
         btnThem = new JButton("Thêm");
         btnCapNhat = new JButton("Cập nhật");
         btnXoa = new JButton("Xóa");
@@ -181,7 +196,7 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
         b.add(Box.createVerticalStrut(10));
 
         // nut phat sinh ma
-        JMenuBar menu2 = new JMenuBar();
+        JPanel menu2 = new JPanel();
         btnPhatSinhMa = new JButton("Phát sinh mã");
         btnPhatSinhMa.addActionListener(this); //dk su kien
         
@@ -203,20 +218,21 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
   		pTimKH.setBorder(BorderFactory.createTitledBorder("Tìm kiếm thú cưng"));
 
   		
-  		JLabel lblSDTKH=new JLabel("Nhập mã thú cưng:");
-  		txtTimMTC=new JTextField(10);
-  		pTimKH.add(lblSDTKH); pTimKH.add(txtTimMTC);
+  		JLabel lblSDTKH=new JLabel("Nhập số điện thoại khách hàng:");
+  		txtTimTCTheoSdtKH=new JTextField(10);
+  		pTimKH.add(lblSDTKH); pTimKH.add(txtTimTCTheoSdtKH);
   		
   		
   		btnTimKiem = new JButton("Tìm kiếm");
   		pTimKH.add(btnTimKiem);
+  		btnTimKiem.addActionListener(this);
   		
   		c.add(pTimKH);
   		
   		
   		JPanel dsKH=new JPanel();
   		dsKH.setBorder(BorderFactory.createTitledBorder("Danh sách thú cưng"));
-  		String[] strDSKH= {"Mã TC","Tên TC","Loại","Cân nặng","Ghi chú","Trạng thái","Độ hung dữ","Chủ sở hữu"};
+  		String[] strDSKH= {"Mã TC","Tên TC","Loại","Cân nặng","Ghi chú","Độ hung dữ","Chủ sở hữu"};
   		model = new DefaultTableModel(strDSKH, 0) {
   		    @Override
   		    public Class<?> getColumnClass(int columnIndex) {
@@ -245,6 +261,12 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
   		c.add(c2);
   		table.addMouseListener(this);
   		
+  		loaiTC.addActionListener(e -> {
+  		    // Chỉ tự đổi mã khi ô nhập mã đang có nội dung hoặc đang tạo mới
+  		    if (!txtMTC.getText().trim().isEmpty()) {
+  		        txtMTC.setText(phatSinhMaTC());
+  		    }
+  		});
   		
   		this.add(c);
 
@@ -252,6 +274,7 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
          try {
              connectDB.ConnectDB.getInstance().connect();
              System.out.println("Kết nối cơ sở dữ liệu thành công!");
+             loadComboBoxKhachHang();
              DocDuLieuVaoTable();
          } catch (java.sql.SQLException e) {
              e.printStackTrace();
@@ -259,24 +282,7 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
          }
     } 
     
-    public static void main(String[] args) {
-		try {
-			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-			
-			FlatLightLaf.setup();
-
-	        UIManager.put("Button.arc", 15);
-	        UIManager.put("Component.arc", 12);
-	        UIManager.put("TextComponent.arc", 10);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		SwingUtilities.invokeLater(() -> {
-			new ThuCung_GUI().setVisible(true);
-		});
-	}
-
+    
     // doc du lieu tu table
  	private void DocDuLieuVaoTable() {
  		model.setRowCount(0); //xoa du lieu cu
@@ -288,7 +294,6 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
  				    tc.getLoai(),
  				    tc.getCanNang(),
  				    tc.getGhiChu(),
- 				    tc.getTrangThaiThuCung(),
  				    tc.getDoHungDu(),
  				    tc.getChuSoHuu().getTenKH()
  				    
@@ -296,46 +301,77 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
  		}
  	}
  	
- 	//Phat sinh ma: TC1 TC2
-	private String phatSinhMaTC() {
-		ArrayList<ThuCung> listTC = tc_dao.getTableThuCung();
-		if (listTC.isEmpty()) {
-			return "TC1";
-		}
-		int max = 0;
-		for (ThuCung tc : listTC) {
-			String ma = tc.getMaThuCung();
-			try {
-				int so = Integer.parseInt(ma.substring(2)); // Cat chu TC, lay so
-				if (so > max) {
-					max = so;
-				}
-			} catch (Exception e) {
-				// Bỏ qua lỗi parse
-			}
-		}
-		return String.format("TC%d", max + 1);
-	}
+ 	//Phat sinh ma thu cung
+ 	private String phatSinhMaTC() {
+ 	    // Xac dinh loai thu cung
+ 	    Loai loaiDuocChon = (Loai) loaiTC.getSelectedItem();
+ 	    String kyTuLoai = "C"; //mac dinh
+ 	    if (loaiDuocChon != null) {
+ 	        String tenLoai = loaiDuocChon.toString().trim().toLowerCase();
+ 	        if (tenLoai.contains("mèo") || tenLoai.contains("meo") || loaiDuocChon.name().equalsIgnoreCase("MEO")) {
+ 	            kyTuLoai = "M";
+ 	        } else {
+ 	            kyTuLoai = "C";
+ 	        }
+ 	    }
+
+ 	    // Lay chuoi ngay thang nam theo dinh dang ddMMyy (Vi du: 050226)
+ 	    LocalDate now = LocalDate.now();
+ 	    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("ddMMyy");
+ 	    String ngayThangNam = now.format(formatter);
+
+ 	    // Tien to can tim: TC + C/M + ddMMyy (Ví dụ: "TCC050226")
+ 	    String prefix = "TC" + kyTuLoai + ngayThangNam;
+
+ 	    // Tim so thu tu lon nhat trong danh sach
+ 	    ArrayList<ThuCung> listTC = tc_dao.getTableThuCung();
+ 	    int maxSTT = 0;
+ 	    if (listTC != null) {
+ 	        for (ThuCung tc : listTC) {
+ 	            String ma = tc.getMaThuCung();
+ 	            if (ma != null && ma.startsWith(prefix) && ma.length() >= prefix.length() + 2) {
+ 	                try {
+ 	                    int stt = Integer.parseInt(ma.substring(prefix.length()));
+ 	                    if (stt > maxSTT) {
+ 	                        maxSTT = stt;
+ 	                    }
+ 	                } catch (NumberFormatException ignored) {}
+ 	            }
+ 	        }
+ 	    }
+
+ 	    // phat sinh ma ke tiep dinh dang 2 so
+ 	    return String.format("%s%02d", prefix, maxSTT + 1);
+ 	}
 	
 	// loc du lieu tren table, btn tim
 	private void locDuLieu() {
-		try {
-			ArrayList<RowFilter<Object, Object>> filters = new ArrayList<>();
-			
-			String maTC = txtTimMTC.getText().trim();
-			if (!maTC.isEmpty()) {
-				filters.add(RowFilter.regexFilter("(?i)" + maTC, 0)); // Cột 0: Mã KH
-			}
-
-			
-			if (filters.isEmpty()) {
-				rowSorter.setRowFilter(null);
-			} else {
-				rowSorter.setRowFilter(RowFilter.andFilter(filters));
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
+	    String sdt = txtTimTCTheoSdtKH.getText().trim();
+	    
+	    if (sdt.isEmpty()) {
+	        DocDuLieuVaoTable();
+	    } else {
+	        ArrayList<ThuCung> listTC = tc_dao.timThuCungTheoSoDienThoai(sdt);
+	        
+	        model.setRowCount(0); // Xóa dữ liệu cũ trên bảng đang hiển thị
+	        
+	        if (listTC.isEmpty()) {
+	            JOptionPane.showMessageDialog(this, "Không tìm thấy thú cưng nào với số điện thoại: " + sdt);
+	            
+	        } else {
+	            for (ThuCung tc : listTC) {
+	                model.addRow(new Object[] { 
+	                    tc.getMaThuCung(), 
+	                    tc.getTenThuCung(),
+	                    tc.getLoai(),
+	                    tc.getCanNang(),
+	                    tc.getGhiChu(),
+	                    tc.getDoHungDu(),
+	                    tc.getChuSoHuu().getTenKH()
+	                });
+	            }
+	        }
+	    }
 	}
 	
 	private boolean validData() {
@@ -388,18 +424,17 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
     public void actionPerformed(ActionEvent e) {
         Object o = e.getSource();
         if (o.equals(btnLamMoi)) {
-            txtMTC.setText(phatSinhMaTC()); 
+            txtMTC.setText(""); 
             txtTenTC.setText("");
             txtTenTC.setEditable(true);
             txtCanNang.setText("");
             txtGhiChu.setText("");
         
             if (loaiTC.getItemCount() > 0) loaiTC.setSelectedIndex(0);
-            if (trangThai.getItemCount() > 0) trangThai.setSelectedIndex(0);
             if (doHungDu.getItemCount() > 0) doHungDu.setSelectedIndex(0);
             if (chuSoHuu.getItemCount() > 0) chuSoHuu.setSelectedIndex(0);
             
-            txtTimMTC.setText("");
+            txtTimTCTheoSdtKH.setText("");
             
             if (rowSorter != null) {
                 rowSorter.setRowFilter(null);
@@ -407,6 +442,21 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
             table.clearSelection();
             
             txtTenTC.requestFocus();
+        }
+        
+        else if(o.equals(btnPhatSinhMa)) {
+        		txtMTC.setText(phatSinhMaTC()); 
+            txtTenTC.setText("");
+            txtTenTC.setEditable(true);
+            txtCanNang.setText("");
+            txtGhiChu.setText("");
+        
+            if (loaiTC.getItemCount() > 0) loaiTC.setSelectedIndex(0);
+            if (doHungDu.getItemCount() > 0) doHungDu.setSelectedIndex(0);
+            if (chuSoHuu.getItemCount() > 0) chuSoHuu.setSelectedIndex(0);
+            
+            txtTimTCTheoSdtKH.setText("");
+            
         }
         
         else if (o.equals(btnPhatSinhMa)) {
@@ -425,7 +475,7 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
                     String ghiChu = txtGhiChu.getText().trim();
 
                     Loai loai = (Loai) loaiTC.getSelectedItem();
-                    TrangThai tt = (TrangThai) trangThai.getSelectedItem();
+//                    TrangThai tt = (TrangThai) trangThai.getSelectedItem();
                     DoHungDu doHD = (DoHungDu) doHungDu.getSelectedItem();
                     KhachHang kh = (KhachHang) chuSoHuu.getSelectedItem(); 
 
@@ -434,7 +484,7 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
                         return;
                     }
 
-                    ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, tt, doHD, kh);
+                    ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHD, kh);
 
                     if (tc_dao.themThuCung(tc)) {
                         model.addRow(new Object[] {
@@ -443,7 +493,6 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
                             loai, 
                             canNang, 
                             ghiChu, 
-                            tt, 
                             doHD, 
                             kh.getTenKH()
                         });
@@ -473,33 +522,44 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
                     String ghiChu = txtGhiChu.getText().trim();
 
                     Loai loai = (Loai) loaiTC.getSelectedItem();
-                    TrangThai tt = (TrangThai) trangThai.getSelectedItem();
+//                    TrangThai tt = (TrangThai) trangThai.getSelectedItem();
                     DoHungDu doHD = (DoHungDu) doHungDu.getSelectedItem();
                     KhachHang kh = (KhachHang) chuSoHuu.getSelectedItem();
 
-                    if (kh == null) {
-                        JOptionPane.showMessageDialog(this, "Vui lòng chọn chủ sở hữu (Khách hàng)!");
+                    // Kiem tra: khach hang phai co maKH
+                    if (kh == null || kh.getMaKH() == null || kh.getMaKH().trim().isEmpty()) {
+                        JOptionPane.showMessageDialog(this, 
+                            "Chủ sở hữu (Khách hàng) chưa hợp lệ! Hãy kiểm tra lại danh sách khách hàng.", 
+                            "Lỗi dữ liệu", JOptionPane.WARNING_MESSAGE);
                         return;
                     }
 
-                    ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, tt, doHD, kh);
+                    ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHD, kh);
 
                     if (tc_dao.suaThuCung(tc)) {
+                        // cap nhat tren model
                         model.setValueAt(ten, row, 1);
                         model.setValueAt(loai, row, 2);
                         model.setValueAt(canNang, row, 3);
                         model.setValueAt(ghiChu, row, 4);
-                        model.setValueAt(tt, row, 5);
-                        model.setValueAt(doHD, row, 6);
-                        model.setValueAt(kh.getTenKH(), row, 7);
+                        model.setValueAt(doHD, row, 5);
+                        model.setValueAt(kh.getTenKH(), row, 6); 
 
                         JOptionPane.showMessageDialog(this, "Cập nhật thú cưng thành công!");
+                        btnLamMoi.doClick();
+                    } else {
+                        JOptionPane.showMessageDialog(this, "Cập nhật thất bại, không tìm thấy mã thú cưng!");
                     }
+                    
                 } catch (Exception ex) {
-                    JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    // Hiển thị chính xác LỖI TỪ SQL SERVER lên màn hình
+                    ex.printStackTrace(); // In ra console để dev dễ nhìn
+                    JOptionPane.showMessageDialog(this, 
+                        "Lỗi cập nhật CSDL: \n" + ex.getMessage(), 
+                        "Lỗi hệ thống", JOptionPane.ERROR_MESSAGE);
                 }
             }
-        } 
+        }
 		
 		//xoa
 		else if (o.equals(btnXoa)) {
@@ -541,7 +601,6 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
         if (viewRow >= 0) {
             int row = table.convertRowIndexToModel(viewRow);
             
-            txtMTC.setText(model.getValueAt(row, 0) != null ? model.getValueAt(row, 0).toString() : "");
             txtTenTC.setText(model.getValueAt(row, 1) != null ? model.getValueAt(row, 1).toString() : "");
             txtCanNang.setText(model.getValueAt(row, 3) != null ? model.getValueAt(row, 3).toString() : "");
             txtGhiChu.setText(model.getValueAt(row, 4) != null ? model.getValueAt(row, 4).toString() : "");
@@ -556,18 +615,26 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
                 }
             }
 
-            if (model.getValueAt(row, 5) != null) {
-                String ttStr = model.getValueAt(row, 5).toString();
-                for (TrangThai tt : TrangThai.values()) {
-                    if (tt.toString().equals(ttStr) || tt.name().equals(ttStr)) {
-                        trangThai.setSelectedItem(tt);
-                        break;
-                    }
-                }
-            }
+//            try {
+//                Object objTrangThai = model.getValueAt(row, 5); 
+//                if (objTrangThai instanceof entity.TrangThai) {
+//                    trangThai.setSelectedItem(objTrangThai);
+//                } else if (objTrangThai != null) {
+//                    String trangThaiStr = objTrangThai.toString();
+//                    for (int i = 0; i < trangThai.getItemCount(); i++) {
+//                        entity.TrangThai item = trangThai.getItemAt(i);
+//                        if (item.name().equals(trangThaiStr) || item.toString().equals(trangThaiStr)) {
+//                            trangThai.setSelectedItem(item);
+//                            break;
+//                        }
+//                    }
+//                }
+//            } catch (Exception ex) {
+//                ex.printStackTrace();
+//            }
 
-            if (model.getValueAt(row, 6) != null) {
-                String hdStr = model.getValueAt(row, 6).toString();
+            if (model.getValueAt(row, 5) != null) {
+                String hdStr = model.getValueAt(row, 5).toString();
                 for (DoHungDu hd : DoHungDu.values()) {
                     if (hd.toString().equals(hdStr) || hd.name().equals(hdStr)) {
                         doHungDu.setSelectedItem(hd);
@@ -576,8 +643,8 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
                 }
             }
 
-            if (model.getValueAt(row, 7) != null) {
-                String tenKH = model.getValueAt(row, 7).toString();
+            if (model.getValueAt(row, 6) != null) {
+                String tenKH = model.getValueAt(row, 6).toString();
                 for (int i = 0; i < chuSoHuu.getItemCount(); i++) {
                     KhachHang kh = chuSoHuu.getItemAt(i);
                     if (kh != null && kh.getTenKH().equals(tenKH)) {
@@ -587,7 +654,18 @@ public class ThuCung_GUI extends JFrame implements ActionListener, MouseListener
                 }
             }
 
+            txtMTC.setText(model.getValueAt(row, 0) != null ? model.getValueAt(row, 0).toString() : "");
             txtMTC.setEditable(false);
+        }
+    }
+    
+    private void loadComboBoxKhachHang() {
+        chuSoHuu.removeAllItems();
+        ArrayList<KhachHang> dsKH = kh_dao.getTableKhachHang(); // Đổi tên hàm theo đúng tên hàm lấy DS trong KhachHangDAO của bạn
+        if (dsKH != null) {
+            for (KhachHang kh : dsKH) {
+                chuSoHuu.addItem(kh);
+            }
         }
     }
 

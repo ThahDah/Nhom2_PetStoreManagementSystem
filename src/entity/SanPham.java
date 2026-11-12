@@ -5,7 +5,8 @@ import java.util.Objects;
 public class SanPham {
 	private String maSP;
 	private String tenSP;
-	private double giaNY;
+	private double giaNhap;
+	private double giaBan;
 	private int soLuongTon;
 	private DonViTinh donViTinh;
 	
@@ -13,54 +14,91 @@ public class SanPham {
 		// TODO Auto-generated constructor stub
 	}
 	
-	public SanPham(String maSP, String tenSP, double giaNY, int soLuongTon, DonViTinh donViTinh) {
+	
+
+	public SanPham(String maSP, String tenSP, double giaNhap, double giaBan, int soLuongTon, DonViTinh donViTinh) {
 		super();
 		this.maSP = maSP;
 		this.tenSP = tenSP;
-		this.giaNY = giaNY;
+		this.giaNhap = giaNhap;
+		this.giaBan = giaBan;
 		this.soLuongTon = soLuongTon;
 		this.donViTinh = donViTinh;
 	}
+
+	
 
 	public String getMaSP() {
 		return maSP;
 	}
 
+
+
 	public void setMaSP(String maSP) {
 		this.maSP = maSP;
 	}
+
+
 
 	public String getTenSP() {
 		return tenSP;
 	}
 
+
+
 	public void setTenSP(String tenSP) {
 		this.tenSP = tenSP;
 	}
 
-	public double getGiaNY() {
-		return giaNY;
+
+
+	public double getGiaNhap() {
+		return giaNhap;
 	}
 
-	public void setGiaNY(double giaNY) {
-		this.giaNY = giaNY;
+
+
+	public void setGiaNhap(double giaNhap) {
+		this.giaNhap = giaNhap;
 	}
+
+
+
+	public double getGiaBan() {
+		return giaBan;
+	}
+
+
+
+	public void setGiaBan(double giaBan) {
+		this.giaBan = giaBan;
+	}
+
+
 
 	public int getSoLuongTon() {
 		return soLuongTon;
 	}
 
+
+
 	public void setSoLuongTon(int soLuongTon) {
 		this.soLuongTon = soLuongTon;
 	}
+
+
 
 	public DonViTinh getDonViTinh() {
 		return donViTinh;
 	}
 
+
+
 	public void setDonViTinh(DonViTinh donViTinh) {
 		this.donViTinh = donViTinh;
 	}
+
+
 
 	@Override
 	public int hashCode() {

@@ -1,4 +1,4 @@
-package gui;
+package common;
 
 import java.text.DecimalFormat;
 import java.time.format.DateTimeFormatter;

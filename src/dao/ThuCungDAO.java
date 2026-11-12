@@ -19,7 +19,7 @@ public class ThuCungDAO {
 
 	public List<ThuCung> timTheoChuSoHuu(KhachHang khachHang) throws SQLException {
 		List<ThuCung> dsThuCung = new ArrayList<>();
-		String sql = "SELECT maThuCung, tenThuCung, loai, canNang, ghiChu, trangThaiThuCung, doHungDu "
+		String sql = "SELECT maThuCung, tenThuCung, loai, canNang, ghiChu, doHungDu "
 				+ "FROM ThuCung WHERE maKH = ? ORDER BY tenThuCung";
 		Connection con = ConnectDB.getConnection();
 		try (PreparedStatement stm = con.prepareStatement(sql)) {
@@ -47,10 +47,60 @@ public class ThuCungDAO {
 	
 	/* doc ResultSet de chuyen ThuCung thanh doi tuong */
 	static ThuCung taoThuCung(ResultSet rs, KhachHang chuSoHuu) throws SQLException {
-		return new ThuCung(rs.getString("maThuCung"), rs.getString("tenThuCung"),
-				Loai.valueOf(rs.getString("loai")), rs.getDouble("canNang"), rs.getString("ghiChu"),
-				TrangThai.valueOf(rs.getString("trangThaiThuCung")), DoHungDu.valueOf(rs.getString("doHungDu")),
+		return new ThuCung(rs.getString("maThuCung"), 
+				rs.getString("tenThuCung"),
+				Loai.valueOf(rs.getString("loai")), 
+				rs.getDouble("canNang"), 
+				rs.getString("ghiChu"),
+				DoHungDu.valueOf(rs.getString("doHungDu")),
 				chuSoHuu);
+	}
+	
+	// Tìm thú cưng theo số điện thoại khách hàng
+	public ArrayList<ThuCung> timThuCungTheoSoDienThoai(String soDienThoai) {
+	    ArrayList<ThuCung> dsTC = new ArrayList<ThuCung>();
+	    Connection con = ConnectDB.getConnection();
+	    PreparedStatement stmt = null;
+	    try {
+	        // Kết hợp 2 bảng ThuCung và KhachHang, lọc theo số điện thoại
+	        String sql = "SELECT tc.*, kh.tenKH " +
+	                     "FROM ThuCung tc " +
+	                     "JOIN KhachHang kh ON tc.maKH = kh.maKH " +
+	                     "WHERE kh.soDienThoai = ?";
+	                     
+	        stmt = con.prepareStatement(sql);
+	        stmt.setString(1, soDienThoai);
+	        ResultSet rs = stmt.executeQuery();
+	        
+	        while (rs.next()) {
+	            String ma = rs.getString("maThuCung");
+	            String ten = rs.getString("tenThuCung");
+
+	            String loaiStr = rs.getString("loai"); 
+	            Loai loai = Loai.valueOf(loaiStr.trim()); 
+	            
+	            double canNang = rs.getDouble("canNang");
+	            String ghiChu = rs.getString("ghiChu");
+	            
+//	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
+//	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
+	            
+	            String doHungDuStr = rs.getString("doHungDu");
+	            DoHungDu doHungDu = DoHungDu.valueOf(doHungDuStr.trim());
+	            
+	            String maKH = rs.getString("maKH");
+	            String tenKH = rs.getString("tenKH");
+	            
+	            // Khởi tạo đối tượng KhachHang và ThuCung giống như hàm getTableThuCung()
+	            KhachHang khachHang = new KhachHang(maKH, tenKH);
+	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHungDu, khachHang);
+	            
+	            dsTC.add(tc);
+	        }
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	    }
+	    return dsTC;
 	}
 	
 	// doc du lieu tu database
@@ -75,8 +125,8 @@ public class ThuCungDAO {
 	            double canNang = rs.getDouble("canNang");
 	            String ghiChu = rs.getString("ghiChu");
 	            
-	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
-	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
+//	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
+//	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
 	            
 	            String doHungDuStr = rs.getString("doHungDu");
 	            DoHungDu doHungDu = DoHungDu.valueOf(doHungDuStr.trim());
@@ -86,7 +136,7 @@ public class ThuCungDAO {
 	            
 	            KhachHang khachHang = new KhachHang(maKH, tenKH);
 
-	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
+	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHungDu, khachHang);
 	            
 				dsTC.add(tc);
 			}
@@ -102,17 +152,16 @@ public class ThuCungDAO {
 	    PreparedStatement stmt = null;
 	    int n = 0;
 	    try {
-	        String sql = "INSERT INTO ThuCung VALUES(?, ?, ?, ?, ?, ?, ?, ?)";
+	        String sql = "INSERT INTO ThuCung VALUES(?, ?, ?, ?, ?, ?, ?)";
 	        stmt = con.prepareStatement(sql);
 	        
 	        stmt.setString(1, tc.getMaThuCung());
 	        stmt.setString(2, tc.getTenThuCung());
 	        stmt.setString(3, tc.getLoai().name());
 	        stmt.setDouble(4, tc.getCanNang()); // double
-	        stmt.setString(5, tc.getGhiChu());  
-	        stmt.setString(6, tc.getTrangThaiThuCung().name()); // Luu Enum
-	        stmt.setString(7, tc.getDoHungDu().name());
-	        stmt.setString(8, tc.getChuSoHuu().getMaKH());
+	        stmt.setString(5, tc.getGhiChu());
+	        stmt.setString(6, tc.getDoHungDu().name());
+	        stmt.setString(7, tc.getChuSoHuu().getMaKH());
 	        
 	        n = stmt.executeUpdate();
 	    } catch (SQLException e) {
@@ -156,6 +205,8 @@ public class ThuCungDAO {
 		               "FROM ThuCung tc " +
 		               "JOIN KhachHang kh ON tc.maKH = kh.maKH " +
 		               "WHERE tc.maThuCung = ?";
+			stmt = con.prepareStatement(query);
+			stmt.setString(1, maTC);
 			ResultSet rs = stmt.executeQuery();
 			while(rs.next()) {
 				String ma = rs.getString("maThuCung");
@@ -167,8 +218,8 @@ public class ThuCungDAO {
 	            double canNang = rs.getDouble("canNang");
 	            String ghiChu = rs.getString("ghiChu");
 	            
-	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
-	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
+//	            String trangThaiTCStr = rs.getString("trangThaiThuCung");
+//	            TrangThai trangThai = TrangThai.valueOf(trangThaiTCStr.trim());
 	            
 	            String doHungDuStr = rs.getString("doHungDu");
 	            DoHungDu doHungDu = DoHungDu.valueOf(doHungDuStr.trim());
@@ -178,7 +229,7 @@ public class ThuCungDAO {
 	            
 	            KhachHang khachHang = new KhachHang(maKH, tenKH);
 
-	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, trangThai, doHungDu, khachHang);
+	            ThuCung tc = new ThuCung(ma, ten, loai, canNang, ghiChu, doHungDu, khachHang);
 	            return tc;
 				
 			}
@@ -189,27 +240,27 @@ public class ThuCungDAO {
 	}
 	
 	// sua thong tin thu cung
-	public boolean suaThuCung(ThuCung tc) {
+	// Thêm throws Exception để đẩy lỗi ra cho GUI hiển thị
+	public boolean suaThuCung(ThuCung tc) throws Exception {
 	    Connection con = connectDB.ConnectDB.getConnection();
 	    PreparedStatement stmt = null;
 	    int n = 0;
-	    try {
-	        String sql = "UPDATE ThuCung SET tenThuCung = ?, loai = ?, canNang = ?, ghiChu = ?, trangThaiThuCung = ?, doHungDu = ?, maKH = ? WHERE maThuCung = ?";
-	        stmt = con.prepareStatement(sql);
-	        
-	        stmt.setString(1, tc.getTenThuCung());
-	        stmt.setString(2, tc.getLoai().name()); 
-	        stmt.setDouble(3, tc.getCanNang()); 
-	        stmt.setString(4, tc.getGhiChu());
-	        stmt.setString(5, tc.getTrangThaiThuCung().name());
-	        stmt.setString(6, tc.getDoHungDu().name()); 
-	        stmt.setString(7, tc.getChuSoHuu().getMaKH());
-	        stmt.setString(8, tc.getMaThuCung()); 
-	        
-	        n = stmt.executeUpdate();
-	    } catch (Exception e) {
-	        e.printStackTrace();
-	    }
+	    String sql = "UPDATE ThuCung SET tenThuCung = ?, loai = ?, canNang = ?, ghiChu = ?, doHungDu = ?, maKH = ? WHERE maThuCung = ?";
+	    stmt = con.prepareStatement(sql);
+	    stmt.setNString(1, tc.getTenThuCung());
+	    stmt.setString(2, tc.getLoai() != null ? tc.getLoai().name() : null);
+	    
+	    stmt.setDouble(3, tc.getCanNang());
+	    stmt.setNString(4, tc.getGhiChu());
+	    
+	    stmt.setString(5, tc.getDoHungDu() != null ? tc.getDoHungDu().name() : null);
+	    
+	    stmt.setString(6, tc.getChuSoHuu() != null ? tc.getChuSoHuu().getMaKH() : null);
+	    
+	    stmt.setString(7, tc.getMaThuCung());
+	    
+	    n = stmt.executeUpdate();
+	    
 	    return n > 0;
 	}
 }

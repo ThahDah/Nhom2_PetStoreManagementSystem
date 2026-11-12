@@ -6,21 +6,19 @@ public class ChiTietHoaDon {
 	private SanPham sanPham;
 	private int soLuong;
 	private double donGia;
-	private double thanhTien;
-	
+	private ThuCung thuCung;
 	public ChiTietHoaDon() {
 		// TODO Auto-generated constructor stub
 	}
 
-	public ChiTietHoaDon(HoaDon hoaDon, DichVu dichVu, SanPham sanPham, int soLuong, double donGia, double thanhTien) {
+	public ChiTietHoaDon(HoaDon hoaDon, DichVu dichVu, SanPham sanPham, int soLuong, double donGia) {
 		this.hoaDon = hoaDon;
 		this.dichVu = dichVu;
 		this.sanPham = sanPham;
 		this.soLuong = soLuong;
 		this.donGia = donGia;
-		this.thanhTien = thanhTien;
 	}
-
+	
 	public HoaDon getHoaDon() {
 		return hoaDon;
 	}
@@ -61,14 +59,17 @@ public class ChiTietHoaDon {
 		this.donGia = donGia;
 	}
 
+
 	public double getThanhTien() {
-		return thanhTien;
+		return soLuong * donGia;
+	}
+	public ThuCung getThuCung() {
+	    return thuCung;
 	}
 
-	public void setThanhTien(double thanhTien) {
-		this.thanhTien = thanhTien;
+	public void setThuCung(ThuCung thuCung) {
+	    this.thuCung = thuCung;
 	}
-	
 	
 	
 	

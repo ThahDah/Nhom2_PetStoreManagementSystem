@@ -6,7 +6,7 @@ public class TaiKhoan {
 	private String tenTK;
 	private String matKhau;
 	private VaiTroTK vaiTroTK;
-	private TrangThai TrangThaiTK;
+	private TrangThai trangThaiTK;
 	private NhanVien nhanVien;
 	
 	public TaiKhoan() {
@@ -17,7 +17,7 @@ public class TaiKhoan {
 		this.tenTK = tenTK;
 		this.matKhau = matKhau;
 		this.vaiTroTK = vaiTroTK;
-		TrangThaiTK = trangThaiTK;
+		trangThaiTK = trangThaiTK;
 		this.nhanVien = nhanVien;
 	}
 
@@ -46,11 +46,11 @@ public class TaiKhoan {
 	}
 
 	public TrangThai getTrangThaiTK() {
-		return TrangThaiTK;
+		return trangThaiTK;
 	}
 
 	public void setTrangThaiTK(TrangThai trangThaiTK) {
-		TrangThaiTK = trangThaiTK;
+		trangThaiTK = trangThaiTK;
 	}
 
 	public NhanVien getNhanVien() {

@@ -1,19 +1,20 @@
+
 package gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
-import java.awt.Cursor;
 import java.awt.Dialog;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
-import java.awt.GridLayout;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
-import java.sql.Date;
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -21,6 +22,7 @@ import javax.swing.BorderFactory;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox; 
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
@@ -28,224 +30,221 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
-import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
-import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.JTableHeader;
+
 import com.toedter.calendar.JDateChooser;
+
+import common.DinhDang;
 import dao.HoaDonDAO;
-import entity.TrangThai;
+import entity.HoaDon;
+
 public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
-	private Color MAU_XANH = new Color(103, 176, 157);
-	private Color MAU_NEN = new Color(239, 248, 239);
-	private Color MAU_CHU = new Color(45, 55, 45);
-	private HoaDonDAO hoaDonDAO = new HoaDonDAO();
-	
-	// tao model cho bang hien thi hoa don
-	private  DefaultTableModel model = new DefaultTableModel(
-			new Object[] { "Mã hóa đơn", "Khách hàng", "Số điện thoại", "Ngày lập", "Tổng tiền", "Trạng thái" },
-			0) {
-		@Override
-		public boolean isCellEditable(int row, int column) {
-			return false;
-		}
-	};
-	private  JTextField txtTimKiem = new JTextField();
-	private  JButton btnTatCa = taoNut("Tất cả");
-	private  JButton btnChuaThanhToan = taoNut("Chưa thanh toán");
-	private  JButton btnDaThanhToan = taoNut("Đã thanh toán");
-	private  JButton btnKhoangNgay = taoNut("Chọn khoảng ngày");
-	private  JTable table = new JTable(model);
-	private  JDateChooser dateFrom = new JDateChooser();
-	private  JDateChooser dateTo = new JDateChooser();
-	private JButton btnApDungNgay;
-	private JButton btnHuyNgay;
-	private JDialog dialogChonNgay;
-	private Date tuNgay;
-	private Date denNgay;
-	private String trangThaiDangLoc = null;
 
-	public HoaDonGUI() {
-		setLayout(new BorderLayout(0, 12));
-		setBackground(MAU_NEN);
-		setBorder(BorderFactory.createEmptyBorder(18, 48, 10, 34));
-		add(taoPhanDau(), BorderLayout.NORTH);
-		add(taoBangHoaDon(), BorderLayout.CENTER);
-		dateFrom.setDateFormatString("dd/MM/yyyy");
-		dateTo.setDateFormatString("dd/MM/yyyy");
-		dangKySuKien();
-		chonNutTrangThai(btnTatCa);
-		taiDuLieu();
-	}
+    private HoaDonDAO hoaDonDAO;
+    private DefaultTableModel model;
+    private JTable table;
+    private JTextField txtTimKiem;
+    private JButton btnTatCa;
+    private JButton btnChuaThanhToan;
+    private JButton btnDaThanhToan;
+    private JButton btnKhoangNgay;
+    private JComboBox<String> cboLoaiHoaDon;
+    private String loaiHoaDonDangLoc = null;
 
-	// panel dau chua tieu de va cac nut tim kiem, loc theo trang thai va khoang ngay
-	private JPanel taoPhanDau() {
-		// panel chua tieu de
-		JPanel pnlHeader = new JPanel(new BorderLayout(0, 18));
-		pnlHeader.setOpaque(false);
-		JLabel lblTieuDe = new JLabel("Hóa đơn");
-		lblTieuDe.setFont(new Font("Arial", Font.BOLD, 23));
-		lblTieuDe.setForeground(MAU_CHU);
-		JLabel lblMoTa = new JLabel("Quản lý và tra cứu thông tin hóa đơn");
-		lblMoTa.setFont(new Font("Arial", Font.PLAIN, 12));
-		lblMoTa.setForeground(new Color(115, 125, 115));
-		JPanel pnlTieuDe = new JPanel(new GridLayout(2, 1, 0, 4));
-		pnlTieuDe.setOpaque(false);
-		pnlTieuDe.add(lblTieuDe);
-		pnlTieuDe.add(lblMoTa);
-		pnlHeader.add(pnlTieuDe, BorderLayout.NORTH);
-		// panel chua o tim kiem
-		JPanel pnlTimKiem = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
-		pnlTimKiem.setOpaque(false);
-		txtTimKiem.setPreferredSize(new Dimension(500, 36));
-		pnlTimKiem.add(txtTimKiem);
-		pnlHeader.add(pnlTimKiem, BorderLayout.CENTER);
-		// panel chua cac nut loc theo trang thai va khoang ngay
-		JPanel pnlBoLoc = new JPanel(new BorderLayout(8, 0));
-		pnlBoLoc.setOpaque(false);
-		JPanel pnlTrangThai = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-		pnlTrangThai.setOpaque(false);
-		pnlTrangThai.add(btnTatCa);
-		pnlTrangThai.add(btnChuaThanhToan);
-		pnlTrangThai.add(btnDaThanhToan);
-		pnlBoLoc.add(pnlTrangThai, BorderLayout.WEST);
-		btnKhoangNgay.setPreferredSize(new Dimension(144, 34));
-		pnlBoLoc.add(btnKhoangNgay, BorderLayout.EAST);
-		pnlHeader.add(pnlBoLoc, BorderLayout.SOUTH);
-		return pnlHeader;
-	}
-	//tao bang hien thi danh sach hoa don
-	private JPanel taoBangHoaDon() {
-		table.setRowHeight(42);
-		table.setFont(new Font("Arial", Font.PLAIN, 11));
-		table.setShowGrid(false);
-		table.addMouseListener(this);
-		table.setFocusable(false);
-		table.setSelectionBackground(MAU_XANH);
-		table.setSelectionForeground(Color.WHITE);
-		table.setBackground(Color.WHITE);
-		table.setIntercellSpacing(new Dimension(0, 6));
-		JTableHeader header = table.getTableHeader();
-		header.setPreferredSize(new Dimension(0, 36));
-		header.setFont(new Font("Arial", Font.BOLD, 10));
-		header.setReorderingAllowed(false);
-		DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer();
-		headerRenderer.setHorizontalAlignment(SwingConstants.LEFT);
-		headerRenderer.setBackground(new Color(216, 216, 216));
-		headerRenderer.setForeground(Color.BLACK);
-		headerRenderer.setBorder(BorderFactory.createEmptyBorder(0, 9, 0, 0));
-		header.setDefaultRenderer(headerRenderer);
-		JPanel pnlBangHoaDon = new JPanel(new BorderLayout());
-		pnlBangHoaDon.setBackground(Color.WHITE);
-		pnlBangHoaDon.setBorder(BorderFactory.createLineBorder(new Color(220, 228, 220)));
-		JScrollPane scrollPane = new JScrollPane(table);
-		scrollPane.setBorder(BorderFactory.createEmptyBorder());
-		scrollPane.getViewport().setBackground(Color.WHITE);
-		pnlBangHoaDon.add(scrollPane, BorderLayout.CENTER);
-		return pnlBangHoaDon;
-	}
+    private JDateChooser dateFrom;
+    private JDateChooser dateTo;
+    private JButton btnApDungNgay;
+    private JButton btnHuyNgay;
+    private JDialog dialogChonNgay;
+    private LocalDate tuNgay;
+    private LocalDate denNgay;
+    private String trangThaiDangLoc = null;
 
-	// ham tao nut dinh dang dung chung
-	private JButton taoNut(String text) {
-		JButton button = new JButton(text);
-		button.setFont(new Font("Arial", Font.BOLD, 10));
-		button.setFocusPainted(false);
-		button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		button.setBackground(Color.WHITE);
-		button.setForeground(MAU_CHU);
-		button.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(220, 228, 220), 1, true),
-				BorderFactory.createEmptyBorder(6, 12, 6, 12)));
-		return button;
-	}
+    public HoaDonGUI() {
+        hoaDonDAO = new HoaDonDAO();
+        setLayout(new BorderLayout(10, 10));
 
-	//dang ky su kien cho cac nut va o tim kiem
-	private void dangKySuKien() {
-		txtTimKiem.addActionListener(this);
-		btnTatCa.addActionListener(this);
-		btnChuaThanhToan.addActionListener(this);
-		btnDaThanhToan.addActionListener(this);
-		btnKhoangNgay.addActionListener(this);
-	}
-	
-	
-	@Override
-	public void actionPerformed(ActionEvent e) {
-		Object o = e.getSource();
-		if (o == txtTimKiem) {
-			taiDuLieu();
-		}else if (o == btnTatCa) {
-			trangThaiDangLoc = null;
-			chonNutTrangThai(btnTatCa);
-			taiDuLieu();
-		}else if (o == btnChuaThanhToan) {
-			trangThaiDangLoc = "CHUA_THANH_TOAN";
-			chonNutTrangThai(btnChuaThanhToan);
-			taiDuLieu();
-		}else if (o == btnDaThanhToan) {
-	        trangThaiDangLoc = "DA_THANH_TOAN";
-	        chonNutTrangThai(btnDaThanhToan);
-	        taiDuLieu();
-		} else if (o == btnKhoangNgay) {
-	        moChonKhoangNgay();
-		}else if (o == btnApDungNgay) {
-	        apDungKhoangNgay();
-		}else if (o == btnHuyNgay) {
-	        huyLocNgay();
-	    }
-	}
+        // Phan panel tren chua tieu de, tim kiem và bo loc
+        JPanel pnlTop = new JPanel(new BorderLayout(0, 15));
+        pnlTop.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-	// ham doi mau nut khi duoc chon
-	private void chonNutTrangThai(JButton nutDuocChon) {
-		for (JButton button : new JButton[] { btnTatCa, btnChuaThanhToan, btnDaThanhToan }) {
-			if (button == nutDuocChon) {
-				button.setBackground(MAU_XANH);
-				button.setForeground(Color.WHITE);
-				button.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(MAU_XANH, 1, true),
-						BorderFactory.createEmptyBorder(6, 12, 6, 12)));
-			} else {
-				button.setBackground(Color.WHITE);
-				if (button == btnChuaThanhToan) {
-					button.setForeground(new Color(190, 125, 10));
-				} else if (button == btnDaThanhToan) {
-					button.setForeground(MAU_XANH);
-				} else {
-					button.setForeground(MAU_CHU);
-				}
-				button.setBorder(BorderFactory.createCompoundBorder(
-						BorderFactory.createLineBorder(new Color(220, 228, 220), 1, true),
-						BorderFactory.createEmptyBorder(6, 12, 6, 12)));
-			}
-		}
-	}
+        // Tieu de
+        JPanel pnlHeader = new JPanel(new BorderLayout());
+        JLabel lblTieuDe = new JLabel("Hóa đơn", JLabel.CENTER);
+        lblTieuDe.setFont(new Font("Arial", Font.BOLD, 30));
+        lblTieuDe.setForeground(Color.BLUE);
+        pnlHeader.add(lblTieuDe, BorderLayout.CENTER);
+        pnlTop.add(pnlHeader, BorderLayout.NORTH);
 
-	//load danh sach hoa don
+        // Tim kiem va bo loc
+        JPanel pnlChucNang = new JPanel();
+        pnlChucNang.setLayout(new BoxLayout(pnlChucNang, BoxLayout.Y_AXIS));
+
+        JPanel pnlTimKiem = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 0));
+        JLabel lblTimKiem = new JLabel("Tìm theo mã hóa đơn hoặc SĐT:");
+        txtTimKiem = new JTextField();
+        txtTimKiem.setPreferredSize(new Dimension(500, 36));
+        pnlTimKiem.add(lblTimKiem);
+        pnlTimKiem.add(txtTimKiem);
+        pnlTimKiem.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+        pnlChucNang.add(pnlTimKiem);
+        pnlChucNang.add(Box.createVerticalStrut(20));
+
+        // Bo loc: trai la trang thai, phai la khoang ngay
+        JPanel pnlBoLoc = new JPanel(new BorderLayout(8, 0));
+        JPanel pnlTrangThai = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+
+        btnTatCa = taoNut("Tất cả");
+        btnChuaThanhToan = taoNut("Chưa thanh toán");
+        btnDaThanhToan = taoNut("Đã thanh toán");
+        btnKhoangNgay = taoNut("Chọn khoảng ngày");
+
+        pnlTrangThai.add(btnTatCa);
+        pnlTrangThai.add(btnChuaThanhToan);
+        pnlTrangThai.add(btnDaThanhToan);
+
+        // Dropdown loc loai hoa don
+        cboLoaiHoaDon = new JComboBox<>(new String[] {
+                "Tất cả hóa đơn",
+                "Hóa đơn bán hàng",
+                "Hóa đơn dịch vụ"
+        });
+        cboLoaiHoaDon.setPreferredSize(new Dimension(165, 34));
+        cboLoaiHoaDon.setFont(new Font("Arial", Font.BOLD, 10));
+        pnlTrangThai.add(cboLoaiHoaDon);
+
+        pnlBoLoc.add(pnlTrangThai, BorderLayout.WEST);
+
+        btnKhoangNgay.setPreferredSize(new Dimension(144, 34));
+        pnlBoLoc.add(btnKhoangNgay, BorderLayout.EAST);
+        pnlBoLoc.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+
+        pnlChucNang.add(pnlBoLoc);
+        pnlTop.add(pnlChucNang, BorderLayout.CENTER);
+        add(pnlTop, BorderLayout.NORTH);
+
+        // Bang hoa don
+        JPanel pnlTable = new JPanel(new BorderLayout());
+        pnlTable.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
+
+        String[] col = {
+                "Mã hóa đơn",
+                "Khách hàng",
+                "Số điện thoại",
+                "Ngày lập",
+                "Tổng tiền",
+                "Trạng thái"
+        };
+
+        model = new DefaultTableModel(col, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        table = new JTable(model);
+        table.setRowHeight(26);
+        table.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        table.getTableHeader().setReorderingAllowed(false);
+
+        JScrollPane pane = new JScrollPane(table);
+        pnlTable.add(pane, BorderLayout.CENTER);
+        add(pnlTable, BorderLayout.CENTER);
+
+        // Chon ngay
+        dateFrom = new JDateChooser();
+        dateTo = new JDateChooser();
+        dateFrom.setDateFormatString("dd/MM/yyyy");
+        dateTo.setDateFormatString("dd/MM/yyyy");
+
+        // Chi chon ngay, khong cho nhap
+        ((JTextField) dateFrom.getDateEditor().getUiComponent()).setEditable(false);
+        ((JTextField) dateTo.getDateEditor().getUiComponent()).setEditable(false);
+
+        // Dang ky su kien
+        table.addMouseListener(this);
+        txtTimKiem.addActionListener(this);
+        btnTatCa.addActionListener(this);
+        btnChuaThanhToan.addActionListener(this);
+        btnDaThanhToan.addActionListener(this);
+        btnKhoangNgay.addActionListener(this);
+        cboLoaiHoaDon.addActionListener(this);
+        capNhatNutTrangThai();
+        taiDuLieu();
+    }
+
+    // Tao nut cho bo loc de dung chung
+    private JButton taoNut(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.BOLD, 10));
+        button.setFocusPainted(false);
+        button.setBackground(Color.WHITE);
+        button.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(
+                        new Color(220, 228, 220)),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)));
+        Dimension size = button.getPreferredSize();
+        button.setPreferredSize(new Dimension(size.width, 34));
+        return button;
+    }
+    // Ham tao gach chan khi chon nut
+    private void capNhatNutTrangThai() {
+        JButton[] dsNut = {
+            btnTatCa, btnChuaThanhToan, btnDaThanhToan
+        };
+
+        JButton nutDangChon;
+
+        if ("CHUA_THANH_TOAN".equals(trangThaiDangLoc)) {
+            nutDangChon = btnChuaThanhToan;
+        } else if ("DA_THANH_TOAN".equals(trangThaiDangLoc)) {
+            nutDangChon = btnDaThanhToan;
+        } else {
+            nutDangChon = btnTatCa;
+        }
+
+        for (JButton nut : dsNut) {
+            nut.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createMatteBorder(
+                    0, 0, nut == nutDangChon ? 3 : 0, 0,
+                    new Color(145, 190, 225)
+                ),
+                BorderFactory.createEmptyBorder(6, 12, 6, 12)
+            ));
+        }
+    }
+    // Doc du lieu hoa don vao bang
     private void taiDuLieu() {
         try {
-            String maHD = txtTimKiem.getText().trim();
-            List<Object[]> danhSachHoaDon;
+            String tuKhoa = txtTimKiem.getText().trim();
+            List<HoaDon> danhSachHoaDon;
 
-            if (maHD.isEmpty() && trangThaiDangLoc == null
-                    && tuNgay == null && denNgay == null) {
+            if (tuKhoa.isEmpty()
+                    && trangThaiDangLoc == null
+                    && tuNgay == null
+                    && denNgay == null
+                    && loaiHoaDonDangLoc == null) {
                 danhSachHoaDon = hoaDonDAO.getAllHoaDon();
+
             } else {
                 danhSachHoaDon = hoaDonDAO.timKiemHoaDon(
-                        maHD, trangThaiDangLoc, tuNgay, denNgay);
+                        tuKhoa, trangThaiDangLoc, tuNgay, denNgay,
+                        loaiHoaDonDangLoc);
             }
 
             model.setRowCount(0);
 
-            for (Object[] hoaDon : danhSachHoaDon) {
+            for (HoaDon hoaDon : danhSachHoaDon) {
                 model.addRow(new Object[] {
-                        hoaDon[0],
-                        hoaDon[1],
-                        hoaDon[2],
-                        hoaDon[3] == null ? ""
-                                : DinhDang.NGAY.format(((Date) hoaDon[3]).toLocalDate()),
-                        DinhDang.TIEN.format(hoaDon[4]),
-                        ((TrangThai) hoaDon[5]).getMoTa()
+                        hoaDon.getMaHD(),
+                        hoaDon.getKhachHang().getTenKH(),
+                        hoaDon.getKhachHang().getSoDienThoai(),
+                        hoaDon.getNgayLap() == null ? ""
+                                : DinhDang.NGAY.format(hoaDon.getNgayLap()),
+                        DinhDang.TIEN.format(hoaDon.getTongTien()),
+                        hoaDon.getTrangThaiHD().getMoTa()
                 });
             }
 
@@ -256,126 +255,193 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
                     JOptionPane.ERROR_MESSAGE);
         }
     }
-	
-	//mo hop chon khoang ngay
-	private void moChonKhoangNgay() {
-		Window owner = SwingUtilities.getWindowAncestor(this);
-		dialogChonNgay = new JDialog(owner, "Chọn khoảng ngày", Dialog.ModalityType.APPLICATION_MODAL);
-		JPanel pnlNgay = new JPanel();
-		pnlNgay.setLayout(new BoxLayout(pnlNgay, BoxLayout.Y_AXIS));
-		pnlNgay.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createLineBorder(new Color(211, 226, 241)),
-				BorderFactory.createEmptyBorder(12, 12, 12, 12)));
 
-		dateFrom.setDate(tuNgay);
-		dateTo.setDate(denNgay);
-		JLabel lblTuNgay = new JLabel("Từ ngày");
-		pnlNgay.add(lblTuNgay);
-		dateFrom.setPreferredSize(new Dimension(210, 28));
-		dateFrom.setMaximumSize(new Dimension(210, 28));
-		pnlNgay.add(dateFrom);
-		pnlNgay.add(Box.createVerticalStrut(8));
-		JLabel lblDenNgay = new JLabel("Đến ngày");
-		pnlNgay.add(lblDenNgay);
-		dateTo.setPreferredSize(new Dimension(210, 28));
-		dateTo.setMaximumSize(new Dimension(210, 28));
-		pnlNgay.add(dateTo);
-		pnlNgay.add(Box.createVerticalStrut(10));
+    // Mo hop thoai chon khoang ngay
+    private void moChonKhoangNgay() {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        dialogChonNgay = new JDialog(
+                owner,
+                "Chọn khoảng ngày",
+                Dialog.ModalityType.APPLICATION_MODAL);
 
-		JPanel pnlNut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-		btnHuyNgay = taoNut("Hủy");
-		btnApDungNgay = taoNut("Áp dụng");
-		btnHuyNgay.addActionListener(this);
-		btnApDungNgay.addActionListener(this);
-		pnlNut.add(btnHuyNgay);
-		pnlNut.add(btnApDungNgay);
-		pnlNgay.add(pnlNut);
+        JPanel pnlNgay = new JPanel();
+        pnlNgay.setLayout(new BoxLayout(pnlNgay, BoxLayout.Y_AXIS));
+        pnlNgay.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
 
-		dialogChonNgay.setContentPane(pnlNgay);
-		dialogChonNgay.setResizable(false);
-		dialogChonNgay.pack();
-		dialogChonNgay.setLocationRelativeTo(owner);
-		dialogChonNgay.setVisible(true);
-	}
+        dateFrom.setDate(tuNgay == null ? null :
+                Date.from(tuNgay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
 
-	//kiem tra va ap dung khoang ngay duoc chon, neu hop le thi cap nhat nut va tai lai danh sach hoa don
-	private void apDungKhoangNgay() {
-		java.util.Date ngayBatDau = dateFrom.getDate();
-		java.util.Date ngayKetThuc = dateTo.getDate();
-		if (ngayBatDau == null || ngayKetThuc == null) {
-			JOptionPane.showMessageDialog(dialogChonNgay,
-					"Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.");
-			return;
-		}
-		if (ngayBatDau.after(ngayKetThuc)) {
-			JOptionPane.showMessageDialog(dialogChonNgay,
-					"Ngày bắt đầu không được sau ngày kết thúc.");
-			return;
-		}
+        dateTo.setDate(denNgay == null ? null :
+                Date.from(denNgay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
 
-		tuNgay = new Date(ngayBatDau.getTime());
-		denNgay = new Date(ngayKetThuc.getTime());
-		btnKhoangNgay.setText(DinhDang.NGAY.format(tuNgay.toLocalDate()) + " - " + DinhDang.NGAY.format(denNgay.toLocalDate()));
-		dialogChonNgay.dispose();
-		taiDuLieu();
-	}
+        JLabel lblTuNgay = new JLabel("Từ ngày:");
+        JLabel lblDenNgay = new JLabel("Đến ngày:");
 
-	//huy bo khoang ngay duoc chon, cap nhat nut va tai lai danh sach hoa don
-	private void huyLocNgay() {
-		tuNgay = null;
-		denNgay = null;
-		dateFrom.setDate(null);
-		dateTo.setDate(null);
-		btnKhoangNgay.setText("Chọn khoảng ngày");
-		dialogChonNgay.dispose();
-		taiDuLieu();
-	}
+        dateFrom.setPreferredSize(new Dimension(220, 30));
+        dateFrom.setMaximumSize(new Dimension(220, 30));
+        dateTo.setPreferredSize(new Dimension(220, 30));
+        dateTo.setMaximumSize(new Dimension(220, 30));
 
-	@Override
-	public void mouseClicked(MouseEvent e) {
-		if (e.getSource() == table && e.getClickCount() == 2) {
+        pnlNgay.add(lblTuNgay);
+        pnlNgay.add(dateFrom);
+        pnlNgay.add(lblDenNgay);
+        pnlNgay.add(dateTo);
 
-	        int row = table.getSelectedRow();
+        JPanel pnlNut = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        btnHuyNgay = new JButton("Hủy lọc");
+        btnApDungNgay = new JButton("Áp dụng");
 
-	        if (row == -1) {
-	            return;
-	        }
+        btnHuyNgay.addActionListener(this);
+        btnApDungNgay.addActionListener(this);
 
-	        String maHD = table.getValueAt(row, 0).toString();
+        pnlNut.add(btnHuyNgay);
+        pnlNut.add(btnApDungNgay);
+        pnlNgay.add(pnlNut);
 
-	        Window owner = SwingUtilities.getWindowAncestor(this);
+        dialogChonNgay.add(pnlNgay);
+        dialogChonNgay.pack();
+        dialogChonNgay.setResizable(false);
+        dialogChonNgay.setLocationRelativeTo(owner);
+        dialogChonNgay.setVisible(true);
+    }
 
-	        if (maHD.startsWith("HDBH")) {
-	            ChiTietHoaDonBanHangGUI dialog =
-	                    new ChiTietHoaDonBanHangGUI(owner, maHD);
+    // Ap dung khoang ngay
+    private void apDungKhoangNgay() {
+        Date ngayBatDau = dateFrom.getDate();
+        Date ngayKetThuc = dateTo.getDate();
 
-	            dialog.setLocationRelativeTo(this);
-	            dialog.setVisible(true);
+        if (ngayBatDau == null || ngayKetThuc == null) {
+            JOptionPane.showMessageDialog(dialogChonNgay,
+                    "Vui lòng chọn đầy đủ ngày bắt đầu và ngày kết thúc.");
+            return;
+        }
 
-	        } else if (maHD.startsWith("HDDV")) {
-	            ChiTietHoaDonDichVuGUI dialog =
-	                    new ChiTietHoaDonDichVuGUI(owner, maHD);
+        LocalDate batDau = ngayBatDau.toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
 
-	            dialog.setLocationRelativeTo(this);
-	            dialog.setVisible(true);
-	        }
-	    }
-	}
+        LocalDate ketThuc = ngayKetThuc.toInstant()
+                .atZone(ZoneId.systemDefault()).toLocalDate();
 
-	@Override
-	public void mousePressed(MouseEvent e) {
-	}
+        if (batDau.isAfter(ketThuc)) {
+            JOptionPane.showMessageDialog(dialogChonNgay,
+                    "Ngày bắt đầu không được sau ngày kết thúc.");
+            return;
+        }
 
-	@Override
-	public void mouseReleased(MouseEvent e) {
-	}
+        tuNgay = batDau;
+        denNgay = ketThuc;
 
-	@Override
-	public void mouseEntered(MouseEvent e) {
-	}
+        btnKhoangNgay.setText(
+                DinhDang.NGAY.format(tuNgay)
+                + " - "
+                + DinhDang.NGAY.format(denNgay));
 
-	@Override
-	public void mouseExited(MouseEvent e) {
-	}
+        dialogChonNgay.dispose();
+        taiDuLieu();
+    }
 
+    // Huy loc ngay
+    private void huyLocNgay() {
+        tuNgay = null;
+        denNgay = null;
+        dateFrom.setDate(null);
+        dateTo.setDate(null);
+        btnKhoangNgay.setText("Chọn khoảng ngày");
+        dialogChonNgay.dispose();
+        taiDuLieu();
+    }
+
+    // Xu ly su kien
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        Object o = e.getSource();
+
+        if (o == txtTimKiem) {
+            taiDuLieu();
+
+            if (model.getRowCount() == 0
+                    && !txtTimKiem.getText().trim().isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Không tìm thấy hóa đơn phù hợp",
+                        "Thông báo",
+                        JOptionPane.INFORMATION_MESSAGE);
+            }
+
+        } else if (o == btnTatCa) {
+            trangThaiDangLoc = null;
+            capNhatNutTrangThai();
+            taiDuLieu();
+
+        } else if (o == btnChuaThanhToan) {
+            trangThaiDangLoc = "CHUA_THANH_TOAN";
+            capNhatNutTrangThai();
+            taiDuLieu();
+
+        } else if (o == btnDaThanhToan) {
+            trangThaiDangLoc = "DA_THANH_TOAN";
+            capNhatNutTrangThai();
+            taiDuLieu();
+
+        // Xu ly khi chon loai hoa don
+        } else if (o == cboLoaiHoaDon) {
+            int loai = cboLoaiHoaDon.getSelectedIndex();
+
+            if (loai == 1) {
+                loaiHoaDonDangLoc = "HDBH";
+            } else if (loai == 2) {
+                loaiHoaDonDangLoc = "HDDV";
+            } else {
+                loaiHoaDonDangLoc = null;
+            }
+
+            taiDuLieu();
+
+        } else if (o == btnKhoangNgay) {
+            moChonKhoangNgay();
+
+        } else if (o == btnApDungNgay) {
+            apDungKhoangNgay();
+
+        } else if (o == btnHuyNgay) {
+            huyLocNgay();
+        }
+    }
+
+    // Double click de xem chi tiet hoa don
+    @Override
+    public void mouseClicked(MouseEvent e) {
+        if (e.getSource() == table && e.getClickCount() == 2) {
+            int row = table.rowAtPoint(e.getPoint());
+
+            if (row < 0) {
+                return;
+            }
+
+            String maHD = table.getValueAt(row, 0).toString();
+            Window owner = SwingUtilities.getWindowAncestor(this);
+
+            ChiTietHoaDonGUI dialog =
+                    new ChiTietHoaDonGUI(owner, maHD);
+
+            dialog.setLocationRelativeTo(this);
+            dialog.setVisible(true);
+            taiDuLieu();
+        }
+    }
+
+    @Override
+    public void mousePressed(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseEntered(MouseEvent e) {
+    }
+
+    @Override
+    public void mouseExited(MouseEvent e) {
+    }
 }
