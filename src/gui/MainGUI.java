@@ -9,8 +9,9 @@ package gui;
 	import java.awt.Image;
 	import java.awt.event.ActionEvent;
 	import java.awt.event.ActionListener;
-	
-	import javax.swing.BorderFactory;
+import java.awt.event.KeyEvent;
+
+import javax.swing.BorderFactory;
 	import javax.swing.Box;
 	import javax.swing.BoxLayout;
 	import javax.swing.ImageIcon;
@@ -23,7 +24,8 @@ package gui;
 	import javax.swing.border.Border;
 	
 	import connectDB.ConnectDB;
-	import entity.NhanVien;
+import custom_gui.PanelNhanVienInfo;
+import entity.NhanVien;
 	
 	public class MainGUI extends JFrame implements ActionListener  {
 		private JPanel pnlTab;
@@ -110,6 +112,7 @@ package gui;
 			boxTop.add(boxTitle);
 			
 			pnlTop.add(boxTop);
+			pnlTop.add(new PanelNhanVienInfo(nhanVienDangNhap, "Quản lý"), BorderLayout.EAST);
 			this.add(pnlTop, BorderLayout.NORTH);
 			
 			//========THANH MENU========
@@ -290,6 +293,30 @@ package gui;
 			btnLichHen.addActionListener(this);
 			btnNhanVien.addActionListener(this);
 			btnDangXuat.addActionListener(this);
+			
+			
+			// ====== Gợi ý ======
+			btnBanHang.setMnemonic(KeyEvent.VK_B);
+			btnSanPham.setMnemonic(KeyEvent.VK_S);
+			btnThongKe.setMnemonic(KeyEvent.VK_T);
+			btnKhachHang.setMnemonic(KeyEvent.VK_K);
+			btnNhanVien.setMnemonic(KeyEvent.VK_N);
+			btnHoaDon.setMnemonic(KeyEvent.VK_H);
+			btnLichHen.setMnemonic(KeyEvent.VK_L);
+			btnThuCung.setMnemonic(KeyEvent.VK_P);
+			btnDichVu.setMnemonic(KeyEvent.VK_D);
+			btnDangXuat.setMnemonic(KeyEvent.VK_X);
+			
+			btnBanHang.setToolTipText("Phím tắt: Alt + B");
+			btnSanPham.setToolTipText("Phím tắt: Alt + S");
+			btnThongKe.setToolTipText("Phím tắt: Alt + T");		
+			btnKhachHang.setToolTipText("Phím tắt: Alt + K");		
+			btnNhanVien.setToolTipText("Phím tắt: Alt + N");		
+			btnLichHen.setToolTipText("Phím tắt: Alt + L");		
+			btnDichVu.setToolTipText("Phím tắt: Alt + D");		
+			btnHoaDon.setToolTipText("Phím tắt: Alt + H");
+			btnDangXuat.setToolTipText("Phím tắt: Alt + X");		
+			
 			
 		}
 		
