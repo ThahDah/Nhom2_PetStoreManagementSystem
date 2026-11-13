@@ -44,14 +44,14 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
     private HoaDonDAO hoaDonDAO;
     private DefaultTableModel model;
     private JTable table;
+    private JLabel lblSoHoaDon;
     private JTextField txtTimKiem;
     private JButton btnTatCa;
     private JButton btnChuaThanhToan;
     private JButton btnDaThanhToan;
-    private JButton btnKhoangNgay;
+    private JComboBox<String> cboThoiGian;
     private JComboBox<String> cboLoaiHoaDon;
     private String loaiHoaDonDangLoc = null;
-
     private JDateChooser dateFrom;
     private JDateChooser dateTo;
     private JButton btnApDungNgay;
@@ -59,6 +59,8 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
     private JDialog dialogChonNgay;
     private LocalDate tuNgay;
     private LocalDate denNgay;
+    private LocalDate tuNgayTuyChon;
+    private LocalDate denNgayTuyChon;
     private String trangThaiDangLoc = null;
 
     public HoaDonGUI() {
@@ -98,8 +100,17 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
         btnTatCa = taoNut("Tất cả");
         btnChuaThanhToan = taoNut("Chưa thanh toán");
         btnDaThanhToan = taoNut("Đã thanh toán");
-        btnKhoangNgay = taoNut("Chọn khoảng ngày");
-
+        // combobox chon thoi gian
+        cboThoiGian = new JComboBox<>(new String[] {
+        	    "Hôm nay",
+        	    "7 ngày gần nhất",
+        	    "30 ngày gần nhất",
+        	    "Khoảng ngày tùy chọn",
+        	    "Toàn bộ thời gian"
+        	});
+        cboThoiGian.setPreferredSize(new Dimension(180, 34));
+        cboThoiGian.setFont(new Font("Arial", Font.BOLD, 11));
+        cboThoiGian.setSelectedIndex(0); // Chon mat dinh hom nay
         pnlTrangThai.add(btnTatCa);
         pnlTrangThai.add(btnChuaThanhToan);
         pnlTrangThai.add(btnDaThanhToan);
@@ -113,11 +124,8 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
         cboLoaiHoaDon.setPreferredSize(new Dimension(165, 34));
         cboLoaiHoaDon.setFont(new Font("Arial", Font.BOLD, 10));
         pnlTrangThai.add(cboLoaiHoaDon);
-
         pnlBoLoc.add(pnlTrangThai, BorderLayout.WEST);
-
-        btnKhoangNgay.setPreferredSize(new Dimension(144, 34));
-        pnlBoLoc.add(btnKhoangNgay, BorderLayout.EAST);
+        pnlBoLoc.add(cboThoiGian, BorderLayout.EAST);
         pnlBoLoc.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
 
         pnlChucNang.add(pnlBoLoc);
@@ -127,7 +135,12 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
         // Bang hoa don
         JPanel pnlTable = new JPanel(new BorderLayout());
         pnlTable.setBorder(BorderFactory.createEmptyBorder(0, 10, 10, 10));
-
+        // Hien thi so luong hoa don
+        lblSoHoaDon = new JLabel("Số hóa đơn: 0");
+        lblSoHoaDon.setFont(new Font("Arial", Font.PLAIN, 12));
+        JPanel pnlSoHoaDon = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 5));
+        pnlSoHoaDon.add(lblSoHoaDon);
+        pnlTable.add(pnlSoHoaDon, BorderLayout.NORTH);
         String[] col = {
                 "Mã hóa đơn",
                 "Khách hàng",
@@ -169,7 +182,7 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
         btnTatCa.addActionListener(this);
         btnChuaThanhToan.addActionListener(this);
         btnDaThanhToan.addActionListener(this);
-        btnKhoangNgay.addActionListener(this);
+        cboThoiGian.addActionListener(this);
         cboLoaiHoaDon.addActionListener(this);
         capNhatNutTrangThai();
         taiDuLieu();
@@ -219,23 +232,19 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
     private void taiDuLieu() {
         try {
             String tuKhoa = txtTimKiem.getText().trim();
-            List<HoaDon> danhSachHoaDon;
-
-            if (tuKhoa.isEmpty()
-                    && trangThaiDangLoc == null
-                    && tuNgay == null
-                    && denNgay == null
-                    && loaiHoaDonDangLoc == null) {
-                danhSachHoaDon = hoaDonDAO.getAllHoaDon();
-
-            } else {
-                danhSachHoaDon = hoaDonDAO.timKiemHoaDon(
-                        tuKhoa, trangThaiDangLoc, tuNgay, denNgay,
-                        loaiHoaDonDangLoc);
+            capNhatKhoangNgay();
+            // Toan bo thoi gian phai co sdt hoac ma hd
+            if (cboThoiGian.getSelectedIndex() == 4 && tuKhoa.isEmpty()) {
+                model.setRowCount(0);
+                lblSoHoaDon.setText("Số hóa đơn: 0");
+                JOptionPane.showMessageDialog(this,
+                        "Vui lòng nhập mã hóa đơn hoặc số điện thoại "
+                        + "để tìm kiếm trên toàn bộ thời gian.");
+                return;
             }
-
+            // Truy van theo cac dieu kien dang chon
+            List<HoaDon> danhSachHoaDon = hoaDonDAO.timKiemHoaDon(tuKhoa,trangThaiDangLoc,tuNgay, denNgay,loaiHoaDonDangLoc);
             model.setRowCount(0);
-
             for (HoaDon hoaDon : danhSachHoaDon) {
                 model.addRow(new Object[] {
                         hoaDon.getMaHD(),
@@ -247,12 +256,41 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
                         hoaDon.getTrangThaiHD().getMoTa()
                 });
             }
-
+            lblSoHoaDon.setText("Số hóa đơn: " + model.getRowCount());
         } catch (SQLException ex) {
             JOptionPane.showMessageDialog(this,
                     "Không thể tải hóa đơn: " + ex.getMessage(),
                     "Lỗi cơ sở dữ liệu",
                     JOptionPane.ERROR_MESSAGE);
+        }
+    }
+    // Ham cap nhat khoang ngay lua chon
+    private void capNhatKhoangNgay() {
+        LocalDate homNay = LocalDate.now();
+
+        switch (cboThoiGian.getSelectedIndex()) {
+            case 0: // Hom nay
+                tuNgay = homNay;
+                denNgay = homNay;
+                break;
+
+            case 1: // 7 ngay gan nhat
+                tuNgay = homNay.minusDays(6); // tinh 7 ngay tinh ca hom nay
+                denNgay = homNay;
+                break;
+
+            case 2: // 30 ngay gan nhat
+                tuNgay = homNay.minusDays(29); // tinh 30 ngay tinh ca hom nay
+                denNgay = homNay;
+                break;
+
+            case 3: // Khoang ngay tuy chon
+                break;
+
+            case 4: // Toan bo thoi gian
+                tuNgay = null;
+                denNgay = null;
+                break;
         }
     }
 
@@ -267,16 +305,12 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
         JPanel pnlNgay = new JPanel();
         pnlNgay.setLayout(new BoxLayout(pnlNgay, BoxLayout.Y_AXIS));
         pnlNgay.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
-
-        dateFrom.setDate(tuNgay == null ? null :
-                Date.from(tuNgay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
-        dateTo.setDate(denNgay == null ? null :
-                Date.from(denNgay.atStartOfDay(ZoneId.systemDefault()).toInstant()));
-
+        dateFrom.setDate(tuNgayTuyChon == null ? null :
+                Date.from(tuNgayTuyChon.atStartOfDay(ZoneId.systemDefault()).toInstant()));
+        dateTo.setDate(denNgayTuyChon == null ? null :
+                Date.from(denNgayTuyChon.atStartOfDay(ZoneId.systemDefault()).toInstant()));
         JLabel lblTuNgay = new JLabel("Từ ngày:");
         JLabel lblDenNgay = new JLabel("Đến ngày:");
-
         dateFrom.setPreferredSize(new Dimension(220, 30));
         dateFrom.setMaximumSize(new Dimension(220, 30));
         dateTo.setPreferredSize(new Dimension(220, 30));
@@ -293,15 +327,29 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
 
         btnHuyNgay.addActionListener(this);
         btnApDungNgay.addActionListener(this);
-
         pnlNut.add(btnHuyNgay);
         pnlNut.add(btnApDungNgay);
         pnlNgay.add(pnlNut);
-
         dialogChonNgay.add(pnlNgay);
         dialogChonNgay.pack();
         dialogChonNgay.setResizable(false);
+     // Xu ly khi dong hop thoai bang dau X, dua bo loc ve "Hom nay"
         dialogChonNgay.setLocationRelativeTo(owner);
+        dialogChonNgay.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
+        dialogChonNgay.addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosing(java.awt.event.WindowEvent e) {
+                cboThoiGian.removeActionListener(HoaDonGUI.this);
+
+                cboThoiGian.setSelectedIndex(0);
+
+                cboThoiGian.addActionListener(HoaDonGUI.this);
+
+                dialogChonNgay.dispose();
+                taiDuLieu();
+            }
+        });
+
         dialogChonNgay.setVisible(true);
     }
 
@@ -327,26 +375,34 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
                     "Ngày bắt đầu không được sau ngày kết thúc.");
             return;
         }
-
+        tuNgayTuyChon = batDau;
+        denNgayTuyChon = ketThuc;
         tuNgay = batDau;
         denNgay = ketThuc;
-
-        btnKhoangNgay.setText(
-                DinhDang.NGAY.format(tuNgay)
-                + " - "
-                + DinhDang.NGAY.format(denNgay));
-
+     // Cap nhat noi dung lua chon khoang ngay
+        cboThoiGian.removeActionListener(this);
+        cboThoiGian.removeItemAt(3);
+        cboThoiGian.insertItemAt(
+            DinhDang.NGAY.format(tuNgayTuyChon) + " - " + DinhDang.NGAY.format(denNgayTuyChon),
+            3
+        );
+        cboThoiGian.setSelectedIndex(3);
+        cboThoiGian.addActionListener(this);
         dialogChonNgay.dispose();
         taiDuLieu();
     }
 
     // Huy loc ngay
     private void huyLocNgay() {
-        tuNgay = null;
-        denNgay = null;
         dateFrom.setDate(null);
         dateTo.setDate(null);
-        btnKhoangNgay.setText("Chọn khoảng ngày");
+        tuNgayTuyChon = null;
+        denNgayTuyChon = null;
+        cboThoiGian.removeActionListener(this);
+        cboThoiGian.removeItemAt(3);
+        cboThoiGian.insertItemAt("Khoảng ngày tùy chọn", 3);
+        cboThoiGian.setSelectedIndex(0);
+        cboThoiGian.addActionListener(this);
         dialogChonNgay.dispose();
         taiDuLieu();
     }
@@ -396,8 +452,12 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
 
             taiDuLieu();
 
-        } else if (o == btnKhoangNgay) {
-            moChonKhoangNgay();
+        } else if (o == cboThoiGian) {
+        	if (cboThoiGian.getSelectedIndex() == 3) {
+        		 moChonKhoangNgay();
+        	 } else {
+        		 taiDuLieu();
+        	}
 
         } else if (o == btnApDungNgay) {
             apDungKhoangNgay();
