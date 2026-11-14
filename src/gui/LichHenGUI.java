@@ -79,6 +79,8 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 
 	private static final int GIOI_HAN = 200;
 	private JLabel lblCheDoXem;
+	private JLabel lblSoLuong;
+	private JLabel lblGioiHan;
 	private JComboBox<String> cboTrangThai;
 
 	public LichHenGUI(NhanVien nhanVienDangNhap) {
@@ -98,7 +100,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		JPanel pnlHeader = new JPanel(new BorderLayout());
 		JLabel lblTitle = new JLabel("Lịch hẹn", JLabel.CENTER);
 		lblTitle.setFont(new Font("Arial", Font.BOLD, 30));
-		lblTitle.setForeground(Color.BLUE);
+		lblTitle.setForeground(new Color(232, 116, 59));
 		pnlHeader.add(lblTitle, BorderLayout.CENTER);
 
 		// nut tao lich hen
@@ -151,7 +153,18 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		pnlCheDoXem.add(lblCheDoXem);
 		pnlCheDoXem.setMaximumSize(new Dimension(Integer.MAX_VALUE, pnlCheDoXem.getPreferredSize().height + 10));
 		pnlTopHalf.add(pnlCheDoXem);
-
+		
+		lblSoLuong = new JLabel(" ");
+		lblSoLuong.setFont(lblSoLuong.getFont().deriveFont(Font.BOLD, 16f));   // chữ to, đậm
+		lblSoLuong.setForeground(new Color(0, 102, 204));                      // màu xanh dương cho dễ thấy
+		lblGioiHan = new JLabel(" ");
+		lblGioiHan.setForeground(Color.GRAY);
+		JPanel pnlKetQua = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+		pnlKetQua.setBorder(BorderFactory.createEmptyBorder(10, 0, 5, 0));     // cách dòng mô tả phía trên 10px
+		pnlKetQua.add(lblSoLuong);
+		pnlKetQua.add(lblGioiHan);
+		pnlKetQua.setMaximumSize(new Dimension(Integer.MAX_VALUE, pnlKetQua.getPreferredSize().height));
+		pnlTopHalf.add(pnlKetQua);
 		add(pnlTopHalf, BorderLayout.NORTH);
 
 		// table
@@ -319,14 +332,30 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 						lichHen.getThoiGianHen().format(DinhDang.NGAY), lichHen.getTrangThaiHen() });
 			}
 
+//			String moTa = macDinh
+//					? "Đang hiển thị lịch hẹn hôm nay và lịch cũ chưa xử lý xong. Chọn trạng thái, lọc ngày hoặc tìm kiếm để xem thêm."
+//					: "Đang hiển thị kết quả tìm kiếm / lọc. Giới hạn (200) kết quả.";
+//			// if (dsTim.size() >= GIOI_HAN) {
+//			if (biCat) {
+//				moTa += " Chỉ hiện tối đa " + GIOI_HAN + " lịch mới nhất, hãy thu hẹp điều kiện.";
+//			}
+//			lblCheDoXem.setText(moTa);
 			String moTa = macDinh
 					? "Đang hiển thị lịch hẹn hôm nay và lịch cũ chưa xử lý xong. Chọn trạng thái, lọc ngày hoặc tìm kiếm để xem thêm."
-					: "Đang hiển thị kết quả tìm kiếm / lọc. Giới hạn (200) kết quả.";
-			// if (dsTim.size() >= GIOI_HAN) {
-			if (biCat) {
-				moTa += " Chỉ hiện tối đa " + GIOI_HAN + " lịch mới nhất, hãy thu hẹp điều kiện.";
-			}
+					: "Đang hiển thị kết quả tìm kiếm / lọc.";
 			lblCheDoXem.setText(moTa);
+			if (biCat) {
+				lblSoLuong.setText("Tìm thấy hơn " + GIOI_HAN + " lịch hẹn (đang hiển thị " + GIOI_HAN + ")");
+				lblGioiHan.setText("| Còn lịch hẹn cũ hơn chưa hiển thị, hãy thu hẹp điều kiện");
+				lblGioiHan.setForeground(Color.RED);
+			} else {
+				lblSoLuong.setText("Tìm thấy " + dsTim.size() + " lịch hẹn");
+				lblGioiHan.setText("| Mỗi lần hiển thị tối đa " + GIOI_HAN + " lịch hẹn mới nhất");
+				lblGioiHan.setForeground(Color.GRAY);
+			}
+			
+			
+			
 		} catch (SQLException ex) {
 			JOptionPane.showMessageDialog(this, "Lỗi truy cập CSDL: " + ex.getMessage(), "Lỗi",
 					JOptionPane.ERROR_MESSAGE);

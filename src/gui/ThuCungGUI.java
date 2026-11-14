@@ -76,7 +76,7 @@ public class ThuCungGUI extends JPanel implements ActionListener, MouseListener 
         JPanel nothTitle = new JPanel();
         JLabel lblNTitile = new JLabel("Quản lý thú cưng");
         lblNTitile.setFont(new Font("Arial", Font.BOLD, 25));
-        lblNTitile.setForeground(Color.blue);
+        lblNTitile.setForeground(new Color(232, 116, 59));
         nothTitle.add(lblNTitile);
         this.add(nothTitle, BorderLayout.NORTH);
 

@@ -71,7 +71,7 @@ public class KhachHangGUI extends JPanel implements ActionListener, MouseListene
 		JPanel nothTitle=new JPanel();
 		JLabel lblNTitile=new JLabel("Quản lý khách hàng");
 		lblNTitile.setFont(new Font("Arial", Font.BOLD, 25));
-		lblNTitile.setForeground(Color.blue);
+		lblNTitile.setForeground(new Color(232, 116, 59));
 		nothTitle.add(lblNTitile);
 		this.add(nothTitle, BorderLayout.NORTH);
 		

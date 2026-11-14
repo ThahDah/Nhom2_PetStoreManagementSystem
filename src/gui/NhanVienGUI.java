@@ -102,7 +102,7 @@ public class NhanVienGUI extends JPanel implements ActionListener, MouseListener
 		JPanel notharea = new JPanel();
 		JLabel lblNTitile = new JLabel("QUẢN LÝ NHÂN VIÊN");
 		lblNTitile.setFont(new Font("Arial", Font.BOLD, 25));
-		lblNTitile.setForeground(Color.blue);
+		lblNTitile.setForeground(new Color(232, 116, 59));
 		notharea.add(lblNTitile);
 		b1.add(notharea);
 		b.add(b1);

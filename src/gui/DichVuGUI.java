@@ -64,7 +64,7 @@ public class DichVuGUI extends JPanel implements ActionListener, MouseListener {
 		JPanel pnlHeader = new JPanel(new BorderLayout());
 		JLabel lblTitle = new JLabel("Dịch vụ", JLabel.CENTER);
 		lblTitle.setFont(new Font("Arial", Font.BOLD, 30));
-		lblTitle.setForeground(Color.BLUE);
+		lblTitle.setForeground(new Color(232, 116, 59));
 		pnlHeader.add(lblTitle, BorderLayout.CENTER);
 		pnlTopHalf.add(pnlHeader);
 		pnlTopHalf.add(Box.createVerticalStrut(15));

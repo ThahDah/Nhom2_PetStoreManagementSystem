@@ -75,7 +75,7 @@ public class HoaDonGUI extends JPanel implements ActionListener, MouseListener {
         JPanel pnlHeader = new JPanel(new BorderLayout());
         JLabel lblTieuDe = new JLabel("Hóa đơn", JLabel.CENTER);
         lblTieuDe.setFont(new Font("Arial", Font.BOLD, 30));
-        lblTieuDe.setForeground(Color.BLUE);
+        lblTieuDe.setForeground(new Color(232, 116, 59));
         pnlHeader.add(lblTieuDe, BorderLayout.CENTER);
         pnlTop.add(pnlHeader, BorderLayout.NORTH);
 
