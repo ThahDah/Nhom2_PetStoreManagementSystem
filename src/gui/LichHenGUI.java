@@ -20,6 +20,8 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
@@ -46,6 +48,7 @@ import entity.ChiTietLichHen;
 import entity.KhachHang;
 import entity.LichHen;
 import entity.NhanVien;
+import entity.TrangThai;
 
 public class LichHenGUI extends JPanel implements ActionListener, MouseListener {
 
@@ -73,6 +76,10 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 	private JButton btnTim;
 	private JButton btnLamMoi;
 	private JButton btnHuyLichHen;
+
+	private static final int GIOI_HAN = 200;
+	private JLabel lblCheDoXem;
+	private JComboBox<String> cboTrangThai;
 
 	public LichHenGUI(NhanVien nhanVienDangNhap) {
 		this.nhanVienDangNhap = nhanVienDangNhap;
@@ -129,9 +136,22 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		pnlLocNgay.add(btnKhoangNgay);
 		pnlLocNgay.setMaximumSize(new Dimension(Integer.MAX_VALUE, pnlLocNgay.getPreferredSize().height));
 
+		cboTrangThai = new JComboBox<String>(new String[] { "Mặc định (cần xử lý)", "Tất cả trạng thái", "Chờ đến hẹn",
+				"Đã tiếp nhận", "Hoàn thành", "Đã hủy" });
+		pnlLocNgay.add(new JLabel("Trạng thái:"));
+		pnlLocNgay.add(cboTrangThai);
+
 		pnlTopHalf.add(pnlHeader);
 		pnlTopHalf.add(pnlTimKiem);
 		pnlTopHalf.add(pnlLocNgay);
+
+		lblCheDoXem = new JLabel();
+		lblCheDoXem.setForeground(Color.GRAY);
+		JPanel pnlCheDoXem = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+		pnlCheDoXem.add(lblCheDoXem);
+		pnlCheDoXem.setMaximumSize(new Dimension(Integer.MAX_VALUE, pnlCheDoXem.getPreferredSize().height + 10));
+		pnlTopHalf.add(pnlCheDoXem);
+
 		add(pnlTopHalf, BorderLayout.NORTH);
 
 		// table
@@ -175,49 +195,114 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		txtTimMaLichHen.addActionListener(this);
 		btnHuyLichHen.addActionListener(this);
 		btnKhoangNgay.addActionListener(this);
+		cboTrangThai.addActionListener(this);
 	}
 
 	// ham doc du lieu vao bang
+//	public void docDuLieuVaoTable() {
+//		String tuKhoa = chuanHoa(txtTimKiem.getText());
+//		String maLichHenTim = chuanHoa(txtTimMaLichHen.getText());
+//		model.setRowCount(0);
+//		dsLichHen.clear();
+//		try {
+//			for (LichHen lichHen : lichHenDAO.layTatCa()) {
+//				if (!chuanHoa(lichHen.getMaLH()).contains(maLichHenTim)) {
+//					continue;
+//				}
+//				if (tuNgay != null && denNgay != null) {
+//					LocalDate ngayLoc = locTheoNgayTao ? layNgayTao(lichHen) : lichHen.getThoiGianHen();
+//					if (ngayLoc == null || ngayLoc.isBefore(tuNgay) || ngayLoc.isAfter(denNgay)) {
+//						continue;
+//					}
+//				}
+//				ArrayList<ChiTietLichHen> dsChiTiet = new ArrayList<ChiTietLichHen>(
+//						chiTietLichHenDAO.timTheoLichHen(lichHen));
+//				KhachHang khachHang = dsChiTiet.isEmpty() ? null : dsChiTiet.get(0).getThuCung().getChuSoHuu();
+//				if (!tuKhoa.isEmpty()) {
+//					if (khachHang == null) {
+//						continue;
+//					}
+//					if (!chuanHoa(khachHang.getMaKH()).contains(tuKhoa)
+//							&& !chuanHoa(khachHang.getTenKH()).contains(tuKhoa)
+//							&& !chuanHoa(khachHang.getSoDienThoai()).contains(tuKhoa)) {
+//						continue;
+//					}
+//				}
+//
+////				StringBuilder tenThuCung = new StringBuilder();
+////				StringBuilder tenDichVu = new StringBuilder();
+////				for (ChiTietLichHen chiTiet : dsChiTiet) {
+////					if (tenThuCung.length() > 0) {
+////						tenThuCung.append(", ");
+////						tenDichVu.append(", ");
+////					}
+////					tenThuCung.append(chiTiet.getThuCung().getTenThuCung());
+////					tenDichVu.append(chiTiet.getDichVu().getTenDV());
+////				}
+//				// moi ten thu cung / dich vu chi hien mot lan
+//				LinkedHashSet<String> dsTenThuCung = new LinkedHashSet<String>();
+//				LinkedHashSet<String> dsTenDichVu = new LinkedHashSet<String>();
+//				for (ChiTietLichHen chiTiet : dsChiTiet) {
+//					dsTenThuCung.add(chiTiet.getThuCung().getTenThuCung());
+//					dsTenDichVu.add(chiTiet.getDichVu().getTenDV());
+//				}
+//
+//				String tenKhachHang = dsChiTiet.isEmpty() ? "" : dsChiTiet.get(0).getThuCung().getChuSoHuu().getTenKH();
+////				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, tenThuCung.toString(),
+////						tenDichVu.toString(), lichHen.getThoiGianHen().format(DinhDang.NGAY),
+////						lichHen.getTrangThaiHen() });
+//
+////				dsLichHen.add(lichHen);
+////				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, String.join(", ", dsTenThuCung),
+////						String.join(", ", dsTenDichVu), lichHen.getThoiGianHen().format(DinhDang.NGAY),
+////						lichHen.getTrangThaiHen() });
+//				String soDienThoai = khachHang == null ? "" : khachHang.getSoDienThoai();
+//				dsLichHen.add(lichHen);
+//				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, soDienThoai,
+//						String.join(", ", dsTenThuCung), String.join(", ", dsTenDichVu),
+//						lichHen.getThoiGianHen().format(DinhDang.NGAY), lichHen.getTrangThaiHen() });
+//			}
+//		} catch (SQLException ex) {
+//			JOptionPane.showMessageDialog(this, "Lỗi truy cập CSDL: " + ex.getMessage(), "Lỗi",
+//					JOptionPane.ERROR_MESSAGE);
+//		}
+//	}
+
+	// ham doc du lieu vao bang (ban moi: mac dinh chi hien lich can xu ly, loc tren
+	// SQL)
 	public void docDuLieuVaoTable() {
-		String tuKhoa = chuanHoa(txtTimKiem.getText());
-		String maLichHenTim = chuanHoa(txtTimMaLichHen.getText());
+		String maLichHenTim = txtTimMaLichHen.getText().trim();
+		String tuKhoa = txtTimKiem.getText().trim();
+		boolean coLocNgay = tuNgay != null && denNgay != null;
+		int viTriTrangThai = cboTrangThai.getSelectedIndex();
+		boolean macDinh = maLichHenTim.isEmpty() && tuKhoa.isEmpty() && !coLocNgay && viTriTrangThai == 0;
+
+		// 0: mac dinh, 1: tat ca, 2..5: tung trang thai
+		TrangThai trangThaiLoc = null;
+		if (viTriTrangThai == 2) {
+			trangThaiLoc = TrangThai.CHO_DEN_HEN;
+		} else if (viTriTrangThai == 3) {
+			trangThaiLoc = TrangThai.DA_TIEP_NHAN;
+		} else if (viTriTrangThai == 4) {
+			trangThaiLoc = TrangThai.HOAN_THANH;
+		} else if (viTriTrangThai == 5) {
+			trangThaiLoc = TrangThai.DA_HUY;
+		}
+
 		model.setRowCount(0);
 		dsLichHen.clear();
 		try {
-			for (LichHen lichHen : lichHenDAO.layTatCa()) {
-				if (!chuanHoa(lichHen.getMaLH()).contains(maLichHenTim)) {
-					continue;
-				}
-				if (tuNgay != null && denNgay != null) {
-					LocalDate ngayLoc = locTheoNgayTao ? layNgayTao(lichHen) : lichHen.getThoiGianHen();
-					if (ngayLoc == null || ngayLoc.isBefore(tuNgay) || ngayLoc.isAfter(denNgay)) {
-						continue;
-					}
-				}
-				ArrayList<ChiTietLichHen> dsChiTiet = new ArrayList<ChiTietLichHen>(
-						chiTietLichHenDAO.timTheoLichHen(lichHen));
+			List<LichHen> dsTim = lichHenDAO.timLichHen(maLichHenTim, tuKhoa, tuNgay, denNgay, locTheoNgayTao,
+					trangThaiLoc, macDinh, GIOI_HAN+1);
+			boolean biCat = dsTim.size() > GIOI_HAN;
+			if (biCat) {
+				dsTim = dsTim.subList(0, GIOI_HAN);
+			}
+			
+			for (LichHen lichHen : dsTim) {
+				List<ChiTietLichHen> dsChiTiet = chiTietLichHenDAO.timTheoLichHen(lichHen);
 				KhachHang khachHang = dsChiTiet.isEmpty() ? null : dsChiTiet.get(0).getThuCung().getChuSoHuu();
-				if (!tuKhoa.isEmpty()) {
-					if (khachHang == null) {
-						continue;
-					}
-					if (!chuanHoa(khachHang.getMaKH()).contains(tuKhoa)
-							&& !chuanHoa(khachHang.getTenKH()).contains(tuKhoa)
-							&& !chuanHoa(khachHang.getSoDienThoai()).contains(tuKhoa)) {
-						continue;
-					}
-				}
 
-//				StringBuilder tenThuCung = new StringBuilder();
-//				StringBuilder tenDichVu = new StringBuilder();
-//				for (ChiTietLichHen chiTiet : dsChiTiet) {
-//					if (tenThuCung.length() > 0) {
-//						tenThuCung.append(", ");
-//						tenDichVu.append(", ");
-//					}
-//					tenThuCung.append(chiTiet.getThuCung().getTenThuCung());
-//					tenDichVu.append(chiTiet.getDichVu().getTenDV());
-//				}
 				// moi ten thu cung / dich vu chi hien mot lan
 				LinkedHashSet<String> dsTenThuCung = new LinkedHashSet<String>();
 				LinkedHashSet<String> dsTenDichVu = new LinkedHashSet<String>();
@@ -226,21 +311,22 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 					dsTenDichVu.add(chiTiet.getDichVu().getTenDV());
 				}
 
-				String tenKhachHang = dsChiTiet.isEmpty() ? "" : dsChiTiet.get(0).getThuCung().getChuSoHuu().getTenKH();
-//				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, tenThuCung.toString(),
-//						tenDichVu.toString(), lichHen.getThoiGianHen().format(DinhDang.NGAY),
-//						lichHen.getTrangThaiHen() });
-
-//				dsLichHen.add(lichHen);
-//				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, String.join(", ", dsTenThuCung),
-//						String.join(", ", dsTenDichVu), lichHen.getThoiGianHen().format(DinhDang.NGAY),
-//						lichHen.getTrangThaiHen() });
+				String tenKhachHang = khachHang == null ? "" : khachHang.getTenKH();
 				String soDienThoai = khachHang == null ? "" : khachHang.getSoDienThoai();
 				dsLichHen.add(lichHen);
 				model.addRow(new Object[] { lichHen.getMaLH(), tenKhachHang, soDienThoai,
 						String.join(", ", dsTenThuCung), String.join(", ", dsTenDichVu),
 						lichHen.getThoiGianHen().format(DinhDang.NGAY), lichHen.getTrangThaiHen() });
 			}
+
+			String moTa = macDinh
+					? "Đang hiển thị lịch hẹn hôm nay và lịch cũ chưa xử lý xong. Chọn trạng thái, lọc ngày hoặc tìm kiếm để xem thêm."
+					: "Đang hiển thị kết quả tìm kiếm / lọc. Giới hạn (200) kết quả.";
+			// if (dsTim.size() >= GIOI_HAN) {
+			if (biCat) {
+				moTa += " Chỉ hiện tối đa " + GIOI_HAN + " lịch mới nhất, hãy thu hẹp điều kiện.";
+			}
+			lblCheDoXem.setText(moTa);
 		} catch (SQLException ex) {
 			JOptionPane.showMessageDialog(this, "Lỗi truy cập CSDL: " + ex.getMessage(), "Lỗi",
 					JOptionPane.ERROR_MESSAGE);
@@ -372,6 +458,8 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 		dateTo.setDate(null);
 		btnKhoangNgay.setText("Chọn khoảng ngày");
 	}
+	
+	
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
@@ -393,6 +481,8 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 //		    txtTimKiem.setText("");
 //		    docDuLieuVaoTable();
 //		}
+		} else if (o.equals(cboTrangThai)) {
+			docDuLieuVaoTable();
 		} else if (o.equals(btnKhoangNgay)) {
 			moChonKhoangNgay();
 		} else if (o.equals(btnApDungNgay)) {
@@ -410,6 +500,7 @@ public class LichHenGUI extends JPanel implements ActionListener, MouseListener 
 			txtTimKiem.setText("");
 			txtTimMaLichHen.setText("");
 			datLaiLocNgay();
+			cboTrangThai.setSelectedIndex(0);
 			docDuLieuVaoTable();
 		} else if (o.equals(btnHuyLichHen)) {
 			int row = table.getSelectedRow();

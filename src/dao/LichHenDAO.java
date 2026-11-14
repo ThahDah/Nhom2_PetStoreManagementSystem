@@ -49,6 +49,74 @@ public class LichHenDAO {
 		}
 		return dsLichHen;
 	}
+	
+	/**
+	 * tim lich hen co dieu kien, loc tren SQL
+	 * macDinh = true: chi lay lich hom nay + lich cu chua xu ly xong (cho den hen, da tiep nhan)
+	 * macDinh = false: tim theo dieu kien da chon, khong gioi han trang thai neu trangThai = null
+	 */
+	public List<LichHen> timLichHen(String maLH, String tuKhoaKhach, LocalDate tuNgay, LocalDate denNgay,
+			boolean theoNgayTao, TrangThai trangThai, boolean macDinh, int gioiHan) throws SQLException {
+		List<Object> thamSo = new ArrayList<>();
+		StringBuilder sql = new StringBuilder("SELECT TOP (" + gioiHan + ") lh.maLH, lh.thoiGianHen, lh.ghiChu, "
+				+ "lh.trangThaiHen FROM LichHen lh WHERE 1 = 1");
+
+		if (macDinh) {
+			sql.append(" AND (lh.thoiGianHen = ? OR (lh.thoiGianHen < ? AND lh.trangThaiHen IN (?, ?)))");
+			thamSo.add(Date.valueOf(LocalDate.now()));
+			thamSo.add(Date.valueOf(LocalDate.now()));
+			thamSo.add(TrangThai.CHO_DEN_HEN.name());
+			thamSo.add(TrangThai.DA_TIEP_NHAN.name());
+		}
+		if (trangThai != null) {
+			sql.append(" AND lh.trangThaiHen = ?");
+			thamSo.add(trangThai.name());
+		}
+		if (maLH != null && !maLH.trim().isEmpty()) {
+			sql.append(" AND lh.maLH LIKE ?");
+			thamSo.add("%" + maLH.trim() + "%");
+		}
+		if (tuKhoaKhach != null && !tuKhoaKhach.trim().isEmpty()) {
+			String mau = "%" + tuKhoaKhach.trim() + "%";
+			sql.append(" AND EXISTS (SELECT 1 FROM ChiTietLichHen ct "
+					+ "JOIN ThuCung t ON ct.maThuCung = t.maThuCung "
+					+ "JOIN KhachHang k ON t.maKH = k.maKH "
+					+ "WHERE ct.maLH = lh.maLH "
+					+ "AND (k.maKH LIKE ? OR k.soDienThoai LIKE ? "
+					+ "OR k.tenKH COLLATE Vietnamese_CI_AI LIKE ?))");
+			thamSo.add(mau);
+			thamSo.add(mau);
+			thamSo.add(mau);
+		}
+		if (tuNgay != null && denNgay != null) {
+			if (theoNgayTao) {
+				// ngay tao nam trong ma: LH + ddMMyy + stt
+				sql.append(" AND TRY_CONVERT(date, '20' + SUBSTRING(lh.maLH, 7, 2) + SUBSTRING(lh.maLH, 5, 2) "
+						+ "+ SUBSTRING(lh.maLH, 3, 2), 112) BETWEEN ? AND ?");
+			} else {
+				sql.append(" AND lh.thoiGianHen BETWEEN ? AND ?");
+			}
+			thamSo.add(Date.valueOf(tuNgay));
+			thamSo.add(Date.valueOf(denNgay));
+		}
+		sql.append(" ORDER BY lh.thoiGianHen DESC, lh.maLH DESC");
+
+		List<LichHen> dsLichHen = new ArrayList<>();
+		Connection con = ConnectDB.getConnection();
+		try (PreparedStatement stm = con.prepareStatement(sql.toString())) {
+			for (int i = 0; i < thamSo.size(); i++) {
+				stm.setObject(i + 1, thamSo.get(i));
+			}
+			try (ResultSet rs = stm.executeQuery()) {
+				while (rs.next()) {
+					dsLichHen.add(new LichHen(rs.getString("maLH"), rs.getDate("thoiGianHen").toLocalDate(),
+							rs.getString("ghiChu"), TrangThai.valueOf(rs.getString("trangThaiHen").trim())));
+				}
+			}
+		}
+		return dsLichHen;
+	}
+	
 
 	/** maLH: "LH" + ddMMyy (ngay tao) + stt trong ngay (3 chu so) */
 	public String phatSinhMaLichHen() throws SQLException {
