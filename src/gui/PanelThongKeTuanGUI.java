@@ -257,20 +257,47 @@ public class PanelThongKeTuanGUI extends JPanel {
     // ====================================================================
     private ChartPanel createLineChartPanel(String title) {
         JFreeChart chart = ChartFactory.createLineChart(title, "Ngày", "Số tiền (VNĐ)", new DefaultCategoryDataset());
+        chart.getLegend().setFrame(org.jfree.chart.block.BlockBorder.NONE);
+        //khu rang cua
+        chart.setAntiAlias(true);
+        chart.setTextAntiAlias(true);
+        chart.getTitle().setFont(new Font("Arial", Font.BOLD, 16)); //font tieu de
+
         CategoryPlot plot = chart.getCategoryPlot();
         LineAndShapeRenderer renderer = new LineAndShapeRenderer();
+        
+        // lam day duong line
+        java.awt.Stroke stroke = new java.awt.BasicStroke(2.5f); 
+        renderer.setSeriesStroke(0, stroke);
+        renderer.setSeriesStroke(1, stroke);
+        renderer.setSeriesStroke(2, stroke);
+        
         renderer.setSeriesShapesVisible(0, true);
         renderer.setSeriesShapesVisible(1, true);
         renderer.setSeriesShapesVisible(2, true);
     
-        renderer.setSeriesPaint(0, new Color(0, 150, 0)); // Mau duong Doanh thu
-        renderer.setSeriesPaint(1, new Color(255, 140, 0)); // Mau duong Chi phi
-        renderer.setSeriesPaint(2, new Color(0, 100, 255)); // Mau duong Loi nhuan
+        renderer.setSeriesPaint(0, new Color(0, 150, 0)); // Doanh thu
+        renderer.setSeriesPaint(1, new Color(255, 140, 0)); // Chi phí
+        renderer.setSeriesPaint(2, new Color(0, 100, 255)); // Lợi nhuận
         plot.setRenderer(renderer);
+        
         plot.setBackgroundPaint(Color.WHITE);
-        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+        plot.setOutlineVisible(false); // bo vien
+        plot.setRangeGridlinePaint(new Color(220, 220, 220)); // luoi mau nhat
+        
+        // font truc
+        plot.getDomainAxis().setTickLabelFont(new Font("Arial", Font.PLAIN, 11));
+        plot.getRangeAxis().setTickLabelFont(new Font("Arial", Font.PLAIN, 11));
         ((NumberAxis) plot.getRangeAxis()).setNumberFormatOverride(new DecimalFormat("#,###"));
-        return new ChartPanel(chart);
+        
+        ChartPanel cp = new ChartPanel(chart);
+        // tat scale anh
+        cp.setMaximumDrawWidth(4000); 
+        cp.setMaximumDrawHeight(4000);
+        cp.setMinimumDrawWidth(10);
+        cp.setMinimumDrawHeight(10);
+        
+        return cp;
     }
 
     // ====================================================================
@@ -488,31 +515,41 @@ public class PanelThongKeTuanGUI extends JPanel {
         worker.execute();
     }
     
- // BIỂU ĐỒ CỘT (Dùng cho Top 5 Dịch Vụ)
+    // BIỂU ĐỒ CỘT (Dùng cho Top 5 Dịch Vụ)
     // ====================================================================
     private ChartPanel createBarChartPanel(String title) {
         JFreeChart chart = ChartFactory.createBarChart(
-            title, 
-            "", 
-            "Doanh thu (VNĐ)", 
-            new DefaultCategoryDataset(), 
-            org.jfree.chart.plot.PlotOrientation.HORIZONTAL, // Đặt biểu đồ nằm ngang cho dễ đọc tên dịch vụ dài
-            false, 
-            true, 
-            false
+            title, "", "Doanh thu (VNĐ)", new DefaultCategoryDataset(), 
+            org.jfree.chart.plot.PlotOrientation.HORIZONTAL, false, true, false
         ); 
+        	
+        // khu rang cua
+        chart.setAntiAlias(true);
+        chart.setTextAntiAlias(true);
+        chart.getTitle().setFont(new Font("Arial", Font.BOLD, 16));
         
         CategoryPlot plot = chart.getCategoryPlot();
         plot.setBackgroundPaint(Color.WHITE);
-        plot.setRangeGridlinePaint(Color.LIGHT_GRAY);
+        plot.setOutlineVisible(false);
+        plot.setRangeGridlinePaint(new Color(220, 220, 220));
         
-        // Chỉnh màu xanh dương cho các cột
+        plot.getDomainAxis().setTickLabelFont(new Font("Arial", Font.BOLD, 12));
+        plot.getRangeAxis().setTickLabelFont(new Font("Arial", Font.PLAIN, 11));
+        
         org.jfree.chart.renderer.category.BarRenderer renderer = (org.jfree.chart.renderer.category.BarRenderer) plot.getRenderer();
-        renderer.setSeriesPaint(0, new Color(0, 153, 204)); 
+        renderer.setSeriesPaint(0, new Color(0, 153, 204));
+        // bo goc cot
+        renderer.setBarPainter(new org.jfree.chart.renderer.category.StandardBarPainter());
         
-        // Format số tiền (thêm dấu phẩy phân cách hàng nghìn)
         ((NumberAxis) plot.getRangeAxis()).setNumberFormatOverride(new DecimalFormat("#,###"));
         
-        return new ChartPanel(chart);
+        ChartPanel cp = new ChartPanel(chart);
+        // chong mo khi resize
+        cp.setMaximumDrawWidth(4000); 
+        cp.setMaximumDrawHeight(4000);
+        cp.setMinimumDrawWidth(10);
+        cp.setMinimumDrawHeight(10);
+        
+        return cp;
     }
 }
