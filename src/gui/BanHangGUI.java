@@ -163,8 +163,42 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
 		   lblName.setText("-");
 		   lblPoints.setText("-");
 		   if (xoaSDT) txtPhone.setText("");
-		   pnlProduct.capNhatKhachHangProduct();
+		   pnlProduct.updateProductCustomer();
 		   pnlService.updateServiceCustomer();
+	   }
+	// load lại thông tin khách từ CSDL (để lấy điểm tích lũy mới), KHÔNG xóa khách
+	   private void loadCustomer() {
+	       String sdt = txtPhone.getText().trim();
+	       KhachHang kh = sdt.isEmpty() ? null : kh_dao.timKiemKhachHangTheoSDT(sdt);
+	       if (kh == null) {          // không tìm lại được -> reset cho an toàn
+	           resetCustomer(true);
+	           return;
+	       }
+	       khachHienTai = kh;
+	       lblName.setText(kh.getTenKH());
+	       lblPoints.setText(String.valueOf(kh.getDiemTichLuy()));
+	   }
+
+	   // Gọi sau khi thanh toán DỊCH VỤ thành công
+	   private void sauThanhToanDichVu() {
+	       if (pnlProduct.haveProduct()) {
+	           loadCustomer();
+	           pnlProduct.updateProductCustomer();   // chỉ cập nhật điểm, giữ nguyên danh sách sản phẩm
+	           pnlService.updateServiceCustomer();     // nạp lại lịch hẹn còn lại + điểm
+	       } else {
+	           resetCustomer(true);
+	       }
+	   }
+
+	  
+	   private void sauThanhToanSanPham() {
+	       if (pnlService.haveService()) {
+	           loadCustomer();
+	           pnlProduct.updateProductCustomer();
+	           pnlService.updateCustomerServicePoint();        // chỉ cập nhật điểm, giữ nguyên lịch hẹn đang chọn
+	       } else {
+	           resetCustomer(true);
+	       }
 	   }
 	   @Override
 	   public void actionPerformed(ActionEvent e) {
@@ -184,7 +218,7 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
 			   khachHienTai = kh;
 			   lblName.setText(kh.getTenKH());
 			   lblPoints.setText(String.valueOf(kh.getDiemTichLuy()));
-			   pnlProduct.capNhatKhachHangProduct();
+			   pnlProduct.updateProductCustomer();
 			   pnlService.updateServiceCustomer();
 		   }
 	   }
@@ -623,7 +657,7 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
 				    txtFindProduct.requestFocusInWindow();
 				}
 
-			  void capNhatKhachHangProduct() {
+			  void updateProductCustomer() {
 					customerPoints = (khachHienTai == null) ? 0 : (long) khachHienTai.getDiemTichLuy();
 					lblPointsAvail.setText("Hiện có " + customerPoints + " điểm");
 					chkUsePoints.setSelected(false);
@@ -720,17 +754,20 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
 			      lblGrandTotal.setText(DinhDang.TIEN.format(subTotal - discount));
 			      updateChange();
 			  }
-
 			  private void updateChange() {
-			      if (txtReceived.getText().trim().isEmpty()) {
-			          txtChange.setText("");
-			          return;
-			      }
-			      long tamTinh = getSubtotal();
-			      long change = parseReceived() - (tamTinh - getDiscount(tamTinh));
-			      txtChange.setText(change >= 0 ? DinhDang.TIEN.format(change)
-			                                    : "Thiếu " + DinhDang.TIEN.format(-change));
+				  if (txtReceived.getText().trim().isEmpty()) {
+					  txtChange.setText("");
+					  return;
+				  }
+				  long tamTinh = getSubtotal();
+				  long change = parseReceived() - (tamTinh - getDiscount(tamTinh));
+				  txtChange.setText(change >= 0 ? DinhDang.TIEN.format(change)
+						  : "Thiếu " + DinhDang.TIEN.format(-change));
 			  }
+			  boolean haveProduct() {
+				    return model.getRowCount() > 0;
+				}
+
 
 			// Kiểm tra chung: có khách, có sản phẩm
 			  private boolean checkAvailable() {
@@ -820,12 +857,12 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
 			  }
 			  // Xóa trắng để bán hóa đơn mới
 			  private void resetInvoice() {
-					model.setRowCount(0);         
-					txtFindProduct.setText("");
-					txtReceived.setText("");
-					txtChange.setText("");
-					resetCustomer(true);       
-					txtFindProduct.requestFocusInWindow();
+				    model.setRowCount(0);
+				    txtFindProduct.setText("");
+				    txtReceived.setText("");
+				    txtChange.setText("");
+				    sauThanhToanSanPham();          
+				    txtFindProduct.requestFocusInWindow();
 				}
 
       }
@@ -1340,7 +1377,19 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
     	      }
     	      recalcTotalsService();
     	  }
+    	  
+    	  boolean haveService() {
+    		    return maLHDangChon != null && !dsChiTietHienTai.isEmpty();
+    		}
 
+    		
+    		void updateCustomerServicePoint() {
+    		    customerPointsService = (khachHienTai == null) ? 0 : (long) khachHienTai.getDiemTichLuy();
+    		    lblPointsAvailService.setText("Hiện có " + customerPointsService + " điểm");
+    		    chkUsePointsService.setSelected(false);
+    		    chkUsePointsService.setEnabled(customerPointsService > 0);
+    		    recalcTotalsService();
+    		}
 
     	  // ===== TÍNH TIỀN =====
     	  private long caculateSubTotalService() {
@@ -1425,7 +1474,7 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
     		    try {
     		        hd_daoService.taoHoaDon(hd, dsCT, giamGia / POINT_VALUE_SERVICE, "DV", maLHDangChon);
     		        JOptionPane.showMessageDialog(this, tenThaoTac + " hóa đơn " + hd.getMaHD() + " thành công!");
-    		        resetInvoiceService();
+    		        resetServiceInvoice();
     		    } catch (SQLException ex) {
     		        ex.printStackTrace();
     		        JOptionPane.showMessageDialog(this, tenThaoTac + " hóa đơn thất bại: " + ex.getMessage(),
@@ -1472,10 +1521,10 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
     		}
     	 
 
-    		private void resetInvoiceService() {
+    		private void resetServiceInvoice() {
     			txtReceivedService.setText("");
     			txtChangeService.setText("");
-    			resetCustomer(true);          // xóa khách + ô SĐT chung, tự xóa lịch hẹn/dịch vụ
+    			sauThanhToanDichVu();
     			txtPhone.requestFocusInWindow();
     		}
       }
