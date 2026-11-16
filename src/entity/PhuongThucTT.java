@@ -1,7 +1,7 @@
 package entity;
 
 public enum PhuongThucTT {
-	TIEN_MAT("Tiền mặt"), THE_TIN_DUNG("Thẻ tín dụng");
+	TIEN_MAT("Tiền mặt"), CHUYEN_KHOAN("Chuyển khoản");
     private final String moTa;
     private PhuongThucTT(String moTa) {
         this.moTa = moTa;

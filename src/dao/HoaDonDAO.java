@@ -311,4 +311,21 @@ public class HoaDonDAO {
 
 		return prefix + String.format("%02d", stt);
 	}
+	// Ham cap nhat trang thai hoa don
+	public boolean capNhatTrangThaiThanhToan(String maHD, String phuongThucTT) {
+	    String sql = "UPDATE HoaDon SET trangThaiHD = ?, phuongThucTT = ? WHERE maHD = ?";
+	    try {
+	        Connection conn = ConnectDB.getConnection();
+	        PreparedStatement ps = conn.prepareStatement(sql);
+	        ps.setString(1, "DA_THANH_TOAN");
+	        ps.setString(2, phuongThucTT);
+	        ps.setString(3, maHD);
+	        int rows = ps.executeUpdate();
+	        ps.close();
+	        return rows > 0;
+	    } catch (SQLException e) {
+	        e.printStackTrace();
+	        return false;
+	    }
+	}
 }

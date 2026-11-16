@@ -255,10 +255,9 @@ private void taiDuLieu() {
         TrangThai trangThai = hd.getTrangThaiHD();
         lblTrangThai.setText(trangThai.getMoTa());
         // Chi hien nut thanh toan khi hoa don chua thanh toan
-        btnThanhToan.setVisible(
-                trangThai == TrangThai.CHUA_THANH_TOAN
-
-        );
+        btnThanhToan.setVisible(trangThai == TrangThai.CHUA_THANH_TOAN);
+        // Chi hien nut in hoa don khi hoa don da duoc thanh toan
+        btnInHoaDon.setVisible(trangThai == TrangThai.DA_THANH_TOAN);
         // Thong tin khach hang
         lblTenKH.setText(hd.getKhachHang().getTenKH());
         lblSDT.setText(hd.getKhachHang().getSoDienThoai());
@@ -283,8 +282,8 @@ private void taiDuLieu() {
             lblPhuongThuc.setText("Chưa thanh toán");
         } else if (phuongThuc == PhuongThucTT.TIEN_MAT) {
             lblPhuongThuc.setText("Tiền mặt");
-        } else if (phuongThuc == PhuongThucTT.THE_TIN_DUNG) {
-            lblPhuongThuc.setText("Thẻ tín dụng");
+        } else if (phuongThuc == PhuongThucTT.CHUYEN_KHOAN) {
+            lblPhuongThuc.setText("Chuyển Khoản");
         } else {
             lblPhuongThuc.setText(phuongThuc.toString());
         }
@@ -363,8 +362,7 @@ private void taiDuLieu() {
             JOptionPane.showMessageDialog(this,
                     "Chức năng in hóa đơn chưa được triển khai.");
         } else if (e.getSource() == btnThanhToan) {
-            JOptionPane.showMessageDialog(this,
-                    "Chuyển đến màn hình thanh toán hóa đơn " + maHD);
+        	  new ThanhToanGUI(this, maHD).setVisible(true);
 
         }
 
