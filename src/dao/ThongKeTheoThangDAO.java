@@ -9,7 +9,6 @@ import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-// Nhớ import class kết nối Database của bạn vào đây
 import connectDB.ConnectDB; 
 
 public class ThongKeTheoThangDAO {
@@ -20,7 +19,6 @@ public class ThongKeTheoThangDAO {
     
     public double getTongDoanhThuTQ(LocalDate start, LocalDate end) {
         double tong = 0;
-        // Dựa vào ERD, bảng HoaDon có cột donGia (đóng vai trò là tổng tiền hóa đơn)
         String sql = "SELECT SUM(tongTien) FROM HoaDon WHERE ngayLap BETWEEN ? AND ?";
         Connection con = ConnectDB.getInstance().getConnection();
         try (PreparedStatement pst = con.prepareStatement(sql)) {
@@ -34,7 +32,6 @@ public class ThongKeTheoThangDAO {
 
     public double getTongChiPhiTQ(LocalDate start, LocalDate end) {
         double chiPhi = 0;
-        // Tổng chi phí = Số lượng * Giá nhập của Sản phẩm trong ChiTietHoaDon
         String sql = "SELECT SUM(ct.soLuong * sp.giaNhap) " +
                      "FROM ChiTietHoaDon ct " +
                      "JOIN HoaDon hd ON ct.maHD = hd.maHD " +
@@ -84,7 +81,6 @@ public class ThongKeTheoThangDAO {
     // CHART TỔNG QUAN
     // =========================================================================
 
-    // Hàm tiện ích tạo Map có đủ 30-31 ngày với giá trị mặc định là 0.0
     private Map<LocalDate, Double> createEmptyMap(LocalDate start, LocalDate end) {
         Map<LocalDate, Double> map = new LinkedHashMap<>();
         for (LocalDate date = start; !date.isAfter(end); date = date.plusDays(1)) {
@@ -159,7 +155,6 @@ public class ThongKeTheoThangDAO {
     }
 
     public double getTongChiPhiSP(LocalDate start, LocalDate end) {
-        // Chi phí SP chính bằng chi phí tổng quan (nếu mảng dịch vụ không tốn vốn)
         return getTongChiPhiTQ(start, end);
     }
 
@@ -223,7 +218,7 @@ public class ThongKeTheoThangDAO {
     }
 
     public Map<LocalDate, Double> getChiPhiTheoNgayChartSP(LocalDate start, LocalDate end) {
-        return getChiPhiTheoNgayChartTQ(start, end); // Dùng chung query
+        return getChiPhiTheoNgayChartTQ(start, end);
     }
 
     public Map<LocalDate, Double> getLoiNhuanTheoNgayChartSP(LocalDate start, LocalDate end) {
@@ -297,7 +292,6 @@ public class ThongKeTheoThangDAO {
     // CHART TOP 5 DỊCH VỤ
     public Map<String, Double> getDoanhThuTop5DichVu(LocalDate start, LocalDate end) {
         Map<String, Double> map = new LinkedHashMap<>();
-        // Lấy top 5 dịch vụ có doanh thu cao nhất theo đúng logic SQL Server
         String sql = "SELECT TOP 5 dv.tenDV, SUM(ct.soLuong * dv.giaTieuChuan) AS DoanhThu " +
                      "FROM ChiTietHoaDon ct " +
                      "JOIN HoaDon hd ON ct.maHD = hd.maHD " +
