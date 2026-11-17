@@ -425,7 +425,7 @@ public class PanelThongKeNamGUI extends JPanel {
                             dx.append("   + BÁO ĐỘNG ĐỎ: Năm qua cửa hàng hoạt động dưới mức hòa vốn. Cần tái cấu trúc mạnh mẽ, cắt bỏ các nhóm hàng/dịch vụ kém hiệu quả và xem xét lại định giá tổng thể.\n");
                         }
                         
-                        // 2.2 Chiến lược theo AOV và Tần suất
+                        // 2.2 Chiến lược theo hành vi người tiêu dùng và Tần suất
                         dx.append("\n2. Về Hành Vi Tiêu Dùng:\n");
                         if (aov < 200000) {
                             dx.append("   + Mức chi tiêu trung bình năm khá thấp. Định hướng năm mới cần tập trung vào nghệ thuật bán chéo (Cross-selling) và tạo các Combo giá trị cao.\n");
