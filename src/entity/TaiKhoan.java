@@ -12,6 +12,15 @@ public class TaiKhoan {
 	public TaiKhoan() {
 		
 	}
+	
+	
+
+	public TaiKhoan(VaiTroTK vaiTroTK) {
+		super();
+		this.vaiTroTK = vaiTroTK;
+	}
+
+
 
 	public TaiKhoan(String tenTK, String matKhau, VaiTroTK vaiTroTK, TrangThai trangThaiTK, NhanVien nhanVien) {
 		this.tenTK = tenTK;

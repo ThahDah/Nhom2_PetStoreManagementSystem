@@ -7,7 +7,9 @@ import java.sql.SQLException;
 
 import connectDB.ConnectDB;
 import entity.NhanVien;
+import entity.TaiKhoan;
 import entity.TrangThai;
+import entity.VaiTroTK;
 
 public class TaiKhoanDAO {
 
@@ -38,5 +40,21 @@ public class TaiKhoanDAO {
 						TrangThai.valueOf(trangThaiNV), rs.getString("hinhAnh"));
 			}
 		}
+	}
+	public TaiKhoan timTaiKhoanTheoMaNV(String maNV) throws SQLException, NghiepVuException {
+		String sql = "Select vaiTroTK From TaiKhoan Where maNV = ?";
+		Connection con = ConnectDB.getConnection();
+		try (PreparedStatement stm = con.prepareStatement(sql)) {
+			stm.setString(1, maNV);
+			try (ResultSet rs = stm.executeQuery()) {
+	            if (!rs.next()) {
+	                throw new NghiepVuException("Không tìm thấy tài khoản của nhân viên " + maNV);
+	            }
+	            String vaiTro = rs.getString("vaiTroTK").trim();  
+	            return new TaiKhoan(VaiTroTK.valueOf(vaiTro));
+	           
+	        }
+		}
+	 
 	}
 }

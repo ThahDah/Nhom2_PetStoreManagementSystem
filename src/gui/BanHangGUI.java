@@ -1329,7 +1329,7 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
     	      modelAppointmentService.setRowCount(0);
     	      for (Map.Entry<String, List<ChiTietLichHen>> en : dsTheoLichHen.entrySet()) {
     	          List<ChiTietLichHen> ds = en.getValue();
-    	          ChiTietLichHen dau = ds.get(0);
+    	          
 
     	          // Giống / cân nặng của từng thú cưng (không lặp)
     	          StringBuilder giong = new StringBuilder();
@@ -1350,7 +1350,7 @@ public class BanHangGUI extends JPanel implements ChangeListener, ActionListener
 
     	          modelAppointmentService.addRow(new Object[]{
     	                  en.getKey(),
-    	                  DinhDang.NGAY.format(dau.getLichHen().getThoiGianHen()),
+    	                  DinhDang.NGAY.format(ds.get(0).getLichHen().getThoiGianHen()),
     	                  tenThuCungCuaLich(ds),
     	                  giong.toString(),
     	                  dichVu.toString()

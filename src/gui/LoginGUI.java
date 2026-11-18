@@ -121,20 +121,7 @@ public class LoginGUI extends JFrame implements ActionListener{
 		btnExit.addActionListener(this);
 		btnLogin.addActionListener(this);
 	}
-
-//	@Override
-//	public void actionPerformed(ActionEvent e) {
-//		Object o = e.getSource();
-//		
-//		if(o == btnExit) {
-//			System.exit(1);
-//		}
-//		else {
-//			new MainGUI().setVisible(true);
-//		}
-//	}
-	
-	
+		
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		Object o = e.getSource();

@@ -10,6 +10,7 @@ package gui;
 	import java.awt.event.ActionEvent;
 	import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.sql.SQLException;
 
 import javax.swing.BorderFactory;
 	import javax.swing.Box;
@@ -18,14 +19,19 @@ import javax.swing.BorderFactory;
 	import javax.swing.JButton;
 	import javax.swing.JFrame;
 	import javax.swing.JLabel;
-	import javax.swing.JPanel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 	import javax.swing.SwingConstants;
 	import javax.swing.UIManager;
 	import javax.swing.border.Border;
 	
 	import connectDB.ConnectDB;
 import custom_gui.PanelNhanVienInfo;
+import dao.NghiepVuException;
+import dao.TaiKhoanDAO;
 import entity.NhanVien;
+import entity.TaiKhoan;
+import entity.VaiTroTK;
 	
 	public class MainGUI extends JFrame implements ActionListener  {
 		private JPanel pnlTab;
@@ -131,6 +137,7 @@ import entity.NhanVien;
 			btnBanHang.setIcon(setImg(cartIcon, 20, 20));
 			btnBanHang.setBorderPainted(false);
 			btnBanHang.setOpaque(false);
+			btnBanHang.setFocusPainted(false);
 			btnBanHang.setContentAreaFilled(false);
 			btnBanHang.setHorizontalAlignment(SwingConstants.LEFT); 
 			btnBanHang.setIconTextGap(15); 
@@ -317,7 +324,8 @@ import entity.NhanVien;
 			btnHoaDon.setToolTipText("Phím tắt: Alt + H");
 			btnDangXuat.setToolTipText("Phím tắt: Alt + X");		
 			
-			
+			updateButtonColor(btnBanHang);
+			phanQuyen();
 		}
 		
 		//Resize ảnh và chuyển định dạng thành ImageIcon để chèn vô JLabel và JButton
@@ -388,8 +396,6 @@ import entity.NhanVien;
 			Object o = e.getSource();
 			
 			if (o instanceof JButton && o != btnDangXuat) {
-				btnBanHang.setOpaque(false);
-				btnBanHang.setBackground(Color.white);
 		        updateButtonColor((JButton) o);
 		    }
 			
@@ -429,5 +435,43 @@ import entity.NhanVien;
 		public void dangXuat() {
 			new LoginGUI().setVisible(true);
 			this.dispose();
+		}
+		
+		public void phanQuyen() {
+		    VaiTroTK vaiTro;
+		    try {
+		        vaiTro = new TaiKhoanDAO().timTaiKhoanTheoMaNV(nhanVienDangNhap.getMaNV()).getVaiTroTK();
+		    } catch (SQLException | NghiepVuException ex) {
+		        JOptionPane.showMessageDialog(this, ex.getMessage(), "Lỗi phân quyền", JOptionPane.ERROR_MESSAGE);
+		        dangXuat();
+		        return;
+		    }
+
+		    if (vaiTro == VaiTroTK.BAN_HANG) {
+		        xoaNut(btnLichHen, lichHen_UI);
+		        xoaNut(btnDichVu, dichVu_UI);
+		        xoaNut(btnNhanVien, nhanVien_UI);
+		    } else if (vaiTro == VaiTroTK.CHAM_SOC) {
+		        xoaNut(btnBanHang, banHang_UI);
+		        xoaNut(btnNhanVien, nhanVien_UI);
+		    }
+		    
+		    pnlTab.remove(btnDangXuat);
+		    while (pnlTab.getComponentCount() < 11) {
+		        pnlTab.add(new JLabel());
+		    }
+		    pnlTab.add(btnDangXuat);
+
+		    pnlTab.revalidate();
+		    pnlTab.repaint();
+		    
+		    JButton macDinh = (vaiTro == VaiTroTK.CHAM_SOC) ? btnLichHen : btnBanHang;
+		    macDinh.doClick();
+		}
+
+		
+		private void xoaNut(JButton btn, JPanel panel) {
+		    pnlTab.remove(btn);
+		    pnlRight.remove(panel);
 		}
 	}
